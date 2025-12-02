@@ -16,18 +16,8 @@
 #include "APDB.h"
 #include "math.h"
 
-#include "read_write_can.h"
+#include "can_manager.h"
 
-#define CONTROLS_CAN_CHANNEL IO_CAN_CHANNEL_0
-
-#define TELEMETRY_CAN_CHANNEL IO_CAN_CHANNEL_1
-
-#define BAUD_RATE 500
-
-#define FIFO_BUFFER_SIZE TODO
-
-
-// 5 ms cycle time
 #define CYCLE_TIME MsToUs(5ul)
 
 /* Application Database,
