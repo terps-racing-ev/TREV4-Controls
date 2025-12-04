@@ -1,7 +1,7 @@
 #ifndef CAN_UTIL_H
 #define CAN_UTIL_H
 
-#include "APDB.h"
+#include "IO_Constants.h"
 #include "IO_CAN.h"
 
 void CAN_Util_ClearData(IO_CAN_DATA_FRAME* frame);
@@ -16,4 +16,4 @@ IO_ErrorType CAN_Util_ReadFIFO(ubyte1 handle, IO_CAN_DATA_FRAME* dest_data_frame
 */
 IO_ErrorType CAN_Util_WriteFIFO(ubyte1 handle, const IO_CAN_DATA_FRAME* src_data_frame);
 
-#endif
+#endif // CAN_UTIL_H

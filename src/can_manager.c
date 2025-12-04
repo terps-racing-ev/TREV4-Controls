@@ -1,13 +1,13 @@
-#include "APDB.h"
+#include "IO_Constants.h"
 #include "IO_RTC.h"
+#include "IO_CAN.h"
 
 #include "can_manager.h"
 #include "can_util.h"
+#include "utilities.h"
 
 #define CONTROLS_CAN_CHANNEL IO_CAN_CHANNEL_0
 #define TELEMETRY_CAN_CHANNEL IO_CAN_CHANNEL_1
-
-#define BAUD_RATE 500
 
 // Buffer size for every rx message, will pretty much always be at 0 or 1
 #define RX_FIFO_BUFFER_SIZE 8
@@ -87,7 +87,7 @@ void CAN_Manager_Init(void)
                     , 0x1FFFFFFF);
 }
 
-void CAN_Manager_RxMessages(void)
+void CAN_Manager_ProcessRxMessages(void)
 {
     // Reuse one frame for every rx, since we'll store the data in our private structs
     IO_CAN_DATA_FRAME rx_frame;
@@ -105,14 +105,14 @@ void CAN_Manager_RxMessages(void)
     }
 }
 
-void CAN_Manager_TxMessages(void)
+void CAN_Manager_ProcessTxMessages(void)
 {
     // Reuse one frame for every tx, since WriteFIFO copies it anyways
     IO_CAN_DATA_FRAME tx_frame;
 
     // TODO figure out the best way to store this data...
     // pack the tx frame
-    CAN_Utils_WriteFIFO(controls_tx_fifo_handle, &tx_frame);
+    CAN_Util_WriteFIFO(controls_tx_fifo_handle, &tx_frame);
 }
 
 //getters for rx

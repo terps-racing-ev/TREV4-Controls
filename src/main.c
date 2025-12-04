@@ -1,21 +1,8 @@
-/**************************************************************************
- *  XC-2000 IO-LIB
- *
- *  Template
- **************************************************************************
- *
- *  Quickstart Template for HY-TTC60
- *
- **************************************************************************/
-
+#include "APDB.h"
 #include "IO_Driver.h"
 #include "IO_RTC.h"
-#include "IO_ADC.h"
-#include "IO_DIO.h"
-#include "IO_CAN.h"
-#include "APDB.h"
-#include "math.h"
 
+#include "utilities.h"
 #include "can_manager.h"
 
 #define CYCLE_TIME MsToUs(5ul)
@@ -58,6 +45,8 @@ APDB appl_db =
 void main (void)
 {
 
+    ubyte4 timestamp;
+
     /*******************************************/
     /*             INITIALIZATION              */
     /*******************************************/
@@ -65,40 +54,45 @@ void main (void)
     /* Initialize the IO driver (without safety functions) */
     IO_Driver_Init(NULL);
 
-    /*  - Use the IO driver functions to initialize */
-    /*    all required IOs and interfaces           */
-
     /* NOTE: turns 5v sensor supply 1 on */
     IO_POWER_Set (IO_ADC_SENSOR_SUPPLY_0, IO_POWER_ON);
     IO_POWER_Set (IO_ADC_SENSOR_SUPPLY_1, IO_POWER_ON);
 
-    /*******************************************/
-    /*       PERIODIC APPLICATION CODE         */
-    /*******************************************/
+    /* Set up FIFOs for all CAN messages */
+    CAN_Manager_Init();
 
-    /* main loop, executed periodically with a
-     * defined cycle time (here: CYCLE_TIME_MS ms)
-     */
     
-    ubyte4 timestamp;
+
+    /*******************************************/
+    /*           MAIN CONTROL LOOP             */
+    /*******************************************/    
     while (1)
     {
-        /* get a timestamp to implement the cycle time */
         IO_RTC_StartTime(&timestamp);
-        /* Task begin function for IO Driver
-         * This function needs to be called at
-         * the beginning of every SW cycle
-         */
         IO_Driver_TaskBegin();
 
-        // LOOP CODE
+        /*******************************************/
+        /*                 INPUTS                  */
+        /*******************************************/
+        //RTD_Update();
+        //APPS_Update();
+        //BSE_Update();
+        CAN_Manager_ProcessRxMessages();  // Read CAN
+        
+        /*******************************************/
+        /*                 LOGIC                   */
+        /*******************************************/
+        //StateMachine_Update();
+        //TorqueController_Update();
+        
+        /*******************************************/
+        /*                OUTPUTS                  */
+        /*******************************************/
+        //Outputs_Update();          // Control buzzer, lights, relay
+        CAN_Manager_ProcessTxMessages();  // Send CAN        
 
-        /* Task end function for IO Driver
-         * This function needs to be called at
-         * the end of every SW cycle
-         */
+
         IO_Driver_TaskEnd();
-
         while (IO_RTC_GetTimeUS(timestamp) < CYCLE_TIME);
     }
 }

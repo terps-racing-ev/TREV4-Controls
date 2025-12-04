@@ -1,8 +1,10 @@
 #ifndef CAN_MANAGER_H
 #define CAN_MANAGER_H
 
-#include "APDB.h"
+#include "IO_Constants.h"
 #include "can_util.h"
+
+#define BAUD_RATE 500
 
 typedef struct {
     ubyte4  run_faults;
@@ -16,5 +18,4 @@ void CAN_Manager_Init(void);
 void CAN_Manager_ProcessRxMessages(void);
 void CAN_Manager_ProcessTxMessages(void);
 
-
-#endif
+#endif // CAN_MANAGER_H

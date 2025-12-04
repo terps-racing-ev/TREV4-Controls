@@ -1,0 +1,1877 @@
+	; TASKING VX-toolset for C166: C compiler v4.0r1 Build 741 SN 09467762
+	; Options: -f cc48980a -c99 -Mh --fp-model=FT -Cxc2287 --core=xc16x -DTASKING_VIPER -D__USIC_MEM_TYPE=__PAGE_080_MEM_TYPE -D__MULTICAN_MEM_TYPE=__PAGE_080_MEM_TYPE -DTTC60 -DRTS_TTC_FLASH_DATE_YEAR=2025 -DRTS_TTC_FLASH_DATE_MONTH=12 -DRTS_TTC_FLASH_DATE_DAY=4 -DRTS_TTC_FLASH_DATE_HOUR=0 -DRTS_TTC_FLASH_DATE_MINUTE=24 -I..\..\..\Environment\inc -I..\..\..\Environment\inc_int -I..\..\..\Environment\bsp -I. --tradeoff=0 --no-tasking-sfr -ga --language=+cmp14,+div32,-gcc,-strings -OabcefgiklopRsY,+predict --source --mac -o build\can_manager.src
+	; Module start
+	.source	'src/can_manager.c'
+code_CAN_Manager_Init	.section	code, cluster 'CAN_Manager_Init', new
+	.global	_CAN_Manager_Init
+
+; src/can_manager.c	     1  #include "IO_Constants.h"
+; src/can_manager.c	     2  #include "IO_RTC.h"
+; src/can_manager.c	     3  #include "IO_CAN.h"
+; src/can_manager.c	     4  
+; src/can_manager.c	     5  #include "can_manager.h"
+; src/can_manager.c	     6  #include "can_util.h"
+; src/can_manager.c	     7  #include "utilities.h"
+; src/can_manager.c	     8  
+; src/can_manager.c	     9  #define CONTROLS_CAN_CHANNEL IO_CAN_CHANNEL_0
+; src/can_manager.c	    10  #define TELEMETRY_CAN_CHANNEL IO_CAN_CHANNEL_1
+; src/can_manager.c	    11  
+; src/can_manager.c	    12  // Buffer size for every rx message, will pretty much always be at 0 or 1
+; src/can_manager.c	    13  #define RX_FIFO_BUFFER_SIZE 8
+; src/can_manager.c	    14  
+; src/can_manager.c	    15  // Buffer size for an entire tx channel
+; src/can_manager.c	    16  #define TX_FIFO_BUFFER_SIZE 32
+; src/can_manager.c	    17  
+; src/can_manager.c	    18  
+; src/can_manager.c	    19  // RX Message IDs
+; src/can_manager.c	    20  #define CAN_ID_INV_STATUS       0x000000AB
+; src/can_manager.c	    21  
+; src/can_manager.c	    22  // TX Message IDs
+; src/can_manager.c	    23  #define CAN_ID_TORQUE_COMMAND   0x000000C0
+; src/can_manager.c	    24  
+; src/can_manager.c	    25  // RX FIFO handles
+; src/can_manager.c	    26  static ubyte1 inverter_status_rx_handle;
+; src/can_manager.c	    27  
+; src/can_manager.c	    28  // TX FIFO handles
+; src/can_manager.c	    29  static ubyte1 controls_tx_fifo_handle;
+; src/can_manager.c	    30  static ubyte1 telemetry_tx_fifo_handle;
+; src/can_manager.c	    31  
+; src/can_manager.c	    32  
+; src/can_manager.c	    33  /**************************************************************************
+; src/can_manager.c	    34  * Private RX Data
+; src/can_manager.c	    35  **************************************************************************/
+; src/can_manager.c	    36  
+; src/can_manager.c	    37  static InverterStatus_RX_Data_t inverter_status_rx_data = {0};
+; src/can_manager.c	    38  
+; src/can_manager.c	    39  /**************************************************************************
+; src/can_manager.c	    40  * Private TX Data
+; src/can_manager.c	    41  **************************************************************************/
+; src/can_manager.c	    42  
+; src/can_manager.c	    43  
+; src/can_manager.c	    44  void CAN_Manager_Init(void)
+; Function _CAN_Manager_Init
+_6:
+_CAN_Manager_Init	.proc	far
+
+; src/can_manager.c	    45  {
+; src/can_manager.c	    46      /* initialize can channel and fifo buffer */
+; src/can_manager.c	    47      IO_CAN_Init( CONTROLS_CAN_CHANNEL
+	movb	rl2,#0x3a
+_293:
+
+; src/can_manager.c	    48                 , BAUD_RATE
+	movw	r3,#0x1f4
+_294:
+
+; src/can_manager.c	    49                 , 0
+	movb	rh2,#0x0
+_295:
+
+; src/can_manager.c	    50                 , 0
+	movb	rl4,rh2
+_296:
+
+; src/can_manager.c	    51                 , 0);
+	movb	rh4,rh2
+	call	_IO_CAN_Init
+_102:
+
+; src/can_manager.c	    52      ubyte1 controls_tx_error_ctr;
+; src/can_manager.c	    53      ubyte1 controls_rx_error_ctr;
+; src/can_manager.c	    54  
+; src/can_manager.c	    55      IO_CAN_Init( TELEMETRY_CAN_CHANNEL
+	movb	rl2,#0x3b
+_297:
+
+; src/can_manager.c	    56                 , BAUD_RATE
+	movw	r3,#0x1f4
+_298:
+
+; src/can_manager.c	    57                 , 0
+	movb	rh2,#0x0
+_299:
+
+; src/can_manager.c	    58                 , 0
+	movb	rl4,rh2
+_300:
+
+; src/can_manager.c	    59                 , 0);
+	movb	rh4,rh2
+	call	_IO_CAN_Init
+_103:
+
+; src/can_manager.c	    60      ubyte1 telemetry_tx_error_ctr;
+; src/can_manager.c	    61      ubyte1 telemetry_rx_error_ctr;
+; src/can_manager.c	    62  
+; src/can_manager.c	    63      /* Initialize fifos for txing messages */
+; src/can_manager.c	    64      IO_CAN_ConfigFIFO( &controls_tx_fifo_handle
+; src/can_manager.c	    65      				 , CONTROLS_CAN_CHANNEL
+	movb	rl4,#0x3a
+_301:
+
+; src/can_manager.c	    66      				 , TX_FIFO_BUFFER_SIZE
+	movb	rh4,#0x20
+_302:
+
+; src/can_manager.c	    67      				 , IO_CAN_MSG_WRITE
+	movb	rl5,#0x1
+_303:
+
+; src/can_manager.c	    68      				 , IO_CAN_EXT_FRAME
+; src/can_manager.c	    69      				 , 0
+	movw	r11,#0x0
+_304:
+
+; src/can_manager.c	    70      				 , 0);
+	movw	r2,#@sof(_controls_tx_fifo_handle)
+	movw	r3,#@seg(_controls_tx_fifo_handle)
+	movb	rh5,rl5
+	movw	r12,r11
+	movw	r13,r11
+	movw	r14,r11
+	call	_IO_CAN_ConfigFIFO
+_305:
+
+; src/can_manager.c	    71  
+; src/can_manager.c	    72      IO_CAN_ConfigFIFO( &telemetry_tx_fifo_handle
+; src/can_manager.c	    73                      , TELEMETRY_CAN_CHANNEL
+	movb	rl4,#0x3b
+_306:
+
+; src/can_manager.c	    74                      , TX_FIFO_BUFFER_SIZE
+	movb	rh4,#0x20
+_307:
+
+; src/can_manager.c	    75                      , IO_CAN_MSG_WRITE
+	movb	rl5,#0x1
+_308:
+
+; src/can_manager.c	    76                      , IO_CAN_EXT_FRAME
+; src/can_manager.c	    77                      , 0
+	movw	r11,#0x0
+_309:
+
+; src/can_manager.c	    78                      , 0);
+	movw	r2,#@sof(_telemetry_tx_fifo_handle)
+	movw	r3,#@seg(_telemetry_tx_fifo_handle)
+	movb	rh5,rl5
+	movw	r12,r11
+	movw	r13,r11
+	movw	r14,r11
+	call	_IO_CAN_ConfigFIFO
+_310:
+
+; src/can_manager.c	    79  
+; src/can_manager.c	    80      // rx
+; src/can_manager.c	    81      IO_CAN_ConfigFIFO( &inverter_status_rx_handle
+; src/can_manager.c	    82                      , CONTROLS_CAN_CHANNEL
+	movb	rl4,#0x3a
+_311:
+
+; src/can_manager.c	    83                      , RX_FIFO_BUFFER_SIZE
+	movb	rh4,#0x8
+_312:
+
+; src/can_manager.c	    84                      , IO_CAN_MSG_READ
+	movb	rl5,#0x0
+_313:
+
+; src/can_manager.c	    85                      , IO_CAN_EXT_FRAME
+	movb	rh5,#0x1
+_314:
+
+; src/can_manager.c	    86                      , CAN_ID_INV_STATUS
+	movw	r11,#0xab
+	movw	r12,#0x0
+_315:
+
+; src/can_manager.c	    87                      , 0x1FFFFFFF);
+	movw	r13,#0xffff
+	movw	r14,#0x1fff
+	movw	r2,#@sof(_inverter_status_rx_handle)
+	movw	r3,#@seg(_inverter_status_rx_handle)
+	call	_IO_CAN_ConfigFIFO
+_316:
+
+; src/can_manager.c	    88  }
+	ret
+_73:
+	; End of function
+	; End of section
+
+code_CAN_Manager_ProcessRxMessages	.section	code, cluster 'CAN_Manager_ProcessRxMessages', new
+	.global	_CAN_Manager_ProcessRxMessages
+
+; src/can_manager.c	    89  
+; src/can_manager.c	    90  void CAN_Manager_ProcessRxMessages(void)
+; Function _CAN_Manager_ProcessRxMessages
+_18:
+_CAN_Manager_ProcessRxMessages	.proc	far
+	movw	[-r15],r8
+_116:
+	movw	[-r15],r9
+_127:
+	subw	r15,#0x10
+_138:
+
+; src/can_manager.c	    91  {
+; src/can_manager.c	    92      // Reuse one frame for every rx, since we'll store the data in our private structs
+; src/can_manager.c	    93      IO_CAN_DATA_FRAME rx_frame;
+; src/can_manager.c	    94      bool received;
+; src/can_manager.c	    95      ubyte4 curr_time = IO_RTC_GetTimeUS(0);
+	movw	r2,#0x0
+	movw	r3,r2
+	call	_IO_RTC_GetTimeUS
+_321:
+	movw	r8,r2
+	movw	r9,r3
+_242:
+
+; src/can_manager.c	    96  
+; src/can_manager.c	    97      CAN_Util_ReadFIFO(inverter_status_rx_handle, &rx_frame, &received);
+	extp	#@pag(_inverter_status_rx_handle),#0x1
+	movb	rl2,@pof(_inverter_status_rx_handle)
+_322:
+	movw	r4,#0x2
+	addw	r4,r15
+	andw	r4,#0x3fff
+	orw	r4,#@sof(__lc_ub_user_stack+0xffff) & 0xc000
+	movw	r5,#@seg(__lc_ub_user_stack+0xffff)
+_323:
+	movw	r11,r15
+	andw	r11,#0x3fff
+	orw	r11,#@sof(__lc_ub_user_stack+0xffff) & 0xc000
+	movw	r12,r5
+	call	_CAN_Util_ReadFIFO
+_324:
+
+; src/can_manager.c	    98      if (received) {
+	movb	rh4,[r15+#0x0]
+_325:
+	jmp+	cc_eq,_2
+_326:
+
+; src/can_manager.c	    99          // worry about this later
+; src/can_manager.c	   100          inverter_status_rx_data.last_rx_timestamp = curr_time;
+	exts	#@seg(_inverter_status_rx_data+0x8),#0x1
+	movw	@sof(_inverter_status_rx_data+0x8),r8
+	exts	#@seg(_inverter_status_rx_data+0xa),#0x1
+	movw	@sof(_inverter_status_rx_data+0xa),r9
+_327:
+
+; src/can_manager.c	   101          inverter_status_rx_data.data_vld = TRUE;
+	movb	rh4,#0x1
+_328:
+	extp	#@pag(_inverter_status_rx_data+0xc),#0x1
+	movb	@pof(_inverter_status_rx_data+0xc),rh4
+_2:
+
+; src/can_manager.c	   102      }
+; src/can_manager.c	   103      if (curr_time - inverter_status_rx_data.last_rx_timestamp > MsToUs(1000)) {
+	exts	#@seg(_inverter_status_rx_data+0x8),#0x1
+	subw	r8,@sof(_inverter_status_rx_data+0x8)
+	exts	#@seg(_inverter_status_rx_data+0xa),#0x1
+	subcw	r9,@sof(_inverter_status_rx_data+0xa)
+_329:
+	cmpw	r8,#0x4240
+	subcw	r9,#0xf
+	jmp+	cc_ule,_3
+_330:
+
+; src/can_manager.c	   104          inverter_status_rx_data.data_vld = FALSE;
+	extp	#@pag(_inverter_status_rx_data+0xc),#0x1
+	movb	@pof(_inverter_status_rx_data+0xc),ZEROS
+_3:
+
+; src/can_manager.c	   105      }
+; src/can_manager.c	   106  }
+	addw	r15,#0x10
+_149:
+	movw	r9,[r15+]
+_160:
+	movw	r8,[r15+]
+_171:
+	ret
+_78:
+	; End of function
+	; End of section
+
+code_CAN_Manager_ProcessTxMessages	.section	code, cluster 'CAN_Manager_ProcessTxMessages', new
+	.global	_CAN_Manager_ProcessTxMessages
+
+; src/can_manager.c	   107  
+; src/can_manager.c	   108  void CAN_Manager_ProcessTxMessages(void)
+; Function _CAN_Manager_ProcessTxMessages
+_30:
+_CAN_Manager_ProcessTxMessages	.proc	far
+	subw	r15,#0xe
+_243:
+
+; src/can_manager.c	   109  {
+; src/can_manager.c	   110      // Reuse one frame for every tx, since WriteFIFO copies it anyways
+; src/can_manager.c	   111      IO_CAN_DATA_FRAME tx_frame;
+; src/can_manager.c	   112  
+; src/can_manager.c	   113      // TODO figure out the best way to store this data...
+; src/can_manager.c	   114      // pack the tx frame
+; src/can_manager.c	   115      CAN_Util_WriteFIFO(controls_tx_fifo_handle, &tx_frame);
+	extp	#@pag(_controls_tx_fifo_handle),#0x1
+	movb	rl2,@pof(_controls_tx_fifo_handle)
+_335:
+	movw	r4,r15
+	andw	r4,#0x3fff
+	orw	r4,#@sof(__lc_ub_user_stack+0xffff) & 0xc000
+	movw	r5,#@seg(__lc_ub_user_stack+0xffff)
+	call	_CAN_Util_WriteFIFO
+_336:
+
+; src/can_manager.c	   116  }
+	addw	r15,#0xe
+_254:
+	ret
+_83:
+	; End of function
+	; End of section
+
+code_CAN_Manager_GetInverterStatusData	.section	code, cluster 'CAN_Manager_GetInverterStatusData', new
+	.global	_CAN_Manager_GetInverterStatusData
+
+; src/can_manager.c	   117  
+; src/can_manager.c	   118  //getters for rx
+; src/can_manager.c	   119  const InverterStatus_RX_Data_t* CAN_Manager_GetInverterStatusData(void)
+; Function _CAN_Manager_GetInverterStatusData
+_42:
+_CAN_Manager_GetInverterStatusData	.proc	far
+
+; src/can_manager.c	   120  {
+; src/can_manager.c	   121      return &inverter_status_rx_data;
+	movw	r2,#@sof(_inverter_status_rx_data)
+	movw	r3,#@seg(_inverter_status_rx_data)
+_341:
+
+; src/can_manager.c	   122  }
+	ret
+_88:
+	; End of function
+	; End of section
+
+code_CAN_Manager_SetTorqueCommandData	.section	code, cluster 'CAN_Manager_SetTorqueCommandData', new
+	.global	_CAN_Manager_SetTorqueCommandData
+
+; src/can_manager.c	   123  
+; src/can_manager.c	   124  //setters for tx TODO
+; src/can_manager.c	   125  void CAN_Manager_SetTorqueCommandData(sbyte2 torque_nm, bool enable)
+; Function _CAN_Manager_SetTorqueCommandData
+_54:
+_CAN_Manager_SetTorqueCommandData	.proc	far
+
+; src/can_manager.c	   126  {
+; src/can_manager.c	   127  
+; src/can_manager.c	   127  }
+
+	ret
+_93:
+	; End of function
+	; End of section
+
+huge_inverter_status_rx_handle	.section	huge, byte, clear, cluster 'inverter_status_rx_handle', new
+_inverter_status_rx_handle	.label	byte
+	.ds	1
+	; End of section
+
+huge_controls_tx_fifo_handle	.section	huge, byte, clear, cluster 'controls_tx_fifo_handle', new
+_controls_tx_fifo_handle	.label	byte
+	.ds	1
+	; End of section
+
+huge_telemetry_tx_fifo_handle	.section	huge, byte, clear, cluster 'telemetry_tx_fifo_handle', new
+_telemetry_tx_fifo_handle	.label	byte
+	.ds	1
+	; End of section
+
+huge_inverter_status_rx_data	.section	huge, init, cluster 'inverter_status_rx_data', new
+_inverter_status_rx_data	.label	word
+	.db	0x0
+	.db	0x0
+	.db	0x0
+	.db	0x0
+	.db	0x0
+	.db	0x0
+	.db	0x0
+	.db	0x0
+	.db	0x0
+	.db	0x0
+	.db	0x0
+	.db	0x0
+	.db	0x0
+	.db	0x0
+	; End of section
+
+	.calls	'_CAN_Manager_Init','_IO_CAN_Init'
+	.calls	'_CAN_Manager_Init','_IO_CAN_ConfigFIFO'
+	.calls	'_CAN_Manager_ProcessRxMessages','_IO_RTC_GetTimeUS'
+	.calls	'_CAN_Manager_ProcessRxMessages','_CAN_Util_ReadFIFO'
+	.calls	'_CAN_Manager_ProcessTxMessages','_CAN_Util_WriteFIFO'
+	.calls	'_CAN_Manager_Init','',4,0
+	.calls	'_CAN_Manager_ProcessRxMessages','',4,20
+	.calls	'_CAN_Manager_ProcessTxMessages','',4,14
+	.calls	'_CAN_Manager_GetInverterStatusData','',4,0
+	.calls	'_CAN_Manager_SetTorqueCommandData','',4,0
+	.extern	_IO_RTC_GetTimeUS : far
+	.extern	_IO_CAN_Init : far
+	.extern	_IO_CAN_ConfigFIFO : far
+	.extern	_CAN_Util_ReadFIFO : far
+	.extern	_CAN_Util_WriteFIFO : far
+	.extern	__lc_ub_user_stack : nearbyte
+	.debug		.debug_info
+_66:
+	.dl	1522
+	.dw	3
+	.dl	_67
+	.db	4
+_65:
+	.db	1
+	.db	'src/can_manager.c',0
+	.db	'TASKING VX-toolset for C166: C compiler',0
+	.db	'C:\\Users\\caleb\\EV\\_TREV4\\Programming Environments\\Environment\\github\\TREV4-Controls\\',0,12,1
+	.dl	_68
+_108:
+	.db	2
+	.db	'unsigned long int',0,4,7,3
+	.db	'IO_RTC_GetTimeUS',0,1,143,1,9,6
+	.dl	161
+	.db	1,1,1,1,4
+	.db	'timestamp',0,1,143,1,35,2
+	.dl	161
+	.db	0,2
+	.db	'unsigned int',0,2,7
+_106:
+	.db	2
+	.db	'unsigned char',0,1,8,3
+	.db	'IO_CAN_Init',0,2,183,3,15,6
+	.dl	234
+	.db	1,1,1,1,4
+	.db	'channel',0,2,183,3,35,2
+	.dl	250
+	.db	4
+	.db	'baudrate',0,2,184,3,35,2
+	.dl	234
+	.db	4
+	.db	'tseg1',0,2,185,3,35,2
+	.dl	250
+	.db	4
+	.db	'tseg2',0,2,186,3,35,2
+	.dl	250
+	.db	4
+	.db	'sjw',0,2,187,3,35,2
+	.dl	250
+	.db	0,5,5
+	.dl	250
+	.db	6
+	.dl	377
+	.db	3
+	.db	'IO_CAN_ConfigFIFO',0,2,137,5,15,6
+	.dl	234
+	.db	1,1,1,1,4
+	.db	'handle',0,2,137,5,49,2
+	.dl	383
+	.db	4
+	.db	'channel',0,2,138,5,41,2
+	.dl	250
+	.db	4
+	.db	'size',0,2,139,5,41,2
+	.dl	250
+	.db	4
+	.db	'mode',0,2,140,5,41,2
+	.dl	250
+	.db	4
+	.db	'id_format',0,2,141,5,41,2
+	.dl	250
+	.db	4
+	.db	'id',0,2,142,5,41,2
+	.dl	161
+	.db	4
+	.db	'ac_mask',0,2,143,5,41,2
+	.dl	161
+	.db	0,7,8
+	.dl	250
+	.db	8,7,0
+_104:
+	.db	9
+	.db	'_io_can_data_frame',0,2,250,2,16,14,10
+	.db	'data',0
+	.dl	537
+	.db	8,2,35,0,10
+	.db	'length',0
+	.dl	250
+	.db	1,2,35,8,10
+	.db	'id_format',0
+	.dl	250
+	.db	1,2,35,9,10
+	.db	'id',0
+	.dl	161
+	.db	4,2,35,10,0,5,5
+	.dl	546
+	.db	5,5
+	.dl	250
+	.db	3
+	.db	'CAN_Util_ReadFIFO',0,3,12,14,6
+	.dl	234
+	.db	1,1,1,1,4
+	.db	'handle',0,3,12,39,2
+	.dl	250
+	.db	4
+	.db	'dest_data_frame',0,3,12,66,2
+	.dl	633
+	.db	4
+	.db	'msg_received',0,3,12,89,2
+	.dl	639
+	.db	0,6
+	.dl	546
+	.db	5,5
+	.dl	740
+	.db	3
+	.db	'CAN_Util_WriteFIFO',0,3,17,14,6
+	.dl	234
+	.db	1,1,1,1,4
+	.db	'handle',0,3,17,40,2
+	.dl	250
+	.db	4
+	.db	'src_data_frame',0,3,17,73,2
+	.dl	745
+	.db	0
+_115:
+	.db	11,4,9,9,14,10
+	.db	'run_faults',0
+	.dl	161
+	.db	4,2,35,0,10
+	.db	'post_faults',0
+	.dl	161
+	.db	4,2,35,4,10
+	.db	'last_rx_timestamp',0
+	.dl	161
+	.db	4,2,35,8,10
+	.db	'data_vld',0
+	.dl	250
+	.db	1,2,35,12,0,6
+	.dl	824
+_111:
+	.db	5,5
+	.dl	916
+_112:
+	.db	2
+	.db	'int',0,2,5,12
+	.db	'void',0,5,5
+	.dl	934
+	.db	13
+	.db	'__prof_adm',0,5,1,1
+	.dl	940
+	.db	13
+	.db	'__codeptr',0,5,1,1
+	.dl	161
+	.db	13
+	.db	'ubyte1',0,6,21,29
+	.dl	250
+	.db	13
+	.db	'ubyte2',0,6,22,29
+	.dl	234
+	.db	13
+	.db	'ubyte4',0,6,23,29
+	.dl	161
+	.db	13
+	.db	'sbyte2',0,6,26,29
+	.dl	927
+	.db	13
+	.db	'bool',0,6,31,29
+	.dl	250
+	.db	13
+	.db	'IO_ErrorType',0,7,153,1,17
+	.dl	234
+	.db	14
+	.db	'_io_driver_reset_reason',0,8,162,3,14,1,15
+	.db	'IO_DRIVER_RESET_REASON_PORST',0,0,15
+	.db	'IO_DRIVER_RESET_REASON_WDT',0,1,15
+	.db	'IO_DRIVER_RESET_REASON_TRAP',0,2,15
+	.db	'IO_DRIVER_RESET_REASON_SW',0,3,15
+	.db	'IO_DRIVER_RESET_REASON_UNKNOWN',0,4,0,13
+	.db	'IO_DRIVER_RESET_REASON',0,8,169,3,3
+	.dl	1078
+	.db	9
+	.db	'_io_driver_trap_info',0,8,174,3,16,10,10
+	.db	'trap_id',0
+	.dl	234
+	.db	2,2,35,0,10
+	.db	'cpu_tfr',0
+	.dl	234
+	.db	2,2,35,2,10
+	.db	'cpu_trapstat',0
+	.dl	234
+	.db	2,2,35,4,10
+	.db	'fault_location',0
+	.dl	161
+	.db	4,2,35,6,0,13
+	.db	'IO_DRIVER_TRAP_INFO',0,8,197,3,3
+	.dl	1292
+	.db	13
+	.db	'IO_CAN_DATA_FRAME',0,2,128,3,3
+	.dl	546
+	.db	13
+	.db	'InverterStatus_RX_Data_t',0,4,15,3
+	.dl	824
+	.db	16
+	.dl	250
+	.db	17,0,18
+	.db	'_lc_ub_user_stack',0,5,1,1,2
+	.dl	1489
+	.db	1,1,0
+	; End of section
+
+	.debug		.debug_abbrev
+_67:
+	.db	1,17,1,3,8,37,8,27,8,19,15,128,70,12,16,6,0,0,2,36,0,3,8,11,15,62,15,0,0,3,46,1,3,8,58,15,59,15,57,15
+	.db	51,15,73,19,54,15,39,12,63,12,60,12,0,0,4,5,0,3,8,58,15,59,15,57,15,51,15,73,19,0,0,5,15,0,51,15,73,19
+	.db	0,0,6,38,0,73,19,0,0,7,1,1,11,15,73,19,0,0,8,33,0,47,15,0,0,9,19,1,3,8,58,15,59,15,57,15,11,15,0,0,10
+	.db	13,0,3,8,73,19,11,15,56,9,0,0,11,19,1,58,15,59,15,57,15,11,15,0,0,12,59,0,3,8,0,0,13,22,0,3,8,58,15,59
+	.db	15,57,15,73,19,0,0,14,4,1,3,8,58,15,59,15,57,15,11,15,0,0,15,40,0,3,8,28,13,0,0,16,1,1,73,19,0,0,17,33
+	.db	0,0,0,18,52,0,3,8,58,15,59,15,57,15,51,15,73,19,63,12,60,12,0,0,0
+	; End of section
+
+	.debug		.debug_line
+_68:
+	.dl	_286-_285
+_285:
+	.dw	3
+	.dl	_288-_287
+_287:
+	.db	2,1,-4,9,10,0,1,1,1,1,0,0,0,1
+	.db	'..\\..\\..\\Environment\\inc',0,0
+	.db	'IO_RTC.h',0,1,0,0
+	.db	'IO_CAN.h',0,1,0,0
+	.db	'src\\can_util.h',0,0,0,0
+	.db	'src\\can_manager.h',0,0,0,0
+	.db	'src/can_manager.c',0,0,0,0
+	.db	'ptypes_xe167.h',0,1,0,0
+	.db	'IO_Constants.h',0,1,0,0
+	.db	'IO_Driver.h',0,1,0,0,0
+_288:
+_286:
+	; End of section
+
+	.debug		.debug_pubnames
+	.dl	118
+	.dw	2
+	.dl	_66,1526,182
+	.db	'IO_RTC_GetTimeUS',0
+	.dl	267
+	.db	'IO_CAN_Init',0
+	.dl	388
+	.db	'IO_CAN_ConfigFIFO',0
+	.dl	645
+	.db	'CAN_Util_ReadFIFO',0
+	.dl	751
+	.db	'CAN_Util_WriteFIFO',0
+	.dl	0
+	; End of section
+
+	.debug		.debug_info, cluster 'CAN_Manager_Init'
+_69:
+	.dl	247
+	.dw	3
+	.dl	_70
+	.db	4,1
+	.db	'src/can_manager.c',0
+	.db	'TASKING VX-toolset for C166: C compiler',0
+	.db	'C:\\Users\\caleb\\EV\\_TREV4\\Programming Environments\\Environment\\github\\TREV4-Controls\\',0,12,1
+	.dl	_72,_71
+	.db	2
+	.dl	_65
+	.db	3
+	.db	'CAN_Manager_Init',0,1,44,6,6,1,1,1
+	.dl	_6,_73,_5
+	.db	12,19,146,176,2,0,64,36,146,161,2,0,33,4
+	.dl	_6,_73
+	.db	4
+	.dl	_102,_73
+	.db	5
+	.dl	_103,_73
+	.db	0,0,0,0
+	; End of section
+
+	.debug		.debug_abbrev, cluster 'CAN_Manager_Init'
+_70:
+	.db	1,17,1,3,8,37,8,27,8,19,15,128,70,12,85,6,16,6,0,0,2,61,0,24,16,0,0,3,46,1,3,8,58,15,59,15,57,15,51,15
+	.db	54,15,39,12,63,12,17,1,18,1,64,6,42,9,0,0,4,11,1,17,1,18,1,0,0,5,11,0,17,1,18,1,0,0,0
+	; End of section
+
+	.debug		.debug_line, cluster 'CAN_Manager_Init'
+_71:
+	.dl	_290-_289
+_289:
+	.dw	3
+	.dl	_292-_291
+_291:
+	.db	2,1,-4,9,10,0,1,1,1,1,0,0,0,1,0
+	.db	'src/can_manager.c',0,0,0,0,0
+_292:
+	.db	5,18,7,0,5,2
+	.dl	_6
+	.db	3,46,1,9
+	.dw	_293-_6
+	.db	3,1,1,9
+	.dw	_294-_293
+	.db	3,1,1,9
+	.dw	_295-_294
+	.db	3,1,1,9
+	.dw	_296-_295
+	.db	3,1,1,9
+	.dw	_102-_296
+	.db	3,4,1,9
+	.dw	_297-_102
+	.db	3,1,1,9
+	.dw	_298-_297
+	.db	3,1,1,9
+	.dw	_299-_298
+	.db	3,1,1,9
+	.dw	_300-_299
+	.db	3,1,1,5,12,9
+	.dw	_103-_300
+	.db	3,6,1,9
+	.dw	_301-_103
+	.db	3,1,1,9
+	.dw	_302-_301
+	.db	3,1,1,9
+	.dw	_303-_302
+	.db	3,2,1,9
+	.dw	_304-_303
+	.db	3,1,1,5,23,9
+	.dw	_305-_304
+	.db	3,3,1,9
+	.dw	_306-_305
+	.db	3,1,1,9
+	.dw	_307-_306
+	.db	3,1,1,9
+	.dw	_308-_307
+	.db	3,2,1,9
+	.dw	_309-_308
+	.db	3,1,1,9
+	.dw	_310-_309
+	.db	3,4,1,9
+	.dw	_311-_310
+	.db	3,1,1,9
+	.dw	_312-_311
+	.db	3,1,1,9
+	.dw	_313-_312
+	.db	3,1,1,9
+	.dw	_314-_313
+	.db	3,1,1,9
+	.dw	_315-_314
+	.db	3,1,1,5,1,9
+	.dw	_316-_315
+	.db	3,1,1,7,9
+	.dw	_73-_316
+	.db	0,1,1
+_290:
+	; End of section
+
+	.debug		.debug_ranges, cluster 'CAN_Manager_Init'
+_72:
+	.dl	-1,_6,0,_73-_6,0,0
+	; End of section
+
+	.debug		.debug_pubnames
+	.dl	35
+	.dw	2
+	.dl	_69,251,170
+	.db	'CAN_Manager_Init',0
+	.dl	0
+	; End of section
+
+	.debug		.debug_info, cluster 'CAN_Manager_ProcessRxMessages'
+_74:
+	.dl	308
+	.dw	3
+	.dl	_75
+	.db	4,1
+	.db	'src/can_manager.c',0
+	.db	'TASKING VX-toolset for C166: C compiler',0
+	.db	'C:\\Users\\caleb\\EV\\_TREV4\\Programming Environments\\Environment\\github\\TREV4-Controls\\',0,12,1
+	.dl	_77,_76
+	.db	2
+	.dl	_65
+	.db	3
+	.db	'CAN_Manager_ProcessRxMessages',0,1,90,6,6,1,1,1
+	.dl	_18,_78,_17
+	.db	12,19,146,176,2,0,64,36,146,161,2,0,33,4
+	.dl	_18,_78
+	.db	5
+	.db	'rx_frame',0,1,93,23,2
+	.dl	_104,_105
+	.db	5
+	.db	'received',0,1,94,10,2
+	.dl	_106,_107
+	.db	5
+	.db	'curr_time',0,1,95,12,2
+	.dl	_108,_109
+	.db	0,0,0
+	; End of section
+
+	.debug		.debug_abbrev, cluster 'CAN_Manager_ProcessRxMessages'
+_75:
+	.db	1,17,1,3,8,37,8,27,8,19,15,128,70,12,85,6,16,6,0,0,2,61,0,24,16,0,0,3,46,1,3,8,58,15,59,15,57,15,51,15
+	.db	54,15,39,12,63,12,17,1,18,1,64,6,42,9,0,0,4,11,1,17,1,18,1,0,0,5,52,0,3,8,58,15,59,15,57,15,51,15,73,16
+	.db	2,6,0,0,0
+	; End of section
+
+	.debug		.debug_line, cluster 'CAN_Manager_ProcessRxMessages'
+_76:
+	.dl	_318-_317
+_317:
+	.dw	3
+	.dl	_320-_319
+_319:
+	.db	2,1,-4,9,10,0,1,1,1,1,0,0,0,1,0
+	.db	'src/can_manager.c',0,0,0,0,0
+_320:
+	.db	5,6,7,0,5,2
+	.dl	_18
+	.db	3,217,0,1,5,41,9
+	.dw	_138-_18
+	.db	3,5,1,5,22,9
+	.dw	_321-_138
+	.db	1,5,23,9
+	.dw	_242-_321
+	.db	3,2,1,5,51,9
+	.dw	_322-_242
+	.db	1,5,62,9
+	.dw	_323-_322
+	.db	1,5,9,9
+	.dw	_324-_323
+	.db	3,1,1,5,5,9
+	.dw	_325-_324
+	.db	1,5,51,7,9
+	.dw	_326-_325
+	.db	3,2,1,5,44,9
+	.dw	_327-_326
+	.db	3,1,1,5,42,9
+	.dw	_328-_327
+	.db	1,5,19,9
+	.dw	_2-_328
+	.db	3,2,1,5,5,9
+	.dw	_329-_2
+	.db	1,5,42,9
+	.dw	_330-_329
+	.db	3,1,1,5,1,9
+	.dw	_3-_330
+	.db	3,2,1,9
+	.dw	_78-_3
+	.db	0,1,1
+_318:
+	; End of section
+
+	.debug		.debug_ranges, cluster 'CAN_Manager_ProcessRxMessages'
+_77:
+	.dl	-1,_18,0,_78-_18,0,0
+	; End of section
+
+	.debug		.debug_pubnames
+	.dl	48
+	.dw	2
+	.dl	_74,312,170
+	.db	'CAN_Manager_ProcessRxMessages',0
+	.dl	0
+	; End of section
+
+	.debug		.debug_info, cluster 'CAN_Manager_ProcessTxMessages'
+_79:
+	.dl	263
+	.dw	3
+	.dl	_80
+	.db	4,1
+	.db	'src/can_manager.c',0
+	.db	'TASKING VX-toolset for C166: C compiler',0
+	.db	'C:\\Users\\caleb\\EV\\_TREV4\\Programming Environments\\Environment\\github\\TREV4-Controls\\',0,12,1
+	.dl	_82,_81
+	.db	2
+	.dl	_65
+	.db	3
+	.db	'CAN_Manager_ProcessTxMessages',0,1,108,6,6,1,1,1
+	.dl	_30,_83,_29
+	.db	12,19,146,176,2,0,64,36,146,161,2,0,33,4
+	.dl	_30,_83
+	.db	5
+	.db	'tx_frame',0,1,111,23,2
+	.dl	_104,_110
+	.db	0,0,0
+	; End of section
+
+	.debug		.debug_abbrev, cluster 'CAN_Manager_ProcessTxMessages'
+_80:
+	.db	1,17,1,3,8,37,8,27,8,19,15,128,70,12,85,6,16,6,0,0,2,61,0,24,16,0,0,3,46,1,3,8,58,15,59,15,57,15,51,15
+	.db	54,15,39,12,63,12,17,1,18,1,64,6,42,9,0,0,4,11,1,17,1,18,1,0,0,5,52,0,3,8,58,15,59,15,57,15,51,15,73,16
+	.db	2,6,0,0,0
+	; End of section
+
+	.debug		.debug_line, cluster 'CAN_Manager_ProcessTxMessages'
+_81:
+	.dl	_332-_331
+_331:
+	.dw	3
+	.dl	_334-_333
+_333:
+	.db	2,1,-4,9,10,0,1,1,1,1,0,0,0,1,0
+	.db	'src/can_manager.c',0,0,0,0,0
+_334:
+	.db	5,6,7,0,5,2
+	.dl	_30
+	.db	3,235,0,1,5,24,9
+	.dw	_243-_30
+	.db	3,7,1,5,50,9
+	.dw	_335-_243
+	.db	1,5,1,9
+	.dw	_336-_335
+	.db	3,1,1,9
+	.dw	_83-_336
+	.db	0,1,1
+_332:
+	; End of section
+
+	.debug		.debug_ranges, cluster 'CAN_Manager_ProcessTxMessages'
+_82:
+	.dl	-1,_30,0,_83-_30,0,0
+	; End of section
+
+	.debug		.debug_pubnames
+	.dl	48
+	.dw	2
+	.dl	_79,267,170
+	.db	'CAN_Manager_ProcessTxMessages',0
+	.dl	0
+	; End of section
+
+	.debug		.debug_info, cluster 'CAN_Manager_GetInverterStatusData'
+_84:
+	.dl	248
+	.dw	3
+	.dl	_85
+	.db	4,1
+	.db	'src/can_manager.c',0
+	.db	'TASKING VX-toolset for C166: C compiler',0
+	.db	'C:\\Users\\caleb\\EV\\_TREV4\\Programming Environments\\Environment\\github\\TREV4-Controls\\',0,12,1
+	.dl	_87,_86
+	.db	2
+	.dl	_65
+	.db	3
+	.db	'CAN_Manager_GetInverterStatusData',0,1,119,33,6
+	.dl	_111
+	.db	1,1,1
+	.dl	_42,_88,_41
+	.db	12,19,146,176,2,0,64,36,146,161,2,0,33,4
+	.dl	_42,_88
+	.db	0,0
+	; End of section
+
+	.debug		.debug_abbrev, cluster 'CAN_Manager_GetInverterStatusData'
+_85:
+	.db	1,17,1,3,8,37,8,27,8,19,15,128,70,12,85,6,16,6,0,0,2,61,0,24,16,0,0,3,46,1,3,8,58,15,59,15,57,15,51,15
+	.db	73,16,54,15,39,12,63,12,17,1,18,1,64,6,42,9,0,0,4,11,0,17,1,18,1,0,0,0
+	; End of section
+
+	.debug		.debug_line, cluster 'CAN_Manager_GetInverterStatusData'
+_86:
+	.dl	_338-_337
+_337:
+	.dw	3
+	.dl	_340-_339
+_339:
+	.db	2,1,-4,9,10,0,1,1,1,1,0,0,0,1,0
+	.db	'src/can_manager.c',0,0,0,0,0
+_340:
+	.db	5,13,7,0,5,2
+	.dl	_42
+	.db	3,248,0,1,5,1,9
+	.dw	_341-_42
+	.db	3,1,1,7,9
+	.dw	_88-_341
+	.db	0,1,1
+_338:
+	; End of section
+
+	.debug		.debug_ranges, cluster 'CAN_Manager_GetInverterStatusData'
+_87:
+	.dl	-1,_42,0,_88-_42,0,0
+	; End of section
+
+	.debug		.debug_pubnames
+	.dl	52
+	.dw	2
+	.dl	_84,252,170
+	.db	'CAN_Manager_GetInverterStatusData',0
+	.dl	0
+	; End of section
+
+	.debug		.debug_info, cluster 'CAN_Manager_SetTorqueCommandData'
+_89:
+	.dl	286
+	.dw	3
+	.dl	_90
+	.db	4,1
+	.db	'src/can_manager.c',0
+	.db	'TASKING VX-toolset for C166: C compiler',0
+	.db	'C:\\Users\\caleb\\EV\\_TREV4\\Programming Environments\\Environment\\github\\TREV4-Controls\\',0,12,1
+	.dl	_92,_91
+	.db	2
+	.dl	_65
+	.db	3
+	.db	'CAN_Manager_SetTorqueCommandData',0,1,125,6,6,1,1,1
+	.dl	_54,_93,_53
+	.db	12,19,146,176,2,0,64,36,146,161,2,0,33,4
+	.db	'torque_nm',0,1,125,46,2
+	.dl	_112,_113
+	.db	4
+	.db	'enable',0,1,125,62,2
+	.dl	_106,_114
+	.db	5
+	.dl	_54,_93
+	.db	0,0
+	; End of section
+
+	.debug		.debug_abbrev, cluster 'CAN_Manager_SetTorqueCommandData'
+_90:
+	.db	1,17,1,3,8,37,8,27,8,19,15,128,70,12,85,6,16,6,0,0,2,61,0,24,16,0,0,3,46,1,3,8,58,15,59,15,57,15,51,15
+	.db	54,15,39,12,63,12,17,1,18,1,64,6,42,9,0,0,4,5,0,3,8,58,15,59,15,57,15,51,15,73,16,2,6,0,0,5,11,0,17,1
+	.db	18,1,0,0,0
+	; End of section
+
+	.debug		.debug_line, cluster 'CAN_Manager_SetTorqueCommandData'
+_91:
+	.dl	_343-_342
+_342:
+	.dw	3
+	.dl	_345-_344
+_344:
+	.db	2,1,-4,9,10,0,1,1,1,1,0,0,0,1,0
+	.db	'src/can_manager.c',0,0,0,0,0
+_345:
+	.db	5,1,7,0,5,2
+	.dl	_54
+	.db	3,255,0,1,7,9
+	.dw	_93-_54
+	.db	0,1,1
+_343:
+	; End of section
+
+	.debug		.debug_ranges, cluster 'CAN_Manager_SetTorqueCommandData'
+_92:
+	.dl	-1,_54,0,_93-_54,0,0
+	; End of section
+
+	.debug		.debug_pubnames
+	.dl	51
+	.dw	2
+	.dl	_89,290,170
+	.db	'CAN_Manager_SetTorqueCommandData',0
+	.dl	0
+	; End of section
+
+	.debug		.debug_info, cluster 'inverter_status_rx_handle'
+_94:
+	.dl	200
+	.dw	3
+	.dl	_95
+	.db	4,1
+	.db	'src/can_manager.c',0
+	.db	'TASKING VX-toolset for C166: C compiler',0
+	.db	'C:\\Users\\caleb\\EV\\_TREV4\\Programming Environments\\Environment\\github\\TREV4-Controls\\',0,12,1
+	.db	2
+	.dl	_65
+	.db	3
+	.db	'inverter_status_rx_handle',0,5,26,15,5
+	.dl	_106
+	.db	5,3
+	.dl	_inverter_status_rx_handle
+	.db	0
+	; End of section
+
+	.debug		.debug_abbrev, cluster 'inverter_status_rx_handle'
+_95:
+	.db	1,17,1,3,8,37,8,27,8,19,15,128,70,12,0,0,2,61,0,24,16,0,0,3,52,0,3,8,58,15,59,15,57,15,51,15,73,16,2,9
+	.db	0,0,0
+	; End of section
+
+	.debug		.debug_info, cluster 'controls_tx_fifo_handle'
+_96:
+	.dl	198
+	.dw	3
+	.dl	_97
+	.db	4,1
+	.db	'src/can_manager.c',0
+	.db	'TASKING VX-toolset for C166: C compiler',0
+	.db	'C:\\Users\\caleb\\EV\\_TREV4\\Programming Environments\\Environment\\github\\TREV4-Controls\\',0,12,1
+	.db	2
+	.dl	_65
+	.db	3
+	.db	'controls_tx_fifo_handle',0,5,29,15,5
+	.dl	_106
+	.db	5,3
+	.dl	_controls_tx_fifo_handle
+	.db	0
+	; End of section
+
+	.debug		.debug_abbrev, cluster 'controls_tx_fifo_handle'
+_97:
+	.db	1,17,1,3,8,37,8,27,8,19,15,128,70,12,0,0,2,61,0,24,16,0,0,3,52,0,3,8,58,15,59,15,57,15,51,15,73,16,2,9
+	.db	0,0,0
+	; End of section
+
+	.debug		.debug_info, cluster 'telemetry_tx_fifo_handle'
+_98:
+	.dl	199
+	.dw	3
+	.dl	_99
+	.db	4,1
+	.db	'src/can_manager.c',0
+	.db	'TASKING VX-toolset for C166: C compiler',0
+	.db	'C:\\Users\\caleb\\EV\\_TREV4\\Programming Environments\\Environment\\github\\TREV4-Controls\\',0,12,1
+	.db	2
+	.dl	_65
+	.db	3
+	.db	'telemetry_tx_fifo_handle',0,5,30,15,5
+	.dl	_106
+	.db	5,3
+	.dl	_telemetry_tx_fifo_handle
+	.db	0
+	; End of section
+
+	.debug		.debug_abbrev, cluster 'telemetry_tx_fifo_handle'
+_99:
+	.db	1,17,1,3,8,37,8,27,8,19,15,128,70,12,0,0,2,61,0,24,16,0,0,3,52,0,3,8,58,15,59,15,57,15,51,15,73,16,2,9
+	.db	0,0,0
+	; End of section
+
+	.debug		.debug_info, cluster 'inverter_status_rx_data'
+_100:
+	.dl	198
+	.dw	3
+	.dl	_101
+	.db	4,1
+	.db	'src/can_manager.c',0
+	.db	'TASKING VX-toolset for C166: C compiler',0
+	.db	'C:\\Users\\caleb\\EV\\_TREV4\\Programming Environments\\Environment\\github\\TREV4-Controls\\',0,12,1
+	.db	2
+	.dl	_65
+	.db	3
+	.db	'inverter_status_rx_data',0,5,37,33,5
+	.dl	_115
+	.db	5,3
+	.dl	_inverter_status_rx_data
+	.db	0
+	; End of section
+
+	.debug		.debug_abbrev, cluster 'inverter_status_rx_data'
+_101:
+	.db	1,17,1,3,8,37,8,27,8,19,15,128,70,12,0,0,2,61,0,24,16,0,0,3,52,0,3,8,58,15,59,15,57,15,51,15,73,16,2,9
+	.db	0,0,0
+	; End of section
+
+	.debug		.debug_loc, cluster 'CAN_Manager_GetInverterStatusData'
+_41:
+	.dl	-1,_42,0,_88-_42
+	.dw	58
+	.db	127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_43-_47
+_47:
+	.db	146,177,2,0,47
+	.dw	_46-_48
+_48:
+_43:
+	.db	18,49,46,40
+	.dw	_44-_49
+_49:
+	.db	146,178,2,0,47
+	.dw	_46-_50
+_50:
+_44:
+	.db	18,50,46,40
+	.dw	_45-_51
+_51:
+	.db	146,179,2,0,47
+	.dw	_46-_52
+_52:
+_45:
+	.db	146,180,2,0
+_46:
+	.db	22,19,62,36,33
+	.dl	0,0
+	; End of section
+
+	.debug		.debug_loc, cluster 'CAN_Manager_Init'
+_5:
+	.dl	-1,_6,0,_73-_6
+	.dw	58
+	.db	127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_7-_11
+_11:
+	.db	146,177,2,0,47
+	.dw	_10-_12
+_12:
+_7:
+	.db	18,49,46,40
+	.dw	_8-_13
+_13:
+	.db	146,178,2,0,47
+	.dw	_10-_14
+_14:
+_8:
+	.db	18,50,46,40
+	.dw	_9-_15
+_15:
+	.db	146,179,2,0,47
+	.dw	_10-_16
+_16:
+_9:
+	.db	146,180,2,0
+_10:
+	.db	22,19,62,36,33
+	.dl	0,0
+	; End of section
+
+	.debug		.debug_loc, cluster 'CAN_Manager_ProcessRxMessages'
+_17:
+	.dl	-1,_18,0,_116-_18
+	.dw	58
+	.db	127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_19-_23
+_23:
+	.db	146,177,2,0,47
+	.dw	_22-_24
+_24:
+_19:
+	.db	18,49,46,40
+	.dw	_20-_25
+_25:
+	.db	146,178,2,0,47
+	.dw	_22-_26
+_26:
+_20:
+	.db	18,50,46,40
+	.dw	_21-_27
+_27:
+	.db	146,179,2,0,47
+	.dw	_22-_28
+_28:
+_21:
+	.db	146,180,2,0
+_22:
+	.db	22,19,62,36,33
+	.dl	_116-_18,_127-_18
+	.dw	60
+	.db	127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_117-_121
+_121:
+	.db	146,177,2,0,47
+	.dw	_120-_122
+_122:
+_117:
+	.db	18,49,46,40
+	.dw	_118-_123
+_123:
+	.db	146,178,2,0,47
+	.dw	_120-_124
+_124:
+_118:
+	.db	18,50,46,40
+	.dw	_119-_125
+_125:
+	.db	146,179,2,0,47
+	.dw	_120-_126
+_126:
+_119:
+	.db	146,180,2,0
+_120:
+	.db	22,19,62,36,33,50,34
+	.dl	_127-_18,_138-_18
+	.dw	60
+	.db	127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_128-_132
+_132:
+	.db	146,177,2,0,47
+	.dw	_131-_133
+_133:
+_128:
+	.db	18,49,46,40
+	.dw	_129-_134
+_134:
+	.db	146,178,2,0,47
+	.dw	_131-_135
+_135:
+_129:
+	.db	18,50,46,40
+	.dw	_130-_136
+_136:
+	.db	146,179,2,0,47
+	.dw	_131-_137
+_137:
+_130:
+	.db	146,180,2,0
+_131:
+	.db	22,19,62,36,33,52,34
+	.dl	_138-_18,_149-_18
+	.dw	60
+	.db	127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_139-_143
+_143:
+	.db	146,177,2,0,47
+	.dw	_142-_144
+_144:
+_139:
+	.db	18,49,46,40
+	.dw	_140-_145
+_145:
+	.db	146,178,2,0,47
+	.dw	_142-_146
+_146:
+_140:
+	.db	18,50,46,40
+	.dw	_141-_147
+_147:
+	.db	146,179,2,0,47
+	.dw	_142-_148
+_148:
+_141:
+	.db	146,180,2,0
+_142:
+	.db	22,19,62,36,33,68,34
+	.dl	_149-_18,_160-_18
+	.dw	60
+	.db	127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_150-_154
+_154:
+	.db	146,177,2,0,47
+	.dw	_153-_155
+_155:
+_150:
+	.db	18,49,46,40
+	.dw	_151-_156
+_156:
+	.db	146,178,2,0,47
+	.dw	_153-_157
+_157:
+_151:
+	.db	18,50,46,40
+	.dw	_152-_158
+_158:
+	.db	146,179,2,0,47
+	.dw	_153-_159
+_159:
+_152:
+	.db	146,180,2,0
+_153:
+	.db	22,19,62,36,33,52,34
+	.dl	_160-_18,_171-_18
+	.dw	60
+	.db	127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_161-_165
+_165:
+	.db	146,177,2,0,47
+	.dw	_164-_166
+_166:
+_161:
+	.db	18,49,46,40
+	.dw	_162-_167
+_167:
+	.db	146,178,2,0,47
+	.dw	_164-_168
+_168:
+_162:
+	.db	18,50,46,40
+	.dw	_163-_169
+_169:
+	.db	146,179,2,0,47
+	.dw	_164-_170
+_170:
+_163:
+	.db	146,180,2,0
+_164:
+	.db	22,19,62,36,33,50,34
+	.dl	_171-_18,_78-_18
+	.dw	58
+	.db	127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_172-_176
+_176:
+	.db	146,177,2,0,47
+	.dw	_175-_177
+_177:
+_172:
+	.db	18,49,46,40
+	.dw	_173-_178
+_178:
+	.db	146,178,2,0,47
+	.dw	_175-_179
+_179:
+_173:
+	.db	18,50,46,40
+	.dw	_174-_180
+_180:
+	.db	146,179,2,0,47
+	.dw	_175-_181
+_181:
+_174:
+	.db	146,180,2,0
+_175:
+	.db	22,19,62,36,33
+	.dl	0,0
+_109:
+	.dl	-1,_18,_242-_18,_160-_18
+	.dw	6
+	.db	88,147,2,89,147,2
+	.dl	0,0
+_107:
+	.dl	-1,_18,0,_78-_18
+	.dw	2
+	.db	145,108
+	.dl	0,0
+_105:
+	.dl	-1,_18,0,_78-_18
+	.dw	2
+	.db	145,110
+	.dl	0,0
+	; End of section
+
+	.debug		.debug_loc, cluster 'CAN_Manager_ProcessTxMessages'
+_29:
+	.dl	-1,_30,0,_243-_30
+	.dw	58
+	.db	127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_31-_35
+_35:
+	.db	146,177,2,0,47
+	.dw	_34-_36
+_36:
+_31:
+	.db	18,49,46,40
+	.dw	_32-_37
+_37:
+	.db	146,178,2,0,47
+	.dw	_34-_38
+_38:
+_32:
+	.db	18,50,46,40
+	.dw	_33-_39
+_39:
+	.db	146,179,2,0,47
+	.dw	_34-_40
+_40:
+_33:
+	.db	146,180,2,0
+_34:
+	.db	22,19,62,36,33
+	.dl	_243-_30,_254-_30
+	.dw	60
+	.db	127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_244-_248
+_248:
+	.db	146,177,2,0,47
+	.dw	_247-_249
+_249:
+_244:
+	.db	18,49,46,40
+	.dw	_245-_250
+_250:
+	.db	146,178,2,0,47
+	.dw	_247-_251
+_251:
+_245:
+	.db	18,50,46,40
+	.dw	_246-_252
+_252:
+	.db	146,179,2,0,47
+	.dw	_247-_253
+_253:
+_246:
+	.db	146,180,2,0
+_247:
+	.db	22,19,62,36,33,62,34
+	.dl	_254-_30,_83-_30
+	.dw	58
+	.db	127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_255-_259
+_259:
+	.db	146,177,2,0,47
+	.dw	_258-_260
+_260:
+_255:
+	.db	18,49,46,40
+	.dw	_256-_261
+_261:
+	.db	146,178,2,0,47
+	.dw	_258-_262
+_262:
+_256:
+	.db	18,50,46,40
+	.dw	_257-_263
+_263:
+	.db	146,179,2,0,47
+	.dw	_258-_264
+_264:
+_257:
+	.db	146,180,2,0
+_258:
+	.db	22,19,62,36,33
+	.dl	0,0
+_110:
+	.dl	-1,_30,0,_83-_30
+	.dw	2
+	.db	145,114
+	.dl	0,0
+	; End of section
+
+	.debug		.debug_loc, cluster 'CAN_Manager_SetTorqueCommandData'
+_53:
+	.dl	-1,_54,0,_93-_54
+	.dw	58
+	.db	127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_55-_59
+_59:
+	.db	146,177,2,0,47
+	.dw	_58-_60
+_60:
+_55:
+	.db	18,49,46,40
+	.dw	_56-_61
+_61:
+	.db	146,178,2,0,47
+	.dw	_58-_62
+_62:
+_56:
+	.db	18,50,46,40
+	.dw	_57-_63
+_63:
+	.db	146,179,2,0,47
+	.dw	_58-_64
+_64:
+_57:
+	.db	146,180,2,0
+_58:
+	.db	22,19,62,36,33
+	.dl	0,0
+_114:
+	.dl	-1,_54,0,_93-_54
+	.dw	4
+	.db	83,157,8,0
+	.dl	0,0
+_113:
+	.dl	-1,_54,0,_93-_54
+	.dw	1
+	.db	82
+	.dl	0,0
+	; End of section
+
+	.debug		.debug_frame
+_346:
+	.dl	184
+	.dl	-1
+	.db	3,0,2,2,173,2,15,60,127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_347-_351
+_351:
+	.db	146,177,2,0,47
+	.dw	_350-_352
+_352:
+_347:
+	.db	18,49,46,40
+	.dw	_348-_353
+_353:
+	.db	146,178,2,0,47
+	.dw	_350-_354
+_354:
+_348:
+	.db	18,50,46,40
+	.dw	_349-_355
+_355:
+	.db	146,179,2,0,47
+	.dw	_350-_356
+_356:
+_349:
+	.db	146,180,2,0
+_350:
+	.db	22,19,62,36,33,48,34,16,173,2,12,19,146,176,2,0,64,36,146,161,2,0,33,8,15,22,161,2,5,19,146,161,2,4,8
+	.db	162,2,8,166,2,8,177,2,8,178,2,8,179,2,8,180,2,8,0,8,1,8,6,8,7,8,8,8,9,8,10,8,167,2,8,168,2,8,169,2,8,170
+	.db	2,8,171,2,8,172,2,16,174,2,12,19,146,176,2,0,64,36,146,161,2,0,33,16,175,2,12,19,146,176,2,0,64,36,146
+	.db	161,2,2,33,8,176,2
+	; End of section
+
+	.debug		.debug_frame, cluster 'CAN_Manager_Init'
+	.dl	12
+	.dl	_346,_6,_73-_6
+	; End of section
+
+	.debug		.debug_frame, cluster 'CAN_Manager_ProcessRxMessages'
+	.dl	456
+	.dl	_346,_18,_78-_18
+	.db	4
+	.dl	(_116-_18)/2
+	.db	15,60,127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_182-_186
+_186:
+	.db	146,177,2,0,47
+	.dw	_185-_187
+_187:
+_182:
+	.db	18,49,46,40
+	.dw	_183-_188
+_188:
+	.db	146,178,2,0,47
+	.dw	_185-_189
+_189:
+_183:
+	.db	18,50,46,40
+	.dw	_184-_190
+_190:
+	.db	146,179,2,0,47
+	.dw	_185-_191
+_191:
+_184:
+	.db	146,180,2,0
+_185:
+	.db	22,19,62,36,33,50,34,22,15,3,19,127,2,17,8,127,4
+	.dl	(_127-_116)/2
+	.db	15,60,127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_192-_196
+_196:
+	.db	146,177,2,0,47
+	.dw	_195-_197
+_197:
+_192:
+	.db	18,49,46,40
+	.dw	_193-_198
+_198:
+	.db	146,178,2,0,47
+	.dw	_195-_199
+_199:
+_193:
+	.db	18,50,46,40
+	.dw	_194-_200
+_200:
+	.db	146,179,2,0,47
+	.dw	_195-_201
+_201:
+_194:
+	.db	146,180,2,0
+_195:
+	.db	22,19,62,36,33,52,34,22,15,3,19,127,4,17,9,126,4
+	.dl	(_138-_127)/2
+	.db	15,60,127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_202-_206
+_206:
+	.db	146,177,2,0,47
+	.dw	_205-_207
+_207:
+_202:
+	.db	18,49,46,40
+	.dw	_203-_208
+_208:
+	.db	146,178,2,0,47
+	.dw	_205-_209
+_209:
+_203:
+	.db	18,50,46,40
+	.dw	_204-_210
+_210:
+	.db	146,179,2,0,47
+	.dw	_205-_211
+_211:
+_204:
+	.db	146,180,2,0
+_205:
+	.db	22,19,62,36,33,68,34,22,15,3,19,127,20,4
+	.dl	(_149-_138)/2
+	.db	15,60,127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_212-_216
+_216:
+	.db	146,177,2,0,47
+	.dw	_215-_217
+_217:
+_212:
+	.db	18,49,46,40
+	.dw	_213-_218
+_218:
+	.db	146,178,2,0,47
+	.dw	_215-_219
+_219:
+_213:
+	.db	18,50,46,40
+	.dw	_214-_220
+_220:
+	.db	146,179,2,0,47
+	.dw	_215-_221
+_221:
+_214:
+	.db	146,180,2,0
+_215:
+	.db	22,19,62,36,33,52,34,22,15,3,19,127,4,4
+	.dl	(_160-_149)/2
+	.db	15,60,127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_222-_226
+_226:
+	.db	146,177,2,0,47
+	.dw	_225-_227
+_227:
+_222:
+	.db	18,49,46,40
+	.dw	_223-_228
+_228:
+	.db	146,178,2,0,47
+	.dw	_225-_229
+_229:
+_223:
+	.db	18,50,46,40
+	.dw	_224-_230
+_230:
+	.db	146,179,2,0,47
+	.dw	_225-_231
+_231:
+_224:
+	.db	146,180,2,0
+_225:
+	.db	22,19,62,36,33,50,34,22,15,3,19,127,2,201,4
+	.dl	(_171-_160)/2
+	.db	15,60,127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_232-_236
+_236:
+	.db	146,177,2,0,47
+	.dw	_235-_237
+_237:
+_232:
+	.db	18,49,46,40
+	.dw	_233-_238
+_238:
+	.db	146,178,2,0,47
+	.dw	_235-_239
+_239:
+_233:
+	.db	18,50,46,40
+	.dw	_234-_240
+_240:
+	.db	146,179,2,0,47
+	.dw	_235-_241
+_241:
+_234:
+	.db	146,180,2,0
+_235:
+	.db	22,19,62,36,33,48,34,8,15,200,0,0
+	; End of section
+
+	.debug		.debug_frame, cluster 'CAN_Manager_ProcessTxMessages'
+	.dl	156
+	.dl	_346,_30,_83-_30
+	.db	4
+	.dl	(_243-_30)/2
+	.db	15,60,127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_265-_269
+_269:
+	.db	146,177,2,0,47
+	.dw	_268-_270
+_270:
+_265:
+	.db	18,49,46,40
+	.dw	_266-_271
+_271:
+	.db	146,178,2,0,47
+	.dw	_268-_272
+_272:
+_266:
+	.db	18,50,46,40
+	.dw	_267-_273
+_273:
+	.db	146,179,2,0,47
+	.dw	_268-_274
+_274:
+_267:
+	.db	146,180,2,0
+_268:
+	.db	22,19,62,36,33,62,34,22,15,3,19,127,14,4
+	.dl	(_254-_243)/2
+	.db	15,60,127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_275-_279
+_279:
+	.db	146,177,2,0,47
+	.dw	_278-_280
+_280:
+_275:
+	.db	18,49,46,40
+	.dw	_276-_281
+_281:
+	.db	146,178,2,0,47
+	.dw	_278-_282
+_282:
+_276:
+	.db	18,50,46,40
+	.dw	_277-_283
+_283:
+	.db	146,179,2,0,47
+	.dw	_278-_284
+_284:
+_277:
+	.db	146,180,2,0
+_278:
+	.db	22,19,62,36,33,48,34,8,15,0,0
+	; End of section
+
+	.debug		.debug_frame, cluster 'CAN_Manager_GetInverterStatusData'
+	.dl	28
+	.dl	_346,_42,_88-_42
+	.db	8,160,2,8,4,8,5,8,11,8,12,8,13,8,14,0
+	; End of section
+
+	.debug		.debug_frame, cluster 'CAN_Manager_SetTorqueCommandData'
+	.dl	32
+	.dl	_346,_54,_93-_54
+	.db	8,160,2,8,2,8,3,8,4,8,5,8,11,8,12,8,13,8,14,0
+	; End of section
+
+
+
+	; Module end
+	.end

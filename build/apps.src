@@ -1,0 +1,3465 @@
+	; TASKING VX-toolset for C166: C compiler v4.0r1 Build 741 SN 09467762
+	; Options: -f cc42300a -c99 -Mh --fp-model=FT -Cxc2287 --core=xc16x -DTASKING_VIPER -D__USIC_MEM_TYPE=__PAGE_080_MEM_TYPE -D__MULTICAN_MEM_TYPE=__PAGE_080_MEM_TYPE -DTTC60 -DRTS_TTC_FLASH_DATE_YEAR=2025 -DRTS_TTC_FLASH_DATE_MONTH=12 -DRTS_TTC_FLASH_DATE_DAY=4 -DRTS_TTC_FLASH_DATE_HOUR=0 -DRTS_TTC_FLASH_DATE_MINUTE=24 -I..\..\..\Environment\inc -I..\..\..\Environment\inc_int -I..\..\..\Environment\bsp -I. --tradeoff=0 --no-tasking-sfr -ga --language=+cmp14,+div32,-gcc,-strings -OabcefgiklopRsY,+predict --source --mac -o build\apps.src
+	; Module start
+	.source	'src/apps.c'
+code_APPS_UpdateChannel	.section	code, cluster 'APPS_UpdateChannel', new
+
+; src/apps.c	     1  #include "IO_Constants.h"
+; src/apps.c	     2  #include "IO_ADC.h"
+; src/apps.c	     3  #include "IO_RTC.h"
+; src/apps.c	     4  
+; src/apps.c	     5  #include "apps.h"
+; src/apps.c	     6  #include "apps_config.h"
+; src/apps.c	     7  #include "moving_average.h"
+; src/apps.c	     8  
+; src/apps.c	     9  static APPS_Data_t apps_data;
+; src/apps.c	    10  static MovingAverage_Data_t apps1_ma;
+; src/apps.c	    11  static MovingAverage_Data_t apps2_ma;
+; src/apps.c	    12  
+; src/apps.c	    13  static ubyte2 APPS_VoltageToPedalTravel(ubyte2 mv, ubyte2 min_mv, ubyte2 max_mv)
+; src/apps.c	    14  {
+; src/apps.c	    15      if (mv < min_mv) {
+; src/apps.c	    16          return 0;
+; src/apps.c	    17      }
+; src/apps.c	    18      
+; src/apps.c	    19      if (mv > max_mv) {
+; src/apps.c	    20          return APPS_RESOLUTION;
+; src/apps.c	    21      }
+; src/apps.c	    22      
+; src/apps.c	    23      return (ubyte2)(((ubyte4)(mv - min_mv) * APPS_RESOLUTION) / 
+; src/apps.c	    24                      (max_mv - min_mv));
+; src/apps.c	    25  }
+; src/apps.c	    26  
+; src/apps.c	    27  
+; src/apps.c	    28  static void APPS_UpdateChannel(ubyte1 adc_channel, MovingAverage_Data_t* ma, APPS_Sensor_t* sensor,
+; Function _APPS_UpdateChannel
+_22:
+_APPS_UpdateChannel	.proc	far
+	subw	r15,#0x2
+_128:
+	CoSTORE	[r15-],MSW
+_139:
+	CoSTORE	[r15-],MAL
+_150:
+	CoSTORE	[r15],MAH
+	movw	[-r15],r0
+_161:
+	movw	[-r15],r1
+_172:
+	movw	[-r15],r6
+_183:
+	movw	[-r15],r7
+_194:
+	movw	[-r15],r8
+_205:
+	movw	[-r15],r9
+_216:
+	movw	[-r15],r10
+_227:
+	subw	r15,#0x8
+_238:
+	movw	r8,r4
+	movw	r9,r5
+_596:
+	movw	r10,r11
+	movw	r6,r12
+_598:
+	movw	[r15+#0x4],r3
+_599:
+	movw	[r15+#0x6],r13
+_600:
+
+; src/apps.c	    29                                 ubyte2 min_mv, ubyte2 max_mv)
+; src/apps.c	    30  {
+; src/apps.c	    31      IO_ErrorType err;
+; src/apps.c	    32      ubyte4 current_time;
+; src/apps.c	    33      bool data_fresh;
+; src/apps.c	    34  
+; src/apps.c	    35      sensor->data_valid = FALSE;
+	movw	r11,r10
+_595:
+	movw	r1,r6
+	addw	r11,#0x7
+	addcw	r1,#0x0
+	movw	[r15+#0x2],r11
+_843:
+	movb	rh4,#0x0
+_594:
+	exts	r1,#0x1
+	movb	[r11],rh4
+_844:
+
+; src/apps.c	    36  
+; src/apps.c	    37      // Read raw ADC
+; src/apps.c	    38      err = IO_ADC_Get(adc_channel, &sensor->raw_mv, &data_fresh);
+	movw	r7,r10
+	movw	r0,r6
+	addw	r7,#0x2
+	addcw	r0,#0x0
+_845:
+	movw	r11,r15
+	andw	r11,#0x3fff
+	orw	r11,#@sof(__lc_ub_user_stack+0xffff) & 0xc000
+	movw	r4,r7
+	movw	r5,r0
+	movw	r12,#@seg(__lc_ub_user_stack+0xffff)
+	call	_IO_ADC_Get
+_593:
+
+; src/apps.c	    39      if (err != IO_E_OK) {
+	cmpw	r2,#0x0
+	jmp	cc_ne,_2
+_846:
+
+; src/apps.c	    40          return;
+; src/apps.c	    41      }
+; src/apps.c	    42  
+; src/apps.c	    43      // Only update moving average if data is fresh
+; src/apps.c	    44      if (data_fresh) {
+	movb	rh4,[r15+#0x0]
+_847:
+	jmp	cc_eq,_3
+_848:
+
+; src/apps.c	    45          err = MovingAverage_Update(ma, sensor->raw_mv, &sensor->filt_mv);
+	movw	r11,r10
+	movw	r12,r6
+	addw	r11,#0x4
+	addcw	r12,#0x0
+_849:
+	exts	r0,#0x1
+	movw	r4,[r7]
+_850:
+	movw	r2,r8
+_601:
+	movw	r3,r9
+	call	_MovingAverage_Update
+_602:
+
+; src/apps.c	    46          if (err != IO_E_OK) {
+	cmpw	r2,#0x0
+	jmp+	cc_ne,_4
+_851:
+
+; src/apps.c	    47              return;
+; src/apps.c	    48          }
+; src/apps.c	    49          sensor->last_update_us = IO_RTC_GetTimeUS(0);
+	movw	r8,r10
+_597:
+	movw	r9,r6
+	addw	r8,#0x8
+	addcw	r9,#0x0
+_852:
+	movw	r2,#0x0
+_603:
+	movw	r3,r2
+	call	_IO_RTC_GetTimeUS
+_853:
+	exts	r9,#0x1
+	movw	[r8],r2
+	addw	r8,#0x2
+	addcw	r9,#0x0
+	exts	r9,#0x1
+	movw	[r8],r3
+_3:
+
+; src/apps.c	    50      }
+; src/apps.c	    51      
+; src/apps.c	    52      // Check staleness, this way data doesn't have to be perfectly fresh before we mark invalid
+; src/apps.c	    53      current_time = IO_RTC_GetTimeUS(0);
+	movw	r2,#0x0
+	movw	r3,r2
+	call	_IO_RTC_GetTimeUS
+_854:
+	movw	r11,r3
+_855:
+
+; src/apps.c	    54      if (current_time - sensor->last_update_us > APPS_MAX_STALENESS) {
+	movw	r3,r10
+	movw	r12,r6
+	addw	r3,#0x8
+	addcw	r12,#0x0
+_856:
+	exts	r12,#0x1
+	movw	r13,[r3]
+	addw	r3,#0x2
+	addcw	r12,#0x0
+	subw	r2,r13
+	exts	r12,#0x1
+	subcw	r11,[r3]
+_857:
+	cmpw	r2,#0x86a0
+	subcw	r11,#0x1
+	jmp-	cc_ugt,_5
+_858:
+
+; src/apps.c	    55          return;
+; src/apps.c	    56      }
+; src/apps.c	    57  
+; src/apps.c	    58      // Bounds check, filtered mv is used for leniency
+; src/apps.c	    59      if (sensor->filt_mv < min_mv - APPS_VOLTAGE_TOLERANCE ||
+	movw	r13,r10
+	movw	r14,r6
+	addw	r13,#0x4
+	addcw	r14,#0x0
+_859:
+
+; src/apps.c	    60          sensor->filt_mv > max_mv + APPS_VOLTAGE_TOLERANCE) {
+; src/apps.c	    61          sensor->out_of_range = TRUE;
+	movw	r11,r10
+	movw	r12,r6
+	addw	r11,#0x6
+	addcw	r12,#0x0
+_860:
+	exts	r14,#0x1
+	movw	r4,[r13]
+_861:
+	movw	r5,[r15+#0x4]
+_604:
+	subw	r5,#0xfa
+_862:
+	cmpw	r4,r5
+	jmp-	cc_ult,_6
+_863:
+	movw	r5,[r15+#0x6]
+_605:
+	addw	r5,#0xfa
+_864:
+	cmpw	r4,r5
+	jmp	cc_ule,_7
+_6:
+	movb	rh4,#0x1
+_865:
+	exts	r12,#0x1
+	movb	[r11],rh4
+_866:
+
+; src/apps.c	    62          return;
+	jmp	_8
+_7:
+
+; src/apps.c	    63      }
+; src/apps.c	    64      
+; src/apps.c	    65      sensor->out_of_range = FALSE;
+	movb	rh4,#0x0
+_867:
+	exts	r12,#0x1
+	movb	[r11],rh4
+_868:
+
+; src/apps.c	    66      sensor->data_valid = TRUE;
+	movw	r11,[r15+#0x2]
+_869:
+	movb	rh4,#0x1
+_870:
+	exts	r1,#0x1
+	movb	[r11],rh4
+_871:
+
+; src/apps.c	    67      
+; src/apps.c	    68      // Scale filtered voltage to pedal travel
+; src/apps.c	    69      sensor->value = APPS_VoltageToPedalTravel(sensor->filt_mv, min_mv, max_mv);
+	exts	r14,#0x1
+	movw	r11,[r13]
+_118:
+
+; src/apps.c	    15      if (mv < min_mv) {      (inlined)
+	movw	r12,[r15+#0x4]
+_607:
+	cmpw	r11,r12
+	jmp+	cc_uge,_9
+_872:
+	movw	r11,#0x0
+
+; src/apps.c	    16          return 0;      (inlined)
+	jmp	_10
+
+; src/apps.c	    15      if (mv < min_mv) {      (inlined)
+_9:
+
+; src/apps.c	    19      if (mv > max_mv) {      (inlined)
+	movw	r12,[r15+#0x6]
+_606:
+	cmpw	r11,r12
+	jmp+	cc_ule,_11
+_873:
+	movw	r11,#0x3e8
+
+; src/apps.c	    20          return APPS_RESOLUTION;      (inlined)
+	jmp	_12
+
+; src/apps.c	    19      if (mv > max_mv) {      (inlined)
+_11:
+	movw	r12,[r15+#0x4]
+_608:
+	subw	r11,r12
+_874:
+	movw	r12,#0x0
+_609:
+	movw	r13,#0x3e8
+_875:
+	CoMULu	r12,r13
+	CoSHL	#0x10
+	CoMACu	r11,r13
+_876:
+	movw	r11,[r15+#0x6]
+_610:
+	movw	r12,[r15+#0x4]
+_611:
+	subw	r11,r12
+_877:
+	movw	MDL,MAL
+	movw	MDH,MAH
+	divlu	r11
+	movw	r11,MDL
+
+; src/apps.c	    25  }      (inlined)
+_12:
+_10:
+	exts	r6,#0x1
+	movw	[r10],r11
+
+; src/apps.c	    70  }
+_8:
+_5:
+_4:
+_2:
+	addw	r15,#0x8
+_249:
+	movw	r10,[r15+]
+_260:
+	movw	r9,[r15+]
+_271:
+	movw	r8,[r15+]
+_282:
+	movw	r7,[r15+]
+_293:
+	movw	r6,[r15+]
+_304:
+	movw	r1,[r15+]
+_315:
+	movw	r0,[r15+]
+_326:
+	movw	MAH,[r15]
+_560:
+	addw	r15,#0x2
+_337:
+	movw	MAL,[r15]
+_571:
+	addw	r15,#0x2
+_348:
+	movw	MSW,[r15]
+_582:
+	addw	r15,#0x2
+_359:
+	ret
+_92:
+	; End of function
+	; End of section
+
+code_APPS_Init	.section	code, cluster 'APPS_Init', new
+	.global	_APPS_Init
+
+; src/apps.c	    71  
+; src/apps.c	    72  void APPS_Init(void)
+; Function _APPS_Init
+_34:
+_APPS_Init	.proc	far
+
+; src/apps.c	    73  {
+; src/apps.c	    74      IO_ADC_ChannelInit(IO_PIN_APPS_1, IO_ADC_RATIOMETRIC,0, 0, IO_APPS_1_SUPPLY, NULL);
+	movb	rl2,#0x8
+_788:
+	movb	rh2,#0x1
+_789:
+	movb	rl3,#0x0
+_790:
+	movb	rh3,rl3
+_791:
+	movb	rl4,#0x24
+_792:
+	movw	r11,#0x0
+	movw	r12,r11
+	call	_IO_ADC_ChannelInit
+_793:
+
+; src/apps.c	    75      IO_ADC_ChannelInit(IO_PIN_APPS_2, IO_ADC_RATIOMETRIC, 0, 0, IO_APPS_2_SUPPLY, NULL);
+	movb	rl2,#0x9
+_794:
+	movb	rh2,#0x1
+_795:
+	movb	rl3,#0x0
+_796:
+	movb	rh3,rl3
+_797:
+	movb	rl4,#0x24
+_798:
+	movw	r11,#0x0
+	movw	r12,r11
+	call	_IO_ADC_ChannelInit
+_799:
+
+; src/apps.c	    76  
+; src/apps.c	    77      MovingAverage_Init(&apps1_ma, APPS_FILTER_WINDOW_SIZE);
+	movw	r2,#@sof(_apps1_ma)
+	movw	r3,#@seg(_apps1_ma)
+_800:
+	movb	rl4,#0x8
+	call	_MovingAverage_Init
+_801:
+
+; src/apps.c	    78      MovingAverage_Init(&apps2_ma, APPS_FILTER_WINDOW_SIZE);
+	movw	r2,#@sof(_apps2_ma)
+	movw	r3,#@seg(_apps2_ma)
+_802:
+	movb	rl4,#0x8
+	call	_MovingAverage_Init
+_803:
+
+; src/apps.c	    79      
+; src/apps.c	    80      // Initialize sensor structs
+; src/apps.c	    81      apps_data.apps1.last_update_us = 0;
+	exts	#@seg(_apps_data+0xa),#0x1
+	movw	@sof(_apps_data+0xa),ZEROS
+	exts	#@seg(_apps_data+0xc),#0x1
+	movw	@sof(_apps_data+0xc),ZEROS
+_804:
+
+; src/apps.c	    82      apps_data.apps2.last_update_us = 0;
+	exts	#@seg(_apps_data+0x16),#0x1
+	movw	@sof(_apps_data+0x16),ZEROS
+	exts	#@seg(_apps_data+0x18),#0x1
+	movw	@sof(_apps_data+0x18),ZEROS
+_805:
+
+; src/apps.c	    83      apps_data.apps1.data_valid = FALSE;
+	extp	#@pag(_apps_data+0x9),#0x1
+	movb	@pof(_apps_data+0x9),ZEROS
+_806:
+
+; src/apps.c	    84      apps_data.apps2.data_valid = FALSE;
+	extp	#@pag(_apps_data+0x15),#0x1
+	movb	@pof(_apps_data+0x15),ZEROS
+_807:
+
+; src/apps.c	    85  }
+	ret
+_77:
+	; End of function
+	; End of section
+
+code_APPS_Update	.section	code, cluster 'APPS_Update', new
+	.global	_APPS_Update
+
+; src/apps.c	    86  
+; src/apps.c	    87  void APPS_Update(void)
+; Function _APPS_Update
+_46:
+_APPS_Update	.proc	far
+	movw	[-r15],r6
+_612:
+	movw	[-r15],r8
+_623:
+	movw	[-r15],r9
+_634:
+	movw	[-r15],r10
+_645:
+
+; src/apps.c	    88  {
+; src/apps.c	    89      APPS_UpdateChannel(IO_PIN_APPS_1, &apps1_ma, &apps_data.apps1,
+	movw	r8,#@sof(_apps_data+0x2)
+	movw	r9,#@seg(_apps_data+0x2)
+_812:
+	movb	rl2,#0x8
+_813:
+
+; src/apps.c	    90                         APPS_1_MIN_VOLTAGE, APPS_1_MAX_VOLTAGE);
+	movw	r3,#0x40f
+_814:
+	movw	r13,#0x1130
+	movw	r4,#@sof(_apps1_ma)
+	movw	r5,#@seg(_apps1_ma)
+	movw	r11,r8
+	movw	r12,r9
+	call	_APPS_UpdateChannel
+_815:
+
+; src/apps.c	    91      APPS_UpdateChannel(IO_PIN_APPS_2, &apps2_ma, &apps_data.apps2,
+	movw	r10,#@sof(_apps_data+0xe)
+	movw	r6,#@seg(_apps_data+0xe)
+_816:
+	movb	rl2,#0x9
+_817:
+
+; src/apps.c	    92                         APPS_2_MIN_VOLTAGE, APPS_2_MAX_VOLTAGE);
+	movw	r3,#0x294
+_818:
+	movw	r13,#0xfb0
+	movw	r4,#@sof(_apps2_ma)
+	movw	r5,#@seg(_apps2_ma)
+	movw	r11,r10
+	movw	r12,r6
+	call	_APPS_UpdateChannel
+_100:
+	movw	r11,#@sof(_apps_data+0x1b)
+	movw	r12,#@seg(_apps_data+0x1b)
+_101:
+
+; src/apps.c	    93      
+; src/apps.c	    94      if (apps_data.apps1.data_valid && apps_data.apps2.data_valid) {
+	movb	rh4,#0x0
+	extp	#@pag(_apps_data+0x9),#0x1
+	cmpb	rh4,@pof(_apps_data+0x9)
+	jmp-	cc_eq,_13
+_819:
+	extp	#@pag(_apps_data+0x15),#0x1
+	cmpb	rh4,@pof(_apps_data+0x15)
+	jmp	cc_eq,_14
+_102:
+
+; src/apps.c	    95          ubyte2 diff = (apps_data.apps1.value > apps_data.apps2.value) ?
+	exts	r6,#0x1
+	movw	r13,[r10]
+_820:
+	exts	r9,#0x1
+	movw	r14,[r8]
+_821:
+	cmpw	r14,r13
+	jmp	cc_ule,_15
+_822:
+
+; src/apps.c	    96                        (apps_data.apps1.value - apps_data.apps2.value) :
+	subw	r14,r13
+_823:
+	jmp	_16
+_15:
+
+; src/apps.c	    97                        (apps_data.apps2.value - apps_data.apps1.value);
+	subw	r13,r14
+_824:
+	movw	r14,r13
+_16:
+
+; src/apps.c	    98          
+; src/apps.c	    99          if (diff > APPS_IMPLAUSIBILITY_DEVIATION) {
+	movb	rh4,#0x0
+	cmpw	r14,#0x64
+	jmp	cc_ule,_17
+	movb	rh4,#0x1
+_17:
+
+; src/apps.c	   100              apps_data.apps_implausible = TRUE;
+	exts	r12,#0x1
+	movb	[r11],rh4
+_825:
+
+; src/apps.c	   101          } else {
+; src/apps.c	   102              apps_data.apps_implausible = FALSE;
+; src/apps.c	   103          }
+; src/apps.c	   104          
+; src/apps.c	   105          // Combined value: average of both if plausible
+; src/apps.c	   106          if (!apps_data.apps_implausible) {
+	exts	r12,#0x1
+	movb	rh4,[r11]
+_826:
+	jmp	cc_ne,_18
+_827:
+
+; src/apps.c	   107              apps_data.apps_value = (ubyte2)((ubyte4)apps_data.apps1.value + apps_data.apps2.value) / 2;
+	movw	r2,r8
+_828:
+	exts	r6,#0x1
+	movw	r11,[r10]
+_829:
+	exts	r9,#0x1
+	addw	r11,[r2]
+_830:
+	shr	r11,#0x1
+_831:
+	extp	#@pag(_apps_data),#0x1
+	movw	@pof(_apps_data),r11
+_832:
+	jmp	_19
+_14:
+_13:
+
+; src/apps.c	   108          } else {
+; src/apps.c	   109              apps_data.apps_value = 0;
+; src/apps.c	   110          }
+; src/apps.c	   111      } else {
+; src/apps.c	   112          apps_data.apps_implausible = TRUE;
+	movb	rh4,#0x1
+_833:
+	exts	r12,#0x1
+	movb	[r11],rh4
+_18:
+
+; src/apps.c	   113          apps_data.apps_value = 0;
+	extp	#@pag(_apps_data),#0x1
+	movw	@pof(_apps_data),ZEROS
+_19:
+
+; src/apps.c	   114      }
+; src/apps.c	   115  }
+	movw	r10,[r15+]
+_656:
+	movw	r9,[r15+]
+_667:
+	movw	r8,[r15+]
+_678:
+	movw	r6,[r15+]
+_689:
+	ret
+_82:
+	; End of function
+	; End of section
+
+code_APPS_GetData	.section	code, cluster 'APPS_GetData', new
+	.global	_APPS_GetData
+
+; src/apps.c	   116  
+; src/apps.c	   117  const APPS_Data_t* APPS_GetData(void)
+; Function _APPS_GetData
+_58:
+_APPS_GetData	.proc	far
+
+; src/apps.c	   118  {
+; src/apps.c	   119      return &apps_data;
+	movw	r2,#@sof(_apps_data)
+	movw	r3,#@seg(_apps_data)
+_838:
+
+; src/apps.c	   120  }
+	ret
+_87:
+	; End of function
+	; End of section
+
+huge_apps_data	.section	huge, clear, cluster 'apps_data', new
+_apps_data	.label	word
+	.ds	28
+	; End of section
+
+huge_apps1_ma	.section	huge, clear, cluster 'apps1_ma', new
+_apps1_ma	.label	word
+	.ds	70
+	; End of section
+
+huge_apps2_ma	.section	huge, clear, cluster 'apps2_ma', new
+_apps2_ma	.label	word
+	.ds	70
+	; End of section
+
+	.calls	'_APPS_UpdateChannel','_IO_ADC_Get'
+	.calls	'_APPS_UpdateChannel','_MovingAverage_Update'
+	.calls	'_APPS_UpdateChannel','_IO_RTC_GetTimeUS'
+	.calls	'_APPS_Init','_IO_ADC_ChannelInit'
+	.calls	'_APPS_Init','_MovingAverage_Init'
+	.calls	'_APPS_Update','_APPS_UpdateChannel'
+	.calls	'_APPS_UpdateChannel','',4,28
+	.calls	'_APPS_Init','',4,0
+	.calls	'_APPS_Update','',4,8
+	.calls	'_APPS_GetData','',4,0
+	.extern	_IO_ADC_ChannelInit : far
+	.extern	_IO_ADC_Get : far
+	.extern	_IO_RTC_GetTimeUS : far
+	.extern	_MovingAverage_Init : far
+	.extern	_MovingAverage_Update : far
+	.extern	__lc_ub_user_stack : nearbyte
+	.debug		.debug_info
+_70:
+	.dl	1825
+	.dw	3
+	.dl	_71
+	.db	4
+_69:
+	.db	1
+	.db	'src/apps.c',0
+	.db	'TASKING VX-toolset for C166: C compiler',0
+	.db	'C:\\Users\\caleb\\EV\\_TREV4\\Programming Environments\\Environment\\github\\TREV4-Controls\\',0,12,1
+	.dl	_72
+_110:
+	.db	2
+	.db	'unsigned int',0,2,7
+_117:
+	.db	3
+	.db	'APPS_VoltageToPedalTravel',0,1,1,13,15,6
+	.dl	154
+	.db	1,1
+_119:
+	.db	4
+	.db	'mv',0,1,13,48,2
+	.dl	154
+_121:
+	.db	4
+	.db	'min_mv',0,1,13,59,2
+	.dl	154
+_123:
+	.db	4
+	.db	'max_mv',0,1,13,74,2
+	.dl	154
+_125:
+	.db	5,0
+_104:
+	.db	2
+	.db	'unsigned char',0,1,8,6
+	.db	'_io_adc_safety_conf',0,2,159,1,16,4,7
+	.db	'adc_val_upper',0
+	.dl	254
+	.db	1,2,35,0,7
+	.db	'adc_val_lower',0
+	.dl	254
+	.db	1,2,35,1,7
+	.db	'redundant_channel',0
+	.dl	254
+	.db	1,2,35,2,0,8
+	.dl	271
+	.db	9,5
+	.dl	371
+	.db	8
+	.dl	376
+	.db	10
+	.db	'IO_ADC_ChannelInit',0,2,157,2,14,6
+	.dl	154
+	.db	1,1,1,1,4
+	.db	'adc_channel',0,2,157,2,41,2
+	.dl	254
+	.db	4
+	.db	'type',0,2,158,2,41,2
+	.dl	254
+	.db	4
+	.db	'range',0,2,159,2,41,2
+	.dl	254
+	.db	4
+	.db	'pupd',0,2,160,2,41,2
+	.dl	254
+	.db	4
+	.db	'sensor_supply',0,2,161,2,41,2
+	.dl	254
+	.db	4
+	.db	'safety_conf',0,2,162,2,67,2
+	.dl	382
+	.db	0,9,5
+	.dl	154
+	.db	8
+	.dl	535
+	.db	9,5
+	.dl	254
+	.db	8
+	.dl	546
+	.db	10
+	.db	'IO_ADC_Get',0,2,132,3,14,6
+	.dl	154
+	.db	1,1,1,1,4
+	.db	'adc_channel',0,2,132,3,33,2
+	.dl	254
+	.db	4
+	.db	'adc_value',0,2,133,3,41,2
+	.dl	541
+	.db	4
+	.db	'fresh',0,2,134,3,39,2
+	.dl	552
+	.db	0
+_114:
+	.db	2
+	.db	'unsigned long int',0,4,7,10
+	.db	'IO_RTC_GetTimeUS',0,3,143,1,9,6
+	.dl	641
+	.db	1,1,1,1,4
+	.db	'timestamp',0,3,143,1,35,2
+	.dl	641
+	.db	0,11,4,7,9,12,7
+	.db	'value',0
+	.dl	154
+	.db	2,2,35,0,7
+	.db	'raw_mv',0
+	.dl	154
+	.db	2,2,35,2,7
+	.db	'filt_mv',0
+	.dl	154
+	.db	2,2,35,4,7
+	.db	'out_of_range',0
+	.dl	254
+	.db	1,2,35,6,7
+	.db	'data_valid',0
+	.dl	254
+	.db	1,2,35,7,7
+	.db	'last_update_us',0
+	.dl	641
+	.db	4,2,35,8,0
+_126:
+	.db	11,4,16,9,28,7
+	.db	'apps_value',0
+	.dl	154
+	.db	2,2,35,0,7
+	.db	'apps1',0
+	.dl	714
+	.db	12,2,35,2,7
+	.db	'apps2',0
+	.dl	714
+	.db	12,2,35,14,7
+	.db	'apps_valid',0
+	.dl	254
+	.db	1,2,35,26,7
+	.db	'apps_implausible',0
+	.dl	254
+	.db	1,2,35,27,0,8
+	.dl	834
+_103:
+	.db	9,5
+	.dl	936
+	.db	12,64
+	.dl	154
+	.db	13,31,0
+_127:
+	.db	11,5,8,9,70,7
+	.db	'window',0
+	.dl	947
+	.db	64,2,35,0,7
+	.db	'sum',0
+	.dl	641
+	.db	4,2,35,64,7
+	.db	'index',0
+	.dl	254
+	.db	1,2,35,68,7
+	.db	'window_size',0
+	.dl	254
+	.db	1,2,35,69,0
+_106:
+	.db	9,5
+	.dl	956
+	.db	10
+	.db	'MovingAverage_Init',0,5,15,14,6
+	.dl	154
+	.db	1,1,1,1,4
+	.db	'ma',0,5,15,55,2
+	.dl	1027
+	.db	4
+	.db	'window_size',0,5,15,66,2
+	.dl	254
+	.db	0,10
+	.db	'MovingAverage_Update',0,5,17,14,6
+	.dl	154
+	.db	1,1,1,1,4
+	.db	'ma',0,5,17,57,2
+	.dl	1027
+	.db	4
+	.db	'new_val',0,5,17,68,2
+	.dl	154
+	.db	4
+	.db	'filtered_val',0,5,17,85,2
+	.dl	535
+	.db	0,14
+	.dl	170
+	.db	15
+	.dl	208
+	.db	15
+	.dl	220
+	.db	15
+	.dl	236
+	.db	5,0
+_108:
+	.db	9,5
+	.dl	714
+	.db	16
+	.db	'void',0,9,5
+	.dl	1213
+	.db	17
+	.db	'__prof_adm',0,1,1,1
+	.dl	1219
+	.db	17
+	.db	'__codeptr',0,1,1,1
+	.dl	641
+	.db	17
+	.db	'ubyte1',0,6,21,29
+	.dl	254
+	.db	17
+	.db	'ubyte2',0,6,22,29
+	.dl	154
+	.db	17
+	.db	'ubyte4',0,6,23,29
+	.dl	641
+	.db	17
+	.db	'bool',0,6,31,29
+	.dl	254
+	.db	17
+	.db	'IO_ErrorType',0,7,153,1,17
+	.dl	154
+	.db	18
+	.db	'_io_driver_reset_reason',0,8,162,3,14,1,19
+	.db	'IO_DRIVER_RESET_REASON_PORST',0,0,19
+	.db	'IO_DRIVER_RESET_REASON_WDT',0,1,19
+	.db	'IO_DRIVER_RESET_REASON_TRAP',0,2,19
+	.db	'IO_DRIVER_RESET_REASON_SW',0,3,19
+	.db	'IO_DRIVER_RESET_REASON_UNKNOWN',0,4,0,17
+	.db	'IO_DRIVER_RESET_REASON',0,8,169,3,3
+	.dl	1342
+	.db	6
+	.db	'_io_driver_trap_info',0,8,174,3,16,10,7
+	.db	'trap_id',0
+	.dl	154
+	.db	2,2,35,0,7
+	.db	'cpu_tfr',0
+	.dl	154
+	.db	2,2,35,2,7
+	.db	'cpu_trapstat',0
+	.dl	154
+	.db	2,2,35,4,7
+	.db	'fault_location',0
+	.dl	641
+	.db	4,2,35,6,0,17
+	.db	'IO_DRIVER_TRAP_INFO',0,8,197,3,3
+	.dl	1556
+	.db	17
+	.db	'IO_ADC_SAFETY_CONF',0,2,169,1,3
+	.dl	271
+	.db	17
+	.db	'APPS_Sensor_t',0,4,14,3
+	.dl	714
+	.db	17
+	.db	'APPS_Data_t',0,4,24,3
+	.dl	834
+	.db	17
+	.db	'MovingAverage_Data_t',0,5,13,3
+	.dl	956
+	.db	20
+	.dl	254
+	.db	21,0,22
+	.db	'_lc_ub_user_stack',0,1,1,1,2
+	.dl	1792
+	.db	1,1,0
+	; End of section
+
+	.debug		.debug_abbrev
+_71:
+	.db	1,17,1,3,8,37,8,27,8,19,15,128,70,12,16,6,0,0,2,36,0,3,8,11,15,62,15,0,0,3,46,1,3,8,32,13,58,15,59,15
+	.db	57,15,51,15,73,19,54,15,39,12,0,0,4,5,0,3,8,58,15,59,15,57,15,51,15,73,19,0,0,5,11,0,0,0,6,19,1,3,8,58
+	.db	15,59,15,57,15,11,15,0,0,7,13,0,3,8,73,19,11,15,56,9,0,0,8,38,0,73,19,0,0,9,15,0,51,15,73,19,0,0,10,46
+	.db	1,3,8,58,15,59,15,57,15,51,15,73,19,54,15,39,12,63,12,60,12,0,0,11,19,1,58,15,59,15,57,15,11,15,0,0,12
+	.db	1,1,11,15,73,19,0,0,13,33,0,47,15,0,0,14,46,1,49,19,0,0,15,5,0,49,19,0,0,16,59,0,3,8,0,0,17,22,0,3,8,58
+	.db	15,59,15,57,15,73,19,0,0,18,4,1,3,8,58,15,59,15,57,15,11,15,0,0,19,40,0,3,8,28,13,0,0,20,1,1,73,19,0,0
+	.db	21,33,0,0,0,22,52,0,3,8,58,15,59,15,57,15,51,15,73,19,63,12,60,12,0,0,0
+	; End of section
+
+	.debug		.debug_line
+_72:
+	.dl	_781-_780
+_780:
+	.dw	3
+	.dl	_783-_782
+_782:
+	.db	2,1,-4,9,10,0,1,1,1,1,0,0,0,1
+	.db	'..\\..\\..\\Environment\\inc',0,0
+	.db	'src/apps.c',0,0,0,0
+	.db	'IO_ADC.h',0,1,0,0
+	.db	'IO_RTC.h',0,1,0,0
+	.db	'src\\apps.h',0,0,0,0
+	.db	'src\\moving_average.h',0,0,0,0
+	.db	'ptypes_xe167.h',0,1,0,0
+	.db	'IO_Constants.h',0,1,0,0
+	.db	'IO_Driver.h',0,1,0,0,0
+_783:
+_781:
+	; End of section
+
+	.debug		.debug_pubnames
+	.dl	121
+	.dw	2
+	.dl	_70,1829,387
+	.db	'IO_ADC_ChannelInit',0
+	.dl	557
+	.db	'IO_ADC_Get',0
+	.dl	662
+	.db	'IO_RTC_GetTimeUS',0
+	.dl	1033
+	.db	'MovingAverage_Init',0
+	.dl	1099
+	.db	'MovingAverage_Update',0
+	.dl	0
+	; End of section
+
+	.debug		.debug_info, cluster 'APPS_Init'
+_73:
+	.dl	213
+	.dw	3
+	.dl	_74
+	.db	4,1
+	.db	'src/apps.c',0
+	.db	'TASKING VX-toolset for C166: C compiler',0
+	.db	'C:\\Users\\caleb\\EV\\_TREV4\\Programming Environments\\Environment\\github\\TREV4-Controls\\',0,12,1
+	.dl	_76,_75
+	.db	2
+	.dl	_69
+	.db	3
+	.db	'APPS_Init',0,1,72,6,6,1,1,1
+	.dl	_34,_77,_33
+	.db	12,19,146,176,2,0,64,36,146,161,2,0,33,4
+	.dl	_34,_77
+	.db	0,0
+	; End of section
+
+	.debug		.debug_abbrev, cluster 'APPS_Init'
+_74:
+	.db	1,17,1,3,8,37,8,27,8,19,15,128,70,12,85,6,16,6,0,0,2,61,0,24,16,0,0,3,46,1,3,8,58,15,59,15,57,15,51,15
+	.db	54,15,39,12,63,12,17,1,18,1,64,6,42,9,0,0,4,11,0,17,1,18,1,0,0,0
+	; End of section
+
+	.debug		.debug_line, cluster 'APPS_Init'
+_75:
+	.dl	_785-_784
+_784:
+	.dw	3
+	.dl	_787-_786
+_786:
+	.db	2,1,-4,9,10,0,1,1,1,1,0,0,0,1,0
+	.db	'src/apps.c',0,0,0,0,0
+_787:
+	.db	5,24,7,0,5,2
+	.dl	_34
+	.db	3,201,0,1,5,39,9
+	.dw	_788-_34
+	.db	1,5,58,9
+	.dw	_789-_788
+	.db	1,5,61,9
+	.dw	_790-_789
+	.db	1,5,64,9
+	.dw	_791-_790
+	.db	1,5,82,9
+	.dw	_792-_791
+	.db	1,5,24,9
+	.dw	_793-_792
+	.db	3,1,1,5,39,9
+	.dw	_794-_793
+	.db	1,5,59,9
+	.dw	_795-_794
+	.db	1,5,62,9
+	.dw	_796-_795
+	.db	1,5,65,9
+	.dw	_797-_796
+	.db	1,5,83,9
+	.dw	_798-_797
+	.db	1,5,25,9
+	.dw	_799-_798
+	.db	3,2,1,5,35,9
+	.dw	_800-_799
+	.db	1,5,25,9
+	.dw	_801-_800
+	.db	3,1,1,5,35,9
+	.dw	_802-_801
+	.db	1,5,36,9
+	.dw	_803-_802
+	.db	3,3,1,9
+	.dw	_804-_803
+	.db	3,1,1,5,32,9
+	.dw	_805-_804
+	.db	3,1,1,9
+	.dw	_806-_805
+	.db	3,1,1,5,1,9
+	.dw	_807-_806
+	.db	3,1,1,7,9
+	.dw	_77-_807
+	.db	0,1,1
+_785:
+	; End of section
+
+	.debug		.debug_ranges, cluster 'APPS_Init'
+_76:
+	.dl	-1,_34,0,_77-_34,0,0
+	; End of section
+
+	.debug		.debug_pubnames
+	.dl	28
+	.dw	2
+	.dl	_73,217,163
+	.db	'APPS_Init',0
+	.dl	0
+	; End of section
+
+	.debug		.debug_info, cluster 'APPS_Update'
+_78:
+	.dl	221
+	.dw	3
+	.dl	_79
+	.db	4,1
+	.db	'src/apps.c',0
+	.db	'TASKING VX-toolset for C166: C compiler',0
+	.db	'C:\\Users\\caleb\\EV\\_TREV4\\Programming Environments\\Environment\\github\\TREV4-Controls\\',0,12,1
+	.dl	_81,_80
+	.db	2
+	.dl	_69
+	.db	3
+	.db	'APPS_Update',0,1,87,6,6,1,1,1
+	.dl	_46,_82,_45
+	.db	12,19,146,176,2,0,64,36,146,161,2,0,33,4
+	.dl	_46,_82
+	.db	5
+	.dl	_99
+	.db	0,0,0
+	; End of section
+
+	.debug		.debug_abbrev, cluster 'APPS_Update'
+_79:
+	.db	1,17,1,3,8,37,8,27,8,19,15,128,70,12,85,6,16,6,0,0,2,61,0,24,16,0,0,3,46,1,3,8,58,15,59,15,57,15,51,15
+	.db	54,15,39,12,63,12,17,1,18,1,64,6,42,9,0,0,4,11,1,17,1,18,1,0,0,5,11,0,85,6,0,0,0
+	; End of section
+
+	.debug		.debug_line, cluster 'APPS_Update'
+_80:
+	.dl	_809-_808
+_808:
+	.dw	3
+	.dl	_811-_810
+_810:
+	.db	2,1,-4,9,10,0,1,1,1,1,0,0,0,1,0
+	.db	'src/apps.c',0,0,0,0,0
+_811:
+	.db	5,6,7,0,5,2
+	.dl	_46
+	.db	3,214,0,1,5,60,9
+	.dw	_645-_46
+	.db	3,2,1,5,24,9
+	.dw	_812-_645
+	.db	1,9
+	.dw	_813-_812
+	.db	3,1,1,5,44,9
+	.dw	_814-_813
+	.db	1,5,60,9
+	.dw	_815-_814
+	.db	3,1,1,5,24,9
+	.dw	_816-_815
+	.db	1,9
+	.dw	_817-_816
+	.db	3,1,1,5,44,9
+	.dw	_818-_817
+	.db	1,5,63,9
+	.dw	_100-_818
+	.db	3,126,1,5,9,9
+	.dw	_101-_100
+	.db	3,4,1,5,54,9
+	.dw	_819-_101
+	.db	1,5,63,9
+	.dw	_102-_819
+	.db	3,1,1,5,39,9
+	.dw	_820-_102
+	.db	1,5,23,9
+	.dw	_821-_820
+	.db	1,5,46,9
+	.dw	_822-_821
+	.db	3,1,1,5,71,9
+	.dw	_823-_822
+	.db	1,5,46,9
+	.dw	_15-_823
+	.db	3,1,1,5,71,9
+	.dw	_824-_15
+	.db	3,126,1,5,18,9
+	.dw	_16-_824
+	.db	3,4,1,5,40,9
+	.dw	_17-_16
+	.db	3,1,1,5,23,9
+	.dw	_825-_17
+	.db	3,6,1,5,14,9
+	.dw	_826-_825
+	.db	1,5,68,7,9
+	.dw	_827-_826
+	.db	3,1,1,5,92,9
+	.dw	_828-_827
+	.db	1,5,75,9
+	.dw	_829-_828
+	.db	1,5,36,9
+	.dw	_830-_829
+	.db	1,5,34,9
+	.dw	_831-_830
+	.db	1,5,103,9
+	.dw	_832-_831
+	.db	1,5,38,9
+	.dw	_13-_832
+	.db	3,5,1,5,36,9
+	.dw	_833-_13
+	.db	1,5,30,9
+	.dw	_18-_833
+	.db	3,1,1,5,1,9
+	.dw	_19-_18
+	.db	3,2,1,9
+	.dw	_82-_19
+	.db	0,1,1
+_809:
+	; End of section
+
+	.debug		.debug_ranges, cluster 'APPS_Update'
+_81:
+	.dl	-1,_46,0,_82-_46,0,0
+_99:
+	.dl	-1,_46,_100-_46,_101-_46,_102-_46,_13-_46,0,0
+	; End of section
+
+	.debug		.debug_pubnames
+	.dl	30
+	.dw	2
+	.dl	_78,225,163
+	.db	'APPS_Update',0
+	.dl	0
+	; End of section
+
+	.debug		.debug_info, cluster 'APPS_GetData'
+_83:
+	.dl	220
+	.dw	3
+	.dl	_84
+	.db	4,1
+	.db	'src/apps.c',0
+	.db	'TASKING VX-toolset for C166: C compiler',0
+	.db	'C:\\Users\\caleb\\EV\\_TREV4\\Programming Environments\\Environment\\github\\TREV4-Controls\\',0,12,1
+	.dl	_86,_85
+	.db	2
+	.dl	_69
+	.db	3
+	.db	'APPS_GetData',0,1,117,20,6
+	.dl	_103
+	.db	1,1,1
+	.dl	_58,_87,_57
+	.db	12,19,146,176,2,0,64,36,146,161,2,0,33,4
+	.dl	_58,_87
+	.db	0,0
+	; End of section
+
+	.debug		.debug_abbrev, cluster 'APPS_GetData'
+_84:
+	.db	1,17,1,3,8,37,8,27,8,19,15,128,70,12,85,6,16,6,0,0,2,61,0,24,16,0,0,3,46,1,3,8,58,15,59,15,57,15,51,15
+	.db	73,16,54,15,39,12,63,12,17,1,18,1,64,6,42,9,0,0,4,11,0,17,1,18,1,0,0,0
+	; End of section
+
+	.debug		.debug_line, cluster 'APPS_GetData'
+_85:
+	.dl	_835-_834
+_834:
+	.dw	3
+	.dl	_837-_836
+_836:
+	.db	2,1,-4,9,10,0,1,1,1,1,0,0,0,1,0
+	.db	'src/apps.c',0,0,0,0,0
+_837:
+	.db	5,13,7,0,5,2
+	.dl	_58
+	.db	3,246,0,1,5,1,9
+	.dw	_838-_58
+	.db	3,1,1,7,9
+	.dw	_87-_838
+	.db	0,1,1
+_835:
+	; End of section
+
+	.debug		.debug_ranges, cluster 'APPS_GetData'
+_86:
+	.dl	-1,_58,0,_87-_58,0,0
+	; End of section
+
+	.debug		.debug_pubnames
+	.dl	31
+	.dw	2
+	.dl	_83,224,163
+	.db	'APPS_GetData',0
+	.dl	0
+	; End of section
+
+	.debug		.debug_info, cluster 'APPS_UpdateChannel'
+_88:
+	.dl	444
+	.dw	3
+	.dl	_89
+	.db	4,1
+	.db	'src/apps.c',0
+	.db	'TASKING VX-toolset for C166: C compiler',0
+	.db	'C:\\Users\\caleb\\EV\\_TREV4\\Programming Environments\\Environment\\github\\TREV4-Controls\\',0,12,1
+	.dl	_91,_90
+	.db	2
+	.dl	_69
+	.db	3
+	.db	'APPS_UpdateChannel',0,1,28,13,6,1,1
+	.dl	_22,_92,_21
+	.db	12,19,146,176,2,0,64,36,146,161,2,0,33,4
+	.db	'adc_channel',0,1,28,39,2
+	.dl	_104,_105
+	.db	4
+	.db	'ma',0,1,28,74,2
+	.dl	_106,_107
+	.db	4
+	.db	'sensor',0,1,28,93,2
+	.dl	_108,_109
+	.db	4
+	.db	'min_mv',0,1,29,39,2
+	.dl	_110,_111
+	.db	4
+	.db	'max_mv',0,1,29,54,2
+	.dl	_110,_112
+	.db	5
+	.dl	_22,_92
+	.db	6
+	.db	'err',0,1,31,18,2
+	.dl	_110,_113
+	.db	6
+	.db	'current_time',0,1,32,12,2
+	.dl	_114,_115
+	.db	6
+	.db	'data_fresh',0,1,33,10,2
+	.dl	_104,_116
+	.db	7
+	.dl	_117,_118,_10
+	.db	8
+	.dl	_119,_120
+	.db	8
+	.dl	_121,_122
+	.db	8
+	.dl	_123,_124
+	.db	9
+	.dl	_125,_118,_10
+	.db	0,0,0,0
+	; End of section
+
+	.debug		.debug_abbrev, cluster 'APPS_UpdateChannel'
+_89:
+	.db	1,17,1,3,8,37,8,27,8,19,15,128,70,12,85,6,16,6,0,0,2,61,0,24,16,0,0,3,46,1,3,8,58,15,59,15,57,15,51,15
+	.db	54,15,39,12,17,1,18,1,64,6,42,9,0,0,4,5,0,3,8,58,15,59,15,57,15,51,15,73,16,2,6,0,0,5,11,1,17,1,18,1,0
+	.db	0,6,52,0,3,8,58,15,59,15,57,15,51,15,73,16,2,6,0,0,7,29,1,49,16,17,1,18,1,0,0,8,5,0,49,16,2,6,0,0,9,11
+	.db	0,49,16,17,1,18,1,0,0,0
+	; End of section
+
+	.debug		.debug_line, cluster 'APPS_UpdateChannel'
+_90:
+	.dl	_840-_839
+_839:
+	.dw	3
+	.dl	_842-_841
+_841:
+	.db	2,1,-4,9,10,0,1,1,1,1,0,0,0,1,0
+	.db	'src/apps.c',0,0,0,0,0
+_842:
+	.db	5,13,7,0,5,2
+	.dl	_22
+	.db	3,27,1,5,11,9
+	.dw	_600-_22
+	.db	3,7,1,5,26,9
+	.dw	_843-_600
+	.db	1,5,24,9
+	.dw	_594-_843
+	.db	1,5,42,9
+	.dw	_844-_594
+	.db	3,3,1,5,53,9
+	.dw	_845-_844
+	.db	1,5,5,9
+	.dw	_593-_845
+	.db	3,1,1,5,9,9
+	.dw	_846-_593
+	.db	3,5,1,5,5,9
+	.dw	_847-_846
+	.db	1,5,63,7,9
+	.dw	_848-_847
+	.db	3,1,1,5,46,9
+	.dw	_849-_848
+	.db	1,5,63,9
+	.dw	_850-_849
+	.db	1,5,9,9
+	.dw	_602-_850
+	.db	3,1,1,5,15,9
+	.dw	_851-_602
+	.db	3,3,1,5,51,9
+	.dw	_852-_851
+	.db	1,5,32,9
+	.dw	_853-_852
+	.db	1,5,37,9
+	.dw	_3-_853
+	.db	3,4,1,5,18,9
+	.dw	_854-_3
+	.db	1,5,30,9
+	.dw	_855-_854
+	.db	3,1,1,5,22,9
+	.dw	_856-_855
+	.db	1,5,5,9
+	.dw	_857-_856
+	.db	1,5,15,9
+	.dw	_858-_857
+	.db	3,5,1,9
+	.dw	_859-_858
+	.db	3,2,1,9
+	.dw	_860-_859
+	.db	3,126,1,5,36,9
+	.dw	_861-_860
+	.db	1,5,34,9
+	.dw	_604-_861
+	.db	1,5,9,9
+	.dw	_862-_604
+	.db	1,5,36,9
+	.dw	_863-_862
+	.db	3,1,1,5,34,9
+	.dw	_605-_863
+	.db	1,5,25,9
+	.dw	_864-_605
+	.db	1,5,32,9
+	.dw	_6-_864
+	.db	3,1,1,5,30,9
+	.dw	_865-_6
+	.db	1,5,9,9
+	.dw	_866-_865
+	.db	3,1,1,5,28,9
+	.dw	_7-_866
+	.db	3,3,1,5,26,9
+	.dw	_867-_7
+	.db	1,5,24,9
+	.dw	_868-_867
+	.db	3,1,1,5,26,9
+	.dw	_869-_868
+	.db	1,5,24,9
+	.dw	_870-_869
+	.db	1,5,53,9
+	.dw	_871-_870
+	.db	3,3,1,5,5,9
+	.dw	_118-_871
+	.db	3,74,1,5,9,9
+	.dw	_872-_118
+	.db	3,1,1,5,5,9
+	.dw	_9-_872
+	.db	3,3,1,5,9,9
+	.dw	_873-_9
+	.db	3,1,1,5,34,9
+	.dw	_11-_873
+	.db	3,3,1,5,22,9
+	.dw	_874-_11
+	.db	1,5,46,9
+	.dw	_609-_874
+	.db	1,5,44,9
+	.dw	_875-_609
+	.db	1,5,64,9
+	.dw	_876-_875
+	.db	3,46,1,5,29,9
+	.dw	_610-_876
+	.db	3,83,1,5,63,9
+	.dw	_877-_610
+	.db	3,127,1,5,19,9
+	.dw	_10-_877
+	.db	3,46,1,5,1,9
+	.dw	_2-_10
+	.db	3,1,1,9
+	.dw	_92-_2
+	.db	0,1,1
+_840:
+	; End of section
+
+	.debug		.debug_ranges, cluster 'APPS_UpdateChannel'
+_91:
+	.dl	-1,_22,0,_92-_22,0,0
+	; End of section
+
+	.debug		.debug_pubnames
+	.dl	37
+	.dw	2
+	.dl	_88,448,163
+	.db	'APPS_UpdateChannel',0
+	.dl	0
+	; End of section
+
+	.debug		.debug_info, cluster 'apps_data'
+_93:
+	.dl	177
+	.dw	3
+	.dl	_94
+	.db	4,1
+	.db	'src/apps.c',0
+	.db	'TASKING VX-toolset for C166: C compiler',0
+	.db	'C:\\Users\\caleb\\EV\\_TREV4\\Programming Environments\\Environment\\github\\TREV4-Controls\\',0,12,1
+	.db	2
+	.dl	_69
+	.db	3
+	.db	'apps_data',0,1,9,20,5
+	.dl	_126
+	.db	5,3
+	.dl	_apps_data
+	.db	0
+	; End of section
+
+	.debug		.debug_abbrev, cluster 'apps_data'
+_94:
+	.db	1,17,1,3,8,37,8,27,8,19,15,128,70,12,0,0,2,61,0,24,16,0,0,3,52,0,3,8,58,15,59,15,57,15,51,15,73,16,2,9
+	.db	0,0,0
+	; End of section
+
+	.debug		.debug_info, cluster 'apps1_ma'
+_95:
+	.dl	176
+	.dw	3
+	.dl	_96
+	.db	4,1
+	.db	'src/apps.c',0
+	.db	'TASKING VX-toolset for C166: C compiler',0
+	.db	'C:\\Users\\caleb\\EV\\_TREV4\\Programming Environments\\Environment\\github\\TREV4-Controls\\',0,12,1
+	.db	2
+	.dl	_69
+	.db	3
+	.db	'apps1_ma',0,1,10,29,5
+	.dl	_127
+	.db	5,3
+	.dl	_apps1_ma
+	.db	0
+	; End of section
+
+	.debug		.debug_abbrev, cluster 'apps1_ma'
+_96:
+	.db	1,17,1,3,8,37,8,27,8,19,15,128,70,12,0,0,2,61,0,24,16,0,0,3,52,0,3,8,58,15,59,15,57,15,51,15,73,16,2,9
+	.db	0,0,0
+	; End of section
+
+	.debug		.debug_info, cluster 'apps2_ma'
+_97:
+	.dl	176
+	.dw	3
+	.dl	_98
+	.db	4,1
+	.db	'src/apps.c',0
+	.db	'TASKING VX-toolset for C166: C compiler',0
+	.db	'C:\\Users\\caleb\\EV\\_TREV4\\Programming Environments\\Environment\\github\\TREV4-Controls\\',0,12,1
+	.db	2
+	.dl	_69
+	.db	3
+	.db	'apps2_ma',0,1,11,29,5
+	.dl	_127
+	.db	5,3
+	.dl	_apps2_ma
+	.db	0
+	; End of section
+
+	.debug		.debug_abbrev, cluster 'apps2_ma'
+_98:
+	.db	1,17,1,3,8,37,8,27,8,19,15,128,70,12,0,0,2,61,0,24,16,0,0,3,52,0,3,8,58,15,59,15,57,15,51,15,73,16,2,9
+	.db	0,0,0
+	; End of section
+
+	.debug		.debug_loc, cluster 'APPS_GetData'
+_57:
+	.dl	-1,_58,0,_87-_58
+	.dw	58
+	.db	127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_59-_63
+_63:
+	.db	146,177,2,0,47
+	.dw	_62-_64
+_64:
+_59:
+	.db	18,49,46,40
+	.dw	_60-_65
+_65:
+	.db	146,178,2,0,47
+	.dw	_62-_66
+_66:
+_60:
+	.db	18,50,46,40
+	.dw	_61-_67
+_67:
+	.db	146,179,2,0,47
+	.dw	_62-_68
+_68:
+_61:
+	.db	146,180,2,0
+_62:
+	.db	22,19,62,36,33
+	.dl	0,0
+	; End of section
+
+	.debug		.debug_loc, cluster 'APPS_Init'
+_33:
+	.dl	-1,_34,0,_77-_34
+	.dw	58
+	.db	127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_35-_39
+_39:
+	.db	146,177,2,0,47
+	.dw	_38-_40
+_40:
+_35:
+	.db	18,49,46,40
+	.dw	_36-_41
+_41:
+	.db	146,178,2,0,47
+	.dw	_38-_42
+_42:
+_36:
+	.db	18,50,46,40
+	.dw	_37-_43
+_43:
+	.db	146,179,2,0,47
+	.dw	_38-_44
+_44:
+_37:
+	.db	146,180,2,0
+_38:
+	.db	22,19,62,36,33
+	.dl	0,0
+	; End of section
+
+	.debug		.debug_loc, cluster 'APPS_Update'
+_45:
+	.dl	-1,_46,0,_612-_46
+	.dw	58
+	.db	127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_47-_51
+_51:
+	.db	146,177,2,0,47
+	.dw	_50-_52
+_52:
+_47:
+	.db	18,49,46,40
+	.dw	_48-_53
+_53:
+	.db	146,178,2,0,47
+	.dw	_50-_54
+_54:
+_48:
+	.db	18,50,46,40
+	.dw	_49-_55
+_55:
+	.db	146,179,2,0,47
+	.dw	_50-_56
+_56:
+_49:
+	.db	146,180,2,0
+_50:
+	.db	22,19,62,36,33
+	.dl	_612-_46,_623-_46
+	.dw	60
+	.db	127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_613-_617
+_617:
+	.db	146,177,2,0,47
+	.dw	_616-_618
+_618:
+_613:
+	.db	18,49,46,40
+	.dw	_614-_619
+_619:
+	.db	146,178,2,0,47
+	.dw	_616-_620
+_620:
+_614:
+	.db	18,50,46,40
+	.dw	_615-_621
+_621:
+	.db	146,179,2,0,47
+	.dw	_616-_622
+_622:
+_615:
+	.db	146,180,2,0
+_616:
+	.db	22,19,62,36,33,50,34
+	.dl	_623-_46,_634-_46
+	.dw	60
+	.db	127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_624-_628
+_628:
+	.db	146,177,2,0,47
+	.dw	_627-_629
+_629:
+_624:
+	.db	18,49,46,40
+	.dw	_625-_630
+_630:
+	.db	146,178,2,0,47
+	.dw	_627-_631
+_631:
+_625:
+	.db	18,50,46,40
+	.dw	_626-_632
+_632:
+	.db	146,179,2,0,47
+	.dw	_627-_633
+_633:
+_626:
+	.db	146,180,2,0
+_627:
+	.db	22,19,62,36,33,52,34
+	.dl	_634-_46,_645-_46
+	.dw	60
+	.db	127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_635-_639
+_639:
+	.db	146,177,2,0,47
+	.dw	_638-_640
+_640:
+_635:
+	.db	18,49,46,40
+	.dw	_636-_641
+_641:
+	.db	146,178,2,0,47
+	.dw	_638-_642
+_642:
+_636:
+	.db	18,50,46,40
+	.dw	_637-_643
+_643:
+	.db	146,179,2,0,47
+	.dw	_638-_644
+_644:
+_637:
+	.db	146,180,2,0
+_638:
+	.db	22,19,62,36,33,54,34
+	.dl	_645-_46,_656-_46
+	.dw	60
+	.db	127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_646-_650
+_650:
+	.db	146,177,2,0,47
+	.dw	_649-_651
+_651:
+_646:
+	.db	18,49,46,40
+	.dw	_647-_652
+_652:
+	.db	146,178,2,0,47
+	.dw	_649-_653
+_653:
+_647:
+	.db	18,50,46,40
+	.dw	_648-_654
+_654:
+	.db	146,179,2,0,47
+	.dw	_649-_655
+_655:
+_648:
+	.db	146,180,2,0
+_649:
+	.db	22,19,62,36,33,56,34
+	.dl	_656-_46,_667-_46
+	.dw	60
+	.db	127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_657-_661
+_661:
+	.db	146,177,2,0,47
+	.dw	_660-_662
+_662:
+_657:
+	.db	18,49,46,40
+	.dw	_658-_663
+_663:
+	.db	146,178,2,0,47
+	.dw	_660-_664
+_664:
+_658:
+	.db	18,50,46,40
+	.dw	_659-_665
+_665:
+	.db	146,179,2,0,47
+	.dw	_660-_666
+_666:
+_659:
+	.db	146,180,2,0
+_660:
+	.db	22,19,62,36,33,54,34
+	.dl	_667-_46,_678-_46
+	.dw	60
+	.db	127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_668-_672
+_672:
+	.db	146,177,2,0,47
+	.dw	_671-_673
+_673:
+_668:
+	.db	18,49,46,40
+	.dw	_669-_674
+_674:
+	.db	146,178,2,0,47
+	.dw	_671-_675
+_675:
+_669:
+	.db	18,50,46,40
+	.dw	_670-_676
+_676:
+	.db	146,179,2,0,47
+	.dw	_671-_677
+_677:
+_670:
+	.db	146,180,2,0
+_671:
+	.db	22,19,62,36,33,52,34
+	.dl	_678-_46,_689-_46
+	.dw	60
+	.db	127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_679-_683
+_683:
+	.db	146,177,2,0,47
+	.dw	_682-_684
+_684:
+_679:
+	.db	18,49,46,40
+	.dw	_680-_685
+_685:
+	.db	146,178,2,0,47
+	.dw	_682-_686
+_686:
+_680:
+	.db	18,50,46,40
+	.dw	_681-_687
+_687:
+	.db	146,179,2,0,47
+	.dw	_682-_688
+_688:
+_681:
+	.db	146,180,2,0
+_682:
+	.db	22,19,62,36,33,50,34
+	.dl	_689-_46,_82-_46
+	.dw	58
+	.db	127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_690-_694
+_694:
+	.db	146,177,2,0,47
+	.dw	_693-_695
+_695:
+_690:
+	.db	18,49,46,40
+	.dw	_691-_696
+_696:
+	.db	146,178,2,0,47
+	.dw	_693-_697
+_697:
+_691:
+	.db	18,50,46,40
+	.dw	_692-_698
+_698:
+	.db	146,179,2,0,47
+	.dw	_693-_699
+_699:
+_692:
+	.db	146,180,2,0
+_693:
+	.db	22,19,62,36,33
+	.dl	0,0
+	; End of section
+
+	.debug		.debug_loc, cluster 'APPS_UpdateChannel'
+_21:
+	.dl	-1,_22,0,_128-_22
+	.dw	58
+	.db	127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_23-_27
+_27:
+	.db	146,177,2,0,47
+	.dw	_26-_28
+_28:
+_23:
+	.db	18,49,46,40
+	.dw	_24-_29
+_29:
+	.db	146,178,2,0,47
+	.dw	_26-_30
+_30:
+_24:
+	.db	18,50,46,40
+	.dw	_25-_31
+_31:
+	.db	146,179,2,0,47
+	.dw	_26-_32
+_32:
+_25:
+	.db	146,180,2,0
+_26:
+	.db	22,19,62,36,33
+	.dl	_128-_22,_139-_22
+	.dw	60
+	.db	127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_129-_133
+_133:
+	.db	146,177,2,0,47
+	.dw	_132-_134
+_134:
+_129:
+	.db	18,49,46,40
+	.dw	_130-_135
+_135:
+	.db	146,178,2,0,47
+	.dw	_132-_136
+_136:
+_130:
+	.db	18,50,46,40
+	.dw	_131-_137
+_137:
+	.db	146,179,2,0,47
+	.dw	_132-_138
+_138:
+_131:
+	.db	146,180,2,0
+_132:
+	.db	22,19,62,36,33,50,34
+	.dl	_139-_22,_150-_22
+	.dw	60
+	.db	127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_140-_144
+_144:
+	.db	146,177,2,0,47
+	.dw	_143-_145
+_145:
+_140:
+	.db	18,49,46,40
+	.dw	_141-_146
+_146:
+	.db	146,178,2,0,47
+	.dw	_143-_147
+_147:
+_141:
+	.db	18,50,46,40
+	.dw	_142-_148
+_148:
+	.db	146,179,2,0,47
+	.dw	_143-_149
+_149:
+_142:
+	.db	146,180,2,0
+_143:
+	.db	22,19,62,36,33,52,34
+	.dl	_150-_22,_161-_22
+	.dw	60
+	.db	127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_151-_155
+_155:
+	.db	146,177,2,0,47
+	.dw	_154-_156
+_156:
+_151:
+	.db	18,49,46,40
+	.dw	_152-_157
+_157:
+	.db	146,178,2,0,47
+	.dw	_154-_158
+_158:
+_152:
+	.db	18,50,46,40
+	.dw	_153-_159
+_159:
+	.db	146,179,2,0,47
+	.dw	_154-_160
+_160:
+_153:
+	.db	146,180,2,0
+_154:
+	.db	22,19,62,36,33,54,34
+	.dl	_161-_22,_172-_22
+	.dw	60
+	.db	127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_162-_166
+_166:
+	.db	146,177,2,0,47
+	.dw	_165-_167
+_167:
+_162:
+	.db	18,49,46,40
+	.dw	_163-_168
+_168:
+	.db	146,178,2,0,47
+	.dw	_165-_169
+_169:
+_163:
+	.db	18,50,46,40
+	.dw	_164-_170
+_170:
+	.db	146,179,2,0,47
+	.dw	_165-_171
+_171:
+_164:
+	.db	146,180,2,0
+_165:
+	.db	22,19,62,36,33,56,34
+	.dl	_172-_22,_183-_22
+	.dw	60
+	.db	127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_173-_177
+_177:
+	.db	146,177,2,0,47
+	.dw	_176-_178
+_178:
+_173:
+	.db	18,49,46,40
+	.dw	_174-_179
+_179:
+	.db	146,178,2,0,47
+	.dw	_176-_180
+_180:
+_174:
+	.db	18,50,46,40
+	.dw	_175-_181
+_181:
+	.db	146,179,2,0,47
+	.dw	_176-_182
+_182:
+_175:
+	.db	146,180,2,0
+_176:
+	.db	22,19,62,36,33,58,34
+	.dl	_183-_22,_194-_22
+	.dw	60
+	.db	127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_184-_188
+_188:
+	.db	146,177,2,0,47
+	.dw	_187-_189
+_189:
+_184:
+	.db	18,49,46,40
+	.dw	_185-_190
+_190:
+	.db	146,178,2,0,47
+	.dw	_187-_191
+_191:
+_185:
+	.db	18,50,46,40
+	.dw	_186-_192
+_192:
+	.db	146,179,2,0,47
+	.dw	_187-_193
+_193:
+_186:
+	.db	146,180,2,0
+_187:
+	.db	22,19,62,36,33,60,34
+	.dl	_194-_22,_205-_22
+	.dw	60
+	.db	127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_195-_199
+_199:
+	.db	146,177,2,0,47
+	.dw	_198-_200
+_200:
+_195:
+	.db	18,49,46,40
+	.dw	_196-_201
+_201:
+	.db	146,178,2,0,47
+	.dw	_198-_202
+_202:
+_196:
+	.db	18,50,46,40
+	.dw	_197-_203
+_203:
+	.db	146,179,2,0,47
+	.dw	_198-_204
+_204:
+_197:
+	.db	146,180,2,0
+_198:
+	.db	22,19,62,36,33,62,34
+	.dl	_205-_22,_216-_22
+	.dw	60
+	.db	127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_206-_210
+_210:
+	.db	146,177,2,0,47
+	.dw	_209-_211
+_211:
+_206:
+	.db	18,49,46,40
+	.dw	_207-_212
+_212:
+	.db	146,178,2,0,47
+	.dw	_209-_213
+_213:
+_207:
+	.db	18,50,46,40
+	.dw	_208-_214
+_214:
+	.db	146,179,2,0,47
+	.dw	_209-_215
+_215:
+_208:
+	.db	146,180,2,0
+_209:
+	.db	22,19,62,36,33,64,34
+	.dl	_216-_22,_227-_22
+	.dw	60
+	.db	127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_217-_221
+_221:
+	.db	146,177,2,0,47
+	.dw	_220-_222
+_222:
+_217:
+	.db	18,49,46,40
+	.dw	_218-_223
+_223:
+	.db	146,178,2,0,47
+	.dw	_220-_224
+_224:
+_218:
+	.db	18,50,46,40
+	.dw	_219-_225
+_225:
+	.db	146,179,2,0,47
+	.dw	_220-_226
+_226:
+_219:
+	.db	146,180,2,0
+_220:
+	.db	22,19,62,36,33,66,34
+	.dl	_227-_22,_238-_22
+	.dw	60
+	.db	127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_228-_232
+_232:
+	.db	146,177,2,0,47
+	.dw	_231-_233
+_233:
+_228:
+	.db	18,49,46,40
+	.dw	_229-_234
+_234:
+	.db	146,178,2,0,47
+	.dw	_231-_235
+_235:
+_229:
+	.db	18,50,46,40
+	.dw	_230-_236
+_236:
+	.db	146,179,2,0,47
+	.dw	_231-_237
+_237:
+_230:
+	.db	146,180,2,0
+_231:
+	.db	22,19,62,36,33,68,34
+	.dl	_238-_22,_249-_22
+	.dw	60
+	.db	127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_239-_243
+_243:
+	.db	146,177,2,0,47
+	.dw	_242-_244
+_244:
+_239:
+	.db	18,49,46,40
+	.dw	_240-_245
+_245:
+	.db	146,178,2,0,47
+	.dw	_242-_246
+_246:
+_240:
+	.db	18,50,46,40
+	.dw	_241-_247
+_247:
+	.db	146,179,2,0,47
+	.dw	_242-_248
+_248:
+_241:
+	.db	146,180,2,0
+_242:
+	.db	22,19,62,36,33,76,34
+	.dl	_249-_22,_260-_22
+	.dw	60
+	.db	127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_250-_254
+_254:
+	.db	146,177,2,0,47
+	.dw	_253-_255
+_255:
+_250:
+	.db	18,49,46,40
+	.dw	_251-_256
+_256:
+	.db	146,178,2,0,47
+	.dw	_253-_257
+_257:
+_251:
+	.db	18,50,46,40
+	.dw	_252-_258
+_258:
+	.db	146,179,2,0,47
+	.dw	_253-_259
+_259:
+_252:
+	.db	146,180,2,0
+_253:
+	.db	22,19,62,36,33,68,34
+	.dl	_260-_22,_271-_22
+	.dw	60
+	.db	127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_261-_265
+_265:
+	.db	146,177,2,0,47
+	.dw	_264-_266
+_266:
+_261:
+	.db	18,49,46,40
+	.dw	_262-_267
+_267:
+	.db	146,178,2,0,47
+	.dw	_264-_268
+_268:
+_262:
+	.db	18,50,46,40
+	.dw	_263-_269
+_269:
+	.db	146,179,2,0,47
+	.dw	_264-_270
+_270:
+_263:
+	.db	146,180,2,0
+_264:
+	.db	22,19,62,36,33,66,34
+	.dl	_271-_22,_282-_22
+	.dw	60
+	.db	127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_272-_276
+_276:
+	.db	146,177,2,0,47
+	.dw	_275-_277
+_277:
+_272:
+	.db	18,49,46,40
+	.dw	_273-_278
+_278:
+	.db	146,178,2,0,47
+	.dw	_275-_279
+_279:
+_273:
+	.db	18,50,46,40
+	.dw	_274-_280
+_280:
+	.db	146,179,2,0,47
+	.dw	_275-_281
+_281:
+_274:
+	.db	146,180,2,0
+_275:
+	.db	22,19,62,36,33,64,34
+	.dl	_282-_22,_293-_22
+	.dw	60
+	.db	127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_283-_287
+_287:
+	.db	146,177,2,0,47
+	.dw	_286-_288
+_288:
+_283:
+	.db	18,49,46,40
+	.dw	_284-_289
+_289:
+	.db	146,178,2,0,47
+	.dw	_286-_290
+_290:
+_284:
+	.db	18,50,46,40
+	.dw	_285-_291
+_291:
+	.db	146,179,2,0,47
+	.dw	_286-_292
+_292:
+_285:
+	.db	146,180,2,0
+_286:
+	.db	22,19,62,36,33,62,34
+	.dl	_293-_22,_304-_22
+	.dw	60
+	.db	127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_294-_298
+_298:
+	.db	146,177,2,0,47
+	.dw	_297-_299
+_299:
+_294:
+	.db	18,49,46,40
+	.dw	_295-_300
+_300:
+	.db	146,178,2,0,47
+	.dw	_297-_301
+_301:
+_295:
+	.db	18,50,46,40
+	.dw	_296-_302
+_302:
+	.db	146,179,2,0,47
+	.dw	_297-_303
+_303:
+_296:
+	.db	146,180,2,0
+_297:
+	.db	22,19,62,36,33,60,34
+	.dl	_304-_22,_315-_22
+	.dw	60
+	.db	127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_305-_309
+_309:
+	.db	146,177,2,0,47
+	.dw	_308-_310
+_310:
+_305:
+	.db	18,49,46,40
+	.dw	_306-_311
+_311:
+	.db	146,178,2,0,47
+	.dw	_308-_312
+_312:
+_306:
+	.db	18,50,46,40
+	.dw	_307-_313
+_313:
+	.db	146,179,2,0,47
+	.dw	_308-_314
+_314:
+_307:
+	.db	146,180,2,0
+_308:
+	.db	22,19,62,36,33,58,34
+	.dl	_315-_22,_326-_22
+	.dw	60
+	.db	127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_316-_320
+_320:
+	.db	146,177,2,0,47
+	.dw	_319-_321
+_321:
+_316:
+	.db	18,49,46,40
+	.dw	_317-_322
+_322:
+	.db	146,178,2,0,47
+	.dw	_319-_323
+_323:
+_317:
+	.db	18,50,46,40
+	.dw	_318-_324
+_324:
+	.db	146,179,2,0,47
+	.dw	_319-_325
+_325:
+_318:
+	.db	146,180,2,0
+_319:
+	.db	22,19,62,36,33,56,34
+	.dl	_326-_22,_337-_22
+	.dw	60
+	.db	127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_327-_331
+_331:
+	.db	146,177,2,0,47
+	.dw	_330-_332
+_332:
+_327:
+	.db	18,49,46,40
+	.dw	_328-_333
+_333:
+	.db	146,178,2,0,47
+	.dw	_330-_334
+_334:
+_328:
+	.db	18,50,46,40
+	.dw	_329-_335
+_335:
+	.db	146,179,2,0,47
+	.dw	_330-_336
+_336:
+_329:
+	.db	146,180,2,0
+_330:
+	.db	22,19,62,36,33,54,34
+	.dl	_337-_22,_348-_22
+	.dw	60
+	.db	127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_338-_342
+_342:
+	.db	146,177,2,0,47
+	.dw	_341-_343
+_343:
+_338:
+	.db	18,49,46,40
+	.dw	_339-_344
+_344:
+	.db	146,178,2,0,47
+	.dw	_341-_345
+_345:
+_339:
+	.db	18,50,46,40
+	.dw	_340-_346
+_346:
+	.db	146,179,2,0,47
+	.dw	_341-_347
+_347:
+_340:
+	.db	146,180,2,0
+_341:
+	.db	22,19,62,36,33,52,34
+	.dl	_348-_22,_359-_22
+	.dw	60
+	.db	127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_349-_353
+_353:
+	.db	146,177,2,0,47
+	.dw	_352-_354
+_354:
+_349:
+	.db	18,49,46,40
+	.dw	_350-_355
+_355:
+	.db	146,178,2,0,47
+	.dw	_352-_356
+_356:
+_350:
+	.db	18,50,46,40
+	.dw	_351-_357
+_357:
+	.db	146,179,2,0,47
+	.dw	_352-_358
+_358:
+_351:
+	.db	146,180,2,0
+_352:
+	.db	22,19,62,36,33,50,34
+	.dl	_359-_22,_92-_22
+	.dw	58
+	.db	127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_360-_364
+_364:
+	.db	146,177,2,0,47
+	.dw	_363-_365
+_365:
+_360:
+	.db	18,49,46,40
+	.dw	_361-_366
+_366:
+	.db	146,178,2,0,47
+	.dw	_363-_367
+_367:
+_361:
+	.db	18,50,46,40
+	.dw	_362-_368
+_368:
+	.db	146,179,2,0,47
+	.dw	_363-_369
+_369:
+_362:
+	.db	146,180,2,0
+_363:
+	.db	22,19,62,36,33
+	.dl	0,0
+_105:
+	.dl	-1,_22,0,_593-_22
+	.dw	4
+	.db	82,157,8,0
+	.dl	0,0
+_115:
+	.dl	0,0
+_116:
+	.dl	-1,_22,0,_92-_22
+	.dw	2
+	.db	145,100
+	.dl	0,0
+_113:
+	.dl	-1,_22,_593-_22,_601-_22
+	.dw	1
+	.db	82
+	.dl	_602-_22,_603-_22
+	.dw	1
+	.db	82
+	.dl	0,0
+_107:
+	.dl	-1,_22,0,_594-_22
+	.dw	6
+	.db	84,147,2,85,147,2
+	.dl	_596-_22,_597-_22
+	.dw	6
+	.db	88,147,2,89,147,2
+	.dl	0,0
+_124:
+	.dl	0,0
+_112:
+	.dl	-1,_22,0,_593-_22
+	.dw	1
+	.db	93
+	.dl	_600-_22,_92-_22
+	.dw	2
+	.db	145,106
+	.dl	_605-_22,_6-_22
+	.dw	1
+	.db	85
+	.dl	_7-_22,_606-_22
+	.dw	1
+	.db	85
+	.dl	_606-_22,_608-_22
+	.dw	1
+	.db	92
+	.dl	_610-_22,_10-_22
+	.dw	1
+	.db	91
+	.dl	0,0
+_122:
+	.dl	0,0
+_111:
+	.dl	-1,_22,0,_593-_22
+	.dw	1
+	.db	83
+	.dl	_599-_22,_92-_22
+	.dw	2
+	.db	145,104
+	.dl	_604-_22,_605-_22
+	.dw	1
+	.db	85
+	.dl	_607-_22,_606-_22
+	.dw	1
+	.db	92
+	.dl	_608-_22,_609-_22
+	.dw	1
+	.db	92
+	.dl	_611-_22,_10-_22
+	.dw	1
+	.db	92
+	.dl	0,0
+_120:
+	.dl	0,0
+_109:
+	.dl	-1,_22,0,_595-_22
+	.dw	6
+	.db	91,147,2,92,147,2
+	.dl	_598-_22,_260-_22
+	.dw	6
+	.db	90,147,2,86,147,2
+	.dl	0,0
+	; End of section
+
+	.debug		.debug_frame
+_878:
+	.dl	184
+	.dl	-1
+	.db	3,0,2,2,173,2,15,60,127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_879-_883
+_883:
+	.db	146,177,2,0,47
+	.dw	_882-_884
+_884:
+_879:
+	.db	18,49,46,40
+	.dw	_880-_885
+_885:
+	.db	146,178,2,0,47
+	.dw	_882-_886
+_886:
+_880:
+	.db	18,50,46,40
+	.dw	_881-_887
+_887:
+	.db	146,179,2,0,47
+	.dw	_882-_888
+_888:
+_881:
+	.db	146,180,2,0
+_882:
+	.db	22,19,62,36,33,48,34,16,173,2,12,19,146,176,2,0,64,36,146,161,2,0,33,8,15,22,161,2,5,19,146,161,2,4,8
+	.db	162,2,8,166,2,8,177,2,8,178,2,8,179,2,8,180,2,8,0,8,1,8,6,8,7,8,8,8,9,8,10,8,167,2,8,168,2,8,169,2,8,170
+	.db	2,8,171,2,8,172,2,16,174,2,12,19,146,176,2,0,64,36,146,161,2,0,33,16,175,2,12,19,146,176,2,0,64,36,146
+	.db	161,2,2,33,8,176,2
+	; End of section
+
+	.debug		.debug_frame, cluster 'APPS_UpdateChannel'
+	.dl	1668
+	.dl	_878,_22,_92-_22
+	.db	4
+	.dl	(_128-_22)/2
+	.db	15,60,127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_370-_374
+_374:
+	.db	146,177,2,0,47
+	.dw	_373-_375
+_375:
+_370:
+	.db	18,49,46,40
+	.dw	_371-_376
+_376:
+	.db	146,178,2,0,47
+	.dw	_373-_377
+_377:
+_371:
+	.db	18,50,46,40
+	.dw	_372-_378
+_378:
+	.db	146,179,2,0,47
+	.dw	_373-_379
+_379:
+_372:
+	.db	146,180,2,0
+_373:
+	.db	22,19,62,36,33,50,34,22,15,3,19,127,2,4
+	.dl	(_139-_128)/2
+	.db	15,60,127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_380-_384
+_384:
+	.db	146,177,2,0,47
+	.dw	_383-_385
+_385:
+_380:
+	.db	18,49,46,40
+	.dw	_381-_386
+_386:
+	.db	146,178,2,0,47
+	.dw	_383-_387
+_387:
+_381:
+	.db	18,50,46,40
+	.dw	_382-_388
+_388:
+	.db	146,179,2,0,47
+	.dw	_383-_389
+_389:
+_382:
+	.db	146,180,2,0
+_383:
+	.db	22,19,62,36,33,52,34,22,15,3,19,127,4,4
+	.dl	(_150-_139)/2
+	.db	15,60,127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_390-_394
+_394:
+	.db	146,177,2,0,47
+	.dw	_393-_395
+_395:
+_390:
+	.db	18,49,46,40
+	.dw	_391-_396
+_396:
+	.db	146,178,2,0,47
+	.dw	_393-_397
+_397:
+_391:
+	.db	18,50,46,40
+	.dw	_392-_398
+_398:
+	.db	146,179,2,0,47
+	.dw	_393-_399
+_399:
+_392:
+	.db	146,180,2,0
+_393:
+	.db	22,19,62,36,33,54,34,22,15,3,19,127,6,4
+	.dl	(_161-_150)/2
+	.db	15,60,127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_400-_404
+_404:
+	.db	146,177,2,0,47
+	.dw	_403-_405
+_405:
+_400:
+	.db	18,49,46,40
+	.dw	_401-_406
+_406:
+	.db	146,178,2,0,47
+	.dw	_403-_407
+_407:
+_401:
+	.db	18,50,46,40
+	.dw	_402-_408
+_408:
+	.db	146,179,2,0,47
+	.dw	_403-_409
+_409:
+_402:
+	.db	146,180,2,0
+_403:
+	.db	22,19,62,36,33,56,34,22,15,3,19,127,8,17,0,124,4
+	.dl	(_172-_161)/2
+	.db	15,60,127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_410-_414
+_414:
+	.db	146,177,2,0,47
+	.dw	_413-_415
+_415:
+_410:
+	.db	18,49,46,40
+	.dw	_411-_416
+_416:
+	.db	146,178,2,0,47
+	.dw	_413-_417
+_417:
+_411:
+	.db	18,50,46,40
+	.dw	_412-_418
+_418:
+	.db	146,179,2,0,47
+	.dw	_413-_419
+_419:
+_412:
+	.db	146,180,2,0
+_413:
+	.db	22,19,62,36,33,58,34,22,15,3,19,127,10,17,1,123,4
+	.dl	(_183-_172)/2
+	.db	15,60,127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_420-_424
+_424:
+	.db	146,177,2,0,47
+	.dw	_423-_425
+_425:
+_420:
+	.db	18,49,46,40
+	.dw	_421-_426
+_426:
+	.db	146,178,2,0,47
+	.dw	_423-_427
+_427:
+_421:
+	.db	18,50,46,40
+	.dw	_422-_428
+_428:
+	.db	146,179,2,0,47
+	.dw	_423-_429
+_429:
+_422:
+	.db	146,180,2,0
+_423:
+	.db	22,19,62,36,33,60,34,22,15,3,19,127,12,17,6,122,4
+	.dl	(_194-_183)/2
+	.db	15,60,127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_430-_434
+_434:
+	.db	146,177,2,0,47
+	.dw	_433-_435
+_435:
+_430:
+	.db	18,49,46,40
+	.dw	_431-_436
+_436:
+	.db	146,178,2,0,47
+	.dw	_433-_437
+_437:
+_431:
+	.db	18,50,46,40
+	.dw	_432-_438
+_438:
+	.db	146,179,2,0,47
+	.dw	_433-_439
+_439:
+_432:
+	.db	146,180,2,0
+_433:
+	.db	22,19,62,36,33,62,34,22,15,3,19,127,14,17,7,121,4
+	.dl	(_205-_194)/2
+	.db	15,60,127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_440-_444
+_444:
+	.db	146,177,2,0,47
+	.dw	_443-_445
+_445:
+_440:
+	.db	18,49,46,40
+	.dw	_441-_446
+_446:
+	.db	146,178,2,0,47
+	.dw	_443-_447
+_447:
+_441:
+	.db	18,50,46,40
+	.dw	_442-_448
+_448:
+	.db	146,179,2,0,47
+	.dw	_443-_449
+_449:
+_442:
+	.db	146,180,2,0
+_443:
+	.db	22,19,62,36,33,64,34,22,15,3,19,127,16,17,8,120,4
+	.dl	(_216-_205)/2
+	.db	15,60,127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_450-_454
+_454:
+	.db	146,177,2,0,47
+	.dw	_453-_455
+_455:
+_450:
+	.db	18,49,46,40
+	.dw	_451-_456
+_456:
+	.db	146,178,2,0,47
+	.dw	_453-_457
+_457:
+_451:
+	.db	18,50,46,40
+	.dw	_452-_458
+_458:
+	.db	146,179,2,0,47
+	.dw	_453-_459
+_459:
+_452:
+	.db	146,180,2,0
+_453:
+	.db	22,19,62,36,33,66,34,22,15,3,19,127,18,17,9,119,4
+	.dl	(_227-_216)/2
+	.db	15,60,127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_460-_464
+_464:
+	.db	146,177,2,0,47
+	.dw	_463-_465
+_465:
+_460:
+	.db	18,49,46,40
+	.dw	_461-_466
+_466:
+	.db	146,178,2,0,47
+	.dw	_463-_467
+_467:
+_461:
+	.db	18,50,46,40
+	.dw	_462-_468
+_468:
+	.db	146,179,2,0,47
+	.dw	_463-_469
+_469:
+_462:
+	.db	146,180,2,0
+_463:
+	.db	22,19,62,36,33,68,34,22,15,3,19,127,20,17,10,118,4
+	.dl	(_238-_227)/2
+	.db	15,60,127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_470-_474
+_474:
+	.db	146,177,2,0,47
+	.dw	_473-_475
+_475:
+_470:
+	.db	18,49,46,40
+	.dw	_471-_476
+_476:
+	.db	146,178,2,0,47
+	.dw	_473-_477
+_477:
+_471:
+	.db	18,50,46,40
+	.dw	_472-_478
+_478:
+	.db	146,179,2,0,47
+	.dw	_473-_479
+_479:
+_472:
+	.db	146,180,2,0
+_473:
+	.db	22,19,62,36,33,76,34,22,15,3,19,127,28,4
+	.dl	(_249-_238)/2
+	.db	15,60,127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_480-_484
+_484:
+	.db	146,177,2,0,47
+	.dw	_483-_485
+_485:
+_480:
+	.db	18,49,46,40
+	.dw	_481-_486
+_486:
+	.db	146,178,2,0,47
+	.dw	_483-_487
+_487:
+_481:
+	.db	18,50,46,40
+	.dw	_482-_488
+_488:
+	.db	146,179,2,0,47
+	.dw	_483-_489
+_489:
+_482:
+	.db	146,180,2,0
+_483:
+	.db	22,19,62,36,33,68,34,22,15,3,19,127,20,4
+	.dl	(_260-_249)/2
+	.db	15,60,127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_490-_494
+_494:
+	.db	146,177,2,0,47
+	.dw	_493-_495
+_495:
+_490:
+	.db	18,49,46,40
+	.dw	_491-_496
+_496:
+	.db	146,178,2,0,47
+	.dw	_493-_497
+_497:
+_491:
+	.db	18,50,46,40
+	.dw	_492-_498
+_498:
+	.db	146,179,2,0,47
+	.dw	_493-_499
+_499:
+_492:
+	.db	146,180,2,0
+_493:
+	.db	22,19,62,36,33,66,34,22,15,3,19,127,18,202,4
+	.dl	(_271-_260)/2
+	.db	15,60,127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_500-_504
+_504:
+	.db	146,177,2,0,47
+	.dw	_503-_505
+_505:
+_500:
+	.db	18,49,46,40
+	.dw	_501-_506
+_506:
+	.db	146,178,2,0,47
+	.dw	_503-_507
+_507:
+_501:
+	.db	18,50,46,40
+	.dw	_502-_508
+_508:
+	.db	146,179,2,0,47
+	.dw	_503-_509
+_509:
+_502:
+	.db	146,180,2,0
+_503:
+	.db	22,19,62,36,33,64,34,22,15,3,19,127,16,201,4
+	.dl	(_282-_271)/2
+	.db	15,60,127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_510-_514
+_514:
+	.db	146,177,2,0,47
+	.dw	_513-_515
+_515:
+_510:
+	.db	18,49,46,40
+	.dw	_511-_516
+_516:
+	.db	146,178,2,0,47
+	.dw	_513-_517
+_517:
+_511:
+	.db	18,50,46,40
+	.dw	_512-_518
+_518:
+	.db	146,179,2,0,47
+	.dw	_513-_519
+_519:
+_512:
+	.db	146,180,2,0
+_513:
+	.db	22,19,62,36,33,62,34,22,15,3,19,127,14,200,4
+	.dl	(_293-_282)/2
+	.db	15,60,127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_520-_524
+_524:
+	.db	146,177,2,0,47
+	.dw	_523-_525
+_525:
+_520:
+	.db	18,49,46,40
+	.dw	_521-_526
+_526:
+	.db	146,178,2,0,47
+	.dw	_523-_527
+_527:
+_521:
+	.db	18,50,46,40
+	.dw	_522-_528
+_528:
+	.db	146,179,2,0,47
+	.dw	_523-_529
+_529:
+_522:
+	.db	146,180,2,0
+_523:
+	.db	22,19,62,36,33,60,34,22,15,3,19,127,12,199,4
+	.dl	(_304-_293)/2
+	.db	15,60,127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_530-_534
+_534:
+	.db	146,177,2,0,47
+	.dw	_533-_535
+_535:
+_530:
+	.db	18,49,46,40
+	.dw	_531-_536
+_536:
+	.db	146,178,2,0,47
+	.dw	_533-_537
+_537:
+_531:
+	.db	18,50,46,40
+	.dw	_532-_538
+_538:
+	.db	146,179,2,0,47
+	.dw	_533-_539
+_539:
+_532:
+	.db	146,180,2,0
+_533:
+	.db	22,19,62,36,33,58,34,22,15,3,19,127,10,198,4
+	.dl	(_315-_304)/2
+	.db	15,60,127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_540-_544
+_544:
+	.db	146,177,2,0,47
+	.dw	_543-_545
+_545:
+_540:
+	.db	18,49,46,40
+	.dw	_541-_546
+_546:
+	.db	146,178,2,0,47
+	.dw	_543-_547
+_547:
+_541:
+	.db	18,50,46,40
+	.dw	_542-_548
+_548:
+	.db	146,179,2,0,47
+	.dw	_543-_549
+_549:
+_542:
+	.db	146,180,2,0
+_543:
+	.db	22,19,62,36,33,56,34,22,15,3,19,127,8,193,4
+	.dl	(_326-_315)/2
+	.db	15,60,127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_550-_554
+_554:
+	.db	146,177,2,0,47
+	.dw	_553-_555
+_555:
+_550:
+	.db	18,49,46,40
+	.dw	_551-_556
+_556:
+	.db	146,178,2,0,47
+	.dw	_553-_557
+_557:
+_551:
+	.db	18,50,46,40
+	.dw	_552-_558
+_558:
+	.db	146,179,2,0,47
+	.dw	_553-_559
+_559:
+_552:
+	.db	146,180,2,0
+_553:
+	.db	22,19,62,36,33,54,34,22,15,3,19,127,6,192,4
+	.dl	(_560-_326)/2
+	.db	6,163,2,4
+	.dl	(_337-_560)/2
+	.db	15,60,127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_561-_565
+_565:
+	.db	146,177,2,0,47
+	.dw	_564-_566
+_566:
+_561:
+	.db	18,49,46,40
+	.dw	_562-_567
+_567:
+	.db	146,178,2,0,47
+	.dw	_564-_568
+_568:
+_562:
+	.db	18,50,46,40
+	.dw	_563-_569
+_569:
+	.db	146,179,2,0,47
+	.dw	_564-_570
+_570:
+_563:
+	.db	146,180,2,0
+_564:
+	.db	22,19,62,36,33,52,34,22,15,3,19,127,4,4
+	.dl	(_571-_337)/2
+	.db	6,164,2,4
+	.dl	(_348-_571)/2
+	.db	15,60,127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_572-_576
+_576:
+	.db	146,177,2,0,47
+	.dw	_575-_577
+_577:
+_572:
+	.db	18,49,46,40
+	.dw	_573-_578
+_578:
+	.db	146,178,2,0,47
+	.dw	_575-_579
+_579:
+_573:
+	.db	18,50,46,40
+	.dw	_574-_580
+_580:
+	.db	146,179,2,0,47
+	.dw	_575-_581
+_581:
+_574:
+	.db	146,180,2,0
+_575:
+	.db	22,19,62,36,33,50,34,22,15,3,19,127,2,4
+	.dl	(_582-_348)/2
+	.db	6,165,2,4
+	.dl	(_359-_582)/2
+	.db	15,60,127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_583-_587
+_587:
+	.db	146,177,2,0,47
+	.dw	_586-_588
+_588:
+_583:
+	.db	18,49,46,40
+	.dw	_584-_589
+_589:
+	.db	146,178,2,0,47
+	.dw	_586-_590
+_590:
+_584:
+	.db	18,50,46,40
+	.dw	_585-_591
+_591:
+	.db	146,179,2,0,47
+	.dw	_586-_592
+_592:
+_585:
+	.db	146,180,2,0
+_586:
+	.db	22,19,62,36,33,48,34,8,15,0,0
+	; End of section
+
+	.debug		.debug_frame, cluster 'APPS_Init'
+	.dl	12
+	.dl	_878,_34,_77-_34
+	; End of section
+
+	.debug		.debug_frame, cluster 'APPS_Update'
+	.dl	608
+	.dl	_878,_46,_82-_46
+	.db	4
+	.dl	(_612-_46)/2
+	.db	15,60,127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_700-_704
+_704:
+	.db	146,177,2,0,47
+	.dw	_703-_705
+_705:
+_700:
+	.db	18,49,46,40
+	.dw	_701-_706
+_706:
+	.db	146,178,2,0,47
+	.dw	_703-_707
+_707:
+_701:
+	.db	18,50,46,40
+	.dw	_702-_708
+_708:
+	.db	146,179,2,0,47
+	.dw	_703-_709
+_709:
+_702:
+	.db	146,180,2,0
+_703:
+	.db	22,19,62,36,33,50,34,22,15,3,19,127,2,17,6,127,4
+	.dl	(_623-_612)/2
+	.db	15,60,127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_710-_714
+_714:
+	.db	146,177,2,0,47
+	.dw	_713-_715
+_715:
+_710:
+	.db	18,49,46,40
+	.dw	_711-_716
+_716:
+	.db	146,178,2,0,47
+	.dw	_713-_717
+_717:
+_711:
+	.db	18,50,46,40
+	.dw	_712-_718
+_718:
+	.db	146,179,2,0,47
+	.dw	_713-_719
+_719:
+_712:
+	.db	146,180,2,0
+_713:
+	.db	22,19,62,36,33,52,34,22,15,3,19,127,4,17,8,126,4
+	.dl	(_634-_623)/2
+	.db	15,60,127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_720-_724
+_724:
+	.db	146,177,2,0,47
+	.dw	_723-_725
+_725:
+_720:
+	.db	18,49,46,40
+	.dw	_721-_726
+_726:
+	.db	146,178,2,0,47
+	.dw	_723-_727
+_727:
+_721:
+	.db	18,50,46,40
+	.dw	_722-_728
+_728:
+	.db	146,179,2,0,47
+	.dw	_723-_729
+_729:
+_722:
+	.db	146,180,2,0
+_723:
+	.db	22,19,62,36,33,54,34,22,15,3,19,127,6,17,9,125,4
+	.dl	(_645-_634)/2
+	.db	15,60,127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_730-_734
+_734:
+	.db	146,177,2,0,47
+	.dw	_733-_735
+_735:
+_730:
+	.db	18,49,46,40
+	.dw	_731-_736
+_736:
+	.db	146,178,2,0,47
+	.dw	_733-_737
+_737:
+_731:
+	.db	18,50,46,40
+	.dw	_732-_738
+_738:
+	.db	146,179,2,0,47
+	.dw	_733-_739
+_739:
+_732:
+	.db	146,180,2,0
+_733:
+	.db	22,19,62,36,33,56,34,22,15,3,19,127,8,17,10,124,4
+	.dl	(_656-_645)/2
+	.db	15,60,127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_740-_744
+_744:
+	.db	146,177,2,0,47
+	.dw	_743-_745
+_745:
+_740:
+	.db	18,49,46,40
+	.dw	_741-_746
+_746:
+	.db	146,178,2,0,47
+	.dw	_743-_747
+_747:
+_741:
+	.db	18,50,46,40
+	.dw	_742-_748
+_748:
+	.db	146,179,2,0,47
+	.dw	_743-_749
+_749:
+_742:
+	.db	146,180,2,0
+_743:
+	.db	22,19,62,36,33,54,34,22,15,3,19,127,6,202,4
+	.dl	(_667-_656)/2
+	.db	15,60,127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_750-_754
+_754:
+	.db	146,177,2,0,47
+	.dw	_753-_755
+_755:
+_750:
+	.db	18,49,46,40
+	.dw	_751-_756
+_756:
+	.db	146,178,2,0,47
+	.dw	_753-_757
+_757:
+_751:
+	.db	18,50,46,40
+	.dw	_752-_758
+_758:
+	.db	146,179,2,0,47
+	.dw	_753-_759
+_759:
+_752:
+	.db	146,180,2,0
+_753:
+	.db	22,19,62,36,33,52,34,22,15,3,19,127,4,201,4
+	.dl	(_678-_667)/2
+	.db	15,60,127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_760-_764
+_764:
+	.db	146,177,2,0,47
+	.dw	_763-_765
+_765:
+_760:
+	.db	18,49,46,40
+	.dw	_761-_766
+_766:
+	.db	146,178,2,0,47
+	.dw	_763-_767
+_767:
+_761:
+	.db	18,50,46,40
+	.dw	_762-_768
+_768:
+	.db	146,179,2,0,47
+	.dw	_763-_769
+_769:
+_762:
+	.db	146,180,2,0
+_763:
+	.db	22,19,62,36,33,50,34,22,15,3,19,127,2,200,4
+	.dl	(_689-_678)/2
+	.db	15,60,127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_770-_774
+_774:
+	.db	146,177,2,0,47
+	.dw	_773-_775
+_775:
+_770:
+	.db	18,49,46,40
+	.dw	_771-_776
+_776:
+	.db	146,178,2,0,47
+	.dw	_773-_777
+_777:
+_771:
+	.db	18,50,46,40
+	.dw	_772-_778
+_778:
+	.db	146,179,2,0,47
+	.dw	_773-_779
+_779:
+_772:
+	.db	146,180,2,0
+_773:
+	.db	22,19,62,36,33,48,34,8,15,198
+	; End of section
+
+	.debug		.debug_frame, cluster 'APPS_GetData'
+	.dl	28
+	.dl	_878,_58,_87-_58
+	.db	8,160,2,8,4,8,5,8,11,8,12,8,13,8,14,0
+	; End of section
+
+
+
+	; Module end
+	.end
