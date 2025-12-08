@@ -4,6 +4,7 @@
 
 #include "utilities.h"
 #include "can_manager.h"
+#include "apps.h"
 
 #define CYCLE_TIME MsToUs(5ul)
 
@@ -60,7 +61,7 @@ void main (void)
 
     /* Set up FIFOs for all CAN messages */
     CAN_Manager_Init();
-
+    APPS_Init();
     
 
     /*******************************************/
@@ -75,7 +76,7 @@ void main (void)
         /*                 INPUTS                  */
         /*******************************************/
         //RTD_Update();
-        //APPS_Update();
+        APPS_Update();
         //BSE_Update();
         CAN_Manager_ProcessRxMessages();  // Read CAN
         

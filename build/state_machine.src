@@ -1,0 +1,349 @@
+	; TASKING VX-toolset for C166: C compiler v4.0r1 Build 741 SN 09467762
+	; Options: -f cc32312a -c99 -Mh --fp-model=FT -Cxc2287 --core=xc16x -DTASKING_VIPER -D__USIC_MEM_TYPE=__PAGE_080_MEM_TYPE -D__MULTICAN_MEM_TYPE=__PAGE_080_MEM_TYPE -DTTC60 -DRTS_TTC_FLASH_DATE_YEAR=2025 -DRTS_TTC_FLASH_DATE_MONTH=12 -DRTS_TTC_FLASH_DATE_DAY=8 -DRTS_TTC_FLASH_DATE_HOUR=3 -DRTS_TTC_FLASH_DATE_MINUTE=42 -I..\..\..\Environment\inc -I..\..\..\Environment\inc_int -I..\..\..\Environment\bsp -I. --tradeoff=0 --no-tasking-sfr -ga --language=+cmp14,+div32,-gcc,-strings -OabcefgiklopRsY,+predict --source --mac -o build\state_machine.src
+	; Module start
+	.source	'src/state_machine.c'
+code_StateMachine_Update	.section	code, cluster 'StateMachine_Update', new
+	.global	_StateMachine_Update
+
+; src/state_machine.c	     1  #include "IO_Constants.h"
+; src/state_machine.c	     2  #include "state_machine.h"
+; src/state_machine.c	     3  #include "apps.h"
+; src/state_machine.c	     4  #include "rtd.h"
+; src/state_machine.c	     5  
+; src/state_machine.c	     6  static VCU_State_t current_state;
+; src/state_machine.c	     7  
+; src/state_machine.c	     8  void StateMachine_Update(void)
+; Function _StateMachine_Update
+_3:
+_StateMachine_Update	.proc	far
+
+; src/state_machine.c	     9  {
+; src/state_machine.c	    10      const APPS_Data_t* apps = APPS_GetData();
+	call	_APPS_GetData
+_31:
+
+; src/state_machine.c	    11      const bool rtd_active = RTD_IsActive();
+	call	_RTD_IsActive
+_32:
+
+; src/state_machine.c	    12  
+; src/state_machine.c	    13      switch (current_state) {
+; src/state_machine.c	    14  
+; src/state_machine.c	    15          case VCU_STATE_NOT_READY:
+; src/state_machine.c	    16              break;
+; src/state_machine.c	    17          case VCU_STATE_PLAYING_RTD_SOUND:
+; src/state_machine.c	    18              break;
+; src/state_machine.c	    19          case VCU_STATE_DRIVING:
+; src/state_machine.c	    20              break;
+; src/state_machine.c	    21          case VCU_STATE_SOFT_ERROR:
+; src/state_machine.c	    22              break;
+; src/state_machine.c	    23          case VCU_STATE_HARD_ERROR:
+; src/state_machine.c	    24              break;
+; src/state_machine.c	    25          default:
+; src/state_machine.c	    26              break;
+; src/state_machine.c	    27      }
+; src/state_machine.c	    27  }
+
+	ret
+_22:
+	; End of function
+	; End of section
+
+	.calls	'_StateMachine_Update','_APPS_GetData'
+	.calls	'_StateMachine_Update','_RTD_IsActive'
+	.calls	'_StateMachine_Update','',4,0
+	.extern	_APPS_GetData : far
+	.extern	_RTD_IsActive : far
+	.debug		.debug_info
+_15:
+	.dl	1016
+	.dw	3
+	.dl	_16
+	.db	4
+_14:
+	.db	1
+	.db	'src/state_machine.c',0
+	.db	'TASKING VX-toolset for C166: C compiler',0
+	.db	'C:\\Users\\caleb\\EV\\_TREV4\\Programming Environments\\Environment\\github\\TREV4-Controls\\',0,12,1
+	.dl	_17
+	.db	2
+	.db	'unsigned int',0,2,7,2
+	.db	'unsigned char',0,1,8,2
+	.db	'unsigned long int',0,4,7,3,1,7,9,14,4
+	.db	'value',0
+	.dl	163
+	.db	2,2,35,0,4
+	.db	'raw_mv',0
+	.dl	163
+	.db	2,2,35,2,4
+	.db	'filt_mv',0
+	.dl	163
+	.db	2,2,35,4,4
+	.db	'valid',0
+	.dl	179
+	.db	1,2,35,6,4
+	.db	'out_of_range',0
+	.dl	179
+	.db	1,2,35,7,4
+	.db	'stale',0
+	.dl	179
+	.db	1,2,35,8,4
+	.db	'adc_err',0
+	.dl	179
+	.db	1,2,35,9,4
+	.db	'last_update_us',0
+	.dl	196
+	.db	4,2,35,10,0,3,1,21,9,32,4
+	.db	'apps_value',0
+	.dl	163
+	.db	2,2,35,0,4
+	.db	'apps1',0
+	.dl	217
+	.db	14,2,35,2,4
+	.db	'apps2',0
+	.dl	217
+	.db	14,2,35,16,4
+	.db	'valid',0
+	.dl	179
+	.db	1,2,35,30,4
+	.db	'implausible',0
+	.dl	179
+	.db	1,2,35,31,0,5
+	.dl	364
+	.db	6,5
+	.dl	456
+	.db	7
+	.db	'APPS_GetData',0,1,42,20,6
+	.dl	461
+	.db	1,1,1,1,7
+	.db	'RTD_IsActive',0,2,14,6,6
+	.dl	179
+	.db	1,1,1,1,8
+	.db	'void',0,6,5
+	.dl	519
+	.db	9
+	.db	'__prof_adm',0,3,1,1
+	.dl	525
+	.db	9
+	.db	'__codeptr',0,3,1,1
+	.dl	196
+	.db	9
+	.db	'ubyte1',0,4,21,29
+	.dl	179
+	.db	9
+	.db	'ubyte2',0,4,22,29
+	.dl	163
+	.db	9
+	.db	'ubyte4',0,4,23,29
+	.dl	196
+	.db	9
+	.db	'bool',0,4,31,29
+	.dl	179
+	.db	10
+	.db	'_io_driver_reset_reason',0,5,162,3,14,1,11
+	.db	'IO_DRIVER_RESET_REASON_PORST',0,0,11
+	.db	'IO_DRIVER_RESET_REASON_WDT',0,1,11
+	.db	'IO_DRIVER_RESET_REASON_TRAP',0,2,11
+	.db	'IO_DRIVER_RESET_REASON_SW',0,3,11
+	.db	'IO_DRIVER_RESET_REASON_UNKNOWN',0,4,0,9
+	.db	'IO_DRIVER_RESET_REASON',0,5,169,3,3
+	.dl	626
+	.db	12
+	.db	'_io_driver_trap_info',0,5,174,3,16,10,4
+	.db	'trap_id',0
+	.dl	163
+	.db	2,2,35,0,4
+	.db	'cpu_tfr',0
+	.dl	163
+	.db	2,2,35,2,4
+	.db	'cpu_trapstat',0
+	.dl	163
+	.db	2,2,35,4,4
+	.db	'fault_location',0
+	.dl	196
+	.db	4,2,35,6,0,9
+	.db	'IO_DRIVER_TRAP_INFO',0,5,197,3,3
+	.dl	840
+	.db	9
+	.db	'APPS_Sensor_t',0,1,19,3
+	.dl	217
+	.db	9
+	.db	'APPS_Data_t',0,1,37,3
+	.dl	364
+	.db	0
+	; End of section
+
+	.debug		.debug_abbrev
+_16:
+	.db	1,17,1,3,8,37,8,27,8,19,15,128,70,12,16,6,0,0,2,36,0,3,8,11,15,62,15,0,0,3,19,1,58,15,59,15,57,15,11,15
+	.db	0,0,4,13,0,3,8,73,19,11,15,56,9,0,0,5,38,0,73,19,0,0,6,15,0,51,15,73,19,0,0,7,46,0,3,8,58,15,59,15,57
+	.db	15,51,15,73,19,54,15,39,12,63,12,60,12,0,0,8,59,0,3,8,0,0,9,22,0,3,8,58,15,59,15,57,15,73,19,0,0,10,4
+	.db	1,3,8,58,15,59,15,57,15,11,15,0,0,11,40,0,3,8,28,13,0,0,12,19,1,3,8,58,15,59,15,57,15,11,15,0,0,0
+	; End of section
+
+	.debug		.debug_line
+_17:
+	.dl	_24-_23
+_23:
+	.dw	3
+	.dl	_26-_25
+_25:
+	.db	2,1,-4,9,10,0,1,1,1,1,0,0,0,1
+	.db	'..\\..\\..\\Environment\\inc',0,0
+	.db	'src\\apps.h',0,0,0,0
+	.db	'src\\rtd.h',0,0,0,0
+	.db	'src/state_machine.c',0,0,0,0
+	.db	'ptypes_xe167.h',0,1,0,0
+	.db	'IO_Driver.h',0,1,0,0,0
+_26:
+_24:
+	; End of section
+
+	.debug		.debug_pubnames
+	.dl	48
+	.dw	2
+	.dl	_15,1020,467
+	.db	'APPS_GetData',0
+	.dl	493
+	.db	'RTD_IsActive',0
+	.dl	0
+	; End of section
+
+	.debug		.debug_info, cluster 'StateMachine_Update'
+_18:
+	.dl	232
+	.dw	3
+	.dl	_19
+	.db	4,1
+	.db	'src/state_machine.c',0
+	.db	'TASKING VX-toolset for C166: C compiler',0
+	.db	'C:\\Users\\caleb\\EV\\_TREV4\\Programming Environments\\Environment\\github\\TREV4-Controls\\',0,12,1
+	.dl	_21,_20
+	.db	2
+	.dl	_14
+	.db	3
+	.db	'StateMachine_Update',0,1,8,6,6,1,1,1
+	.dl	_3,_22,_2
+	.db	12,19,146,176,2,0,64,36,146,161,2,0,33,4
+	.dl	_3,_22
+	.db	0,0
+	; End of section
+
+	.debug		.debug_abbrev, cluster 'StateMachine_Update'
+_19:
+	.db	1,17,1,3,8,37,8,27,8,19,15,128,70,12,85,6,16,6,0,0,2,61,0,24,16,0,0,3,46,1,3,8,58,15,59,15,57,15,51,15
+	.db	54,15,39,12,63,12,17,1,18,1,64,6,42,9,0,0,4,11,0,17,1,18,1,0,0,0
+	; End of section
+
+	.debug		.debug_line, cluster 'StateMachine_Update'
+_20:
+	.dl	_28-_27
+_27:
+	.dw	3
+	.dl	_30-_29
+_29:
+	.db	2,1,-4,9,10,0,1,1,1,1,0,0,0,1,0
+	.db	'src/state_machine.c',0,0,0,0,0
+_30:
+	.db	5,43,7,0,5,2
+	.dl	_3
+	.db	3,9,1,5,41,9
+	.dw	_31-_3
+	.db	3,1,1,5,1,9
+	.dw	_32-_31
+	.db	3,17,1,7,9
+	.dw	_22-_32
+	.db	0,1,1
+_28:
+	; End of section
+
+	.debug		.debug_ranges, cluster 'StateMachine_Update'
+_21:
+	.dl	-1,_3,0,_22-_3,0,0
+	; End of section
+
+	.debug		.debug_pubnames
+	.dl	38
+	.dw	2
+	.dl	_18,236,172
+	.db	'StateMachine_Update',0
+	.dl	0
+	; End of section
+
+	.debug		.debug_loc, cluster 'StateMachine_Update'
+_2:
+	.dl	-1,_3,0,_22-_3
+	.dw	58
+	.db	127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_4-_8
+_8:
+	.db	146,177,2,0,47
+	.dw	_7-_9
+_9:
+_4:
+	.db	18,49,46,40
+	.dw	_5-_10
+_10:
+	.db	146,178,2,0,47
+	.dw	_7-_11
+_11:
+_5:
+	.db	18,50,46,40
+	.dw	_6-_12
+_12:
+	.db	146,179,2,0,47
+	.dw	_7-_13
+_13:
+_6:
+	.db	146,180,2,0
+_7:
+	.db	22,19,62,36,33
+	.dl	0,0
+	; End of section
+
+	.debug		.debug_frame
+_33:
+	.dl	184
+	.dl	-1
+	.db	3,0,2,2,173,2,15,60,127,0,18,10
+	.dw	16383
+	.db	26,22,62,37,18,48,46,40
+	.dw	_34-_38
+_38:
+	.db	146,177,2,0,47
+	.dw	_37-_39
+_39:
+_34:
+	.db	18,49,46,40
+	.dw	_35-_40
+_40:
+	.db	146,178,2,0,47
+	.dw	_37-_41
+_41:
+_35:
+	.db	18,50,46,40
+	.dw	_36-_42
+_42:
+	.db	146,179,2,0,47
+	.dw	_37-_43
+_43:
+_36:
+	.db	146,180,2,0
+_37:
+	.db	22,19,62,36,33,48,34,16,173,2,12,19,146,176,2,0,64,36,146,161,2,0,33,8,15,22,161,2,5,19,146,161,2,4,8
+	.db	162,2,8,166,2,8,177,2,8,178,2,8,179,2,8,180,2,8,0,8,1,8,6,8,7,8,8,8,9,8,10,8,167,2,8,168,2,8,169,2,8,170
+	.db	2,8,171,2,8,172,2,16,174,2,12,19,146,176,2,0,64,36,146,161,2,0,33,16,175,2,12,19,146,176,2,0,64,36,146
+	.db	161,2,2,33,8,176,2
+	; End of section
+
+	.debug		.debug_frame, cluster 'StateMachine_Update'
+	.dl	12
+	.dl	_33,_3,_22-_3
+	; End of section
+
+
+
+	; Module end
+	.end
