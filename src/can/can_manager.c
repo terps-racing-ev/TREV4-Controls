@@ -4,12 +4,13 @@
 
 #include "can_manager.h"
 #include "can_util.h"
-#include "utilities.h"
+#include "util/utilities.h"
 
 #define CONTROLS_CAN_CHANNEL IO_CAN_CHANNEL_0
 #define TELEMETRY_CAN_CHANNEL IO_CAN_CHANNEL_1
 
 // Buffer size for every rx message, will pretty much always be at 0 or 1
+// since we poll (200hz) faster than we will receive (50hz)
 #define RX_FIFO_BUFFER_SIZE 8
 
 // Buffer size for an entire tx channel
@@ -29,6 +30,13 @@ static ubyte1 inverter_status_rx_handle;
 static ubyte1 controls_tx_fifo_handle;
 static ubyte1 telemetry_tx_fifo_handle;
 
+// Error counters
+ubyte1 controls_tx_error_ctr;
+ubyte1 controls_rx_error_ctr;
+
+ubyte1 telemetry_tx_error_ctr;
+ubyte1 telemetry_rx_error_ctr;
+
 
 /**************************************************************************
 * Private RX Data
@@ -43,24 +51,22 @@ static InverterStatus_RX_Data_t inverter_status_rx_data = {0};
 
 void CAN_Manager_Init(void)
 {
-    /* initialize can channel and fifo buffer */
+    /* initialize CAN channel and FIFO buffer */
     IO_CAN_Init( CONTROLS_CAN_CHANNEL
                , BAUD_RATE
                , 0
                , 0
                , 0);
-    ubyte1 controls_tx_error_ctr;
-    ubyte1 controls_rx_error_ctr;
+    
 
     IO_CAN_Init( TELEMETRY_CAN_CHANNEL
                , BAUD_RATE
                , 0
                , 0
                , 0);
-    ubyte1 telemetry_tx_error_ctr;
-    ubyte1 telemetry_rx_error_ctr;
+    
 
-    /* Initialize fifos for txing messages */
+    /* Initialize FIFOs for txing messages */
     IO_CAN_ConfigFIFO( &controls_tx_fifo_handle
     				 , CONTROLS_CAN_CHANNEL
     				 , TX_FIFO_BUFFER_SIZE
@@ -77,7 +83,7 @@ void CAN_Manager_Init(void)
                     , 0
                     , 0);
 
-    // rx
+    /* Initialize FIFOs for rxing messages */
     IO_CAN_ConfigFIFO( &inverter_status_rx_handle
                     , CONTROLS_CAN_CHANNEL
                     , RX_FIFO_BUFFER_SIZE

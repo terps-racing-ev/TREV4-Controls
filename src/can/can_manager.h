@@ -2,7 +2,6 @@
 #define CAN_MANAGER_H
 
 #include "IO_Constants.h"
-#include "can_util.h"
 
 #define BAUD_RATE 500
 

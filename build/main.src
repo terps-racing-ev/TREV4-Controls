@@ -1,5 +1,5 @@
 	; TASKING VX-toolset for C166: C compiler v4.0r1 Build 741 SN 09467762
-	; Options: -f cc76164a -c99 -Mh --fp-model=FT -Cxc2287 --core=xc16x -DTASKING_VIPER -D__USIC_MEM_TYPE=__PAGE_080_MEM_TYPE -D__MULTICAN_MEM_TYPE=__PAGE_080_MEM_TYPE -DTTC60 -DRTS_TTC_FLASH_DATE_YEAR=2025 -DRTS_TTC_FLASH_DATE_MONTH=12 -DRTS_TTC_FLASH_DATE_DAY=8 -DRTS_TTC_FLASH_DATE_HOUR=3 -DRTS_TTC_FLASH_DATE_MINUTE=42 -I..\..\..\Environment\inc -I..\..\..\Environment\inc_int -I..\..\..\Environment\bsp -I. --tradeoff=0 --no-tasking-sfr -ga --language=+cmp14,+div32,-gcc,-strings -OabcefgiklopRsY,+predict --source --mac -o build\main.src
+	; Options: -f cc31596a -c99 -Mh --fp-model=FT -Cxc2287 --core=xc16x -DTASKING_VIPER -D__USIC_MEM_TYPE=__PAGE_080_MEM_TYPE -D__MULTICAN_MEM_TYPE=__PAGE_080_MEM_TYPE -DTTC60 -DRTS_TTC_FLASH_DATE_YEAR=2025 -DRTS_TTC_FLASH_DATE_MONTH=12 -DRTS_TTC_FLASH_DATE_DAY=22 -DRTS_TTC_FLASH_DATE_HOUR=1 -DRTS_TTC_FLASH_DATE_MINUTE=13 -I..\..\..\Environment\inc -I..\..\..\Environment\inc_int -I..\..\..\Environment\bsp -I. -Isrc --tradeoff=0 --no-tasking-sfr -ga --language=+cmp14,+div32,-gcc,-strings -OabcefgiklopRsY,+predict --source --mac -o build\main.src
 	; Module start
 	.source	'src/main.c'
 code_main	.section	code, cluster 'main', new
@@ -9,9 +9,9 @@ code_main	.section	code, cluster 'main', new
 ; src/main.c	     2  #include "IO_Driver.h"
 ; src/main.c	     3  #include "IO_RTC.h"
 ; src/main.c	     4  
-; src/main.c	     5  #include "utilities.h"
-; src/main.c	     6  #include "can_manager.h"
-; src/main.c	     7  #include "apps.h"
+; src/main.c	     5  #include "util/utilities.h"
+; src/main.c	     6  #include "can/can_manager.h"
+; src/main.c	     7  #include "sensors/apps.h"
 ; src/main.c	     8  
 ; src/main.c	     9  #define CYCLE_TIME MsToUs(5ul)
 ; src/main.c	    10  
@@ -144,7 +144,7 @@ _69:
 ; src/main.c	    89          /*******************************************/
 ; src/main.c	    90          /*                OUTPUTS                  */
 ; src/main.c	    91          /*******************************************/
-; src/main.c	    92          //Outputs_Update();          // Control buzzer, lights, relay
+; src/main.c	    92          //Outputs_Update();          // Control buzzer, lights
 ; src/main.c	    93          CAN_Manager_ProcessTxMessages();  // Send CAN        
 	call	_CAN_Manager_ProcessTxMessages
 _70:
@@ -180,7 +180,7 @@ _appl_db	.label	word
 	.db	0x0
 	.db	0x0
 	.db	0x0
-	.dl	0xa868c7e9
+	.dl	0x3436c7e9
 	.db	0x0
 	.db	0x0
 	.db	0x0
@@ -385,9 +385,9 @@ _27:
 	.db	'timestamp',0,3,143,1,35,2
 	.dl	512
 	.db	0,10
-	.db	'CAN_Manager_Init',0,4,17,6,6,1,1,1,1,10
-	.db	'CAN_Manager_ProcessRxMessages',0,4,18,6,6,1,1,1,1,10
-	.db	'CAN_Manager_ProcessTxMessages',0,4,19,6,6,1,1,1,1,10
+	.db	'CAN_Manager_Init',0,4,16,6,6,1,1,1,1,10
+	.db	'CAN_Manager_ProcessRxMessages',0,4,17,6,6,1,1,1,1,10
+	.db	'CAN_Manager_ProcessTxMessages',0,4,18,6,6,1,1,1,1,10
 	.db	'APPS_Init',0,5,39,6,6,1,1,1,1,10
 	.db	'APPS_Update',0,5,40,6,6,1,1,1,1,11
 	.db	'_INDIRECT__',0,6,1,1,6,1,1,1,12
@@ -621,13 +621,14 @@ _51:
 	.dl	_54-_53
 _53:
 	.db	2,1,-4,9,10,0,1,1,1,1,0,0,0,1
-	.db	'..\\..\\..\\Environment\\inc',0,0
+	.db	'..\\..\\..\\Environment\\inc',0
+	.db	'src',0,0
 	.db	'IO_POWER.h',0,1,0,0
 	.db	'IO_Driver.h',0,1,0,0
 	.db	'IO_RTC.h',0,1,0,0
-	.db	'src\\can_manager.h',0,0,0,0
-	.db	'src\\apps.h',0,0,0,0
-	.db	'src/main.c',0,0,0,0
+	.db	'src\\can\\can_manager.h',0,0,0,0
+	.db	'src\\sensors\\apps.h',0,0,0,0
+	.db	'main.c',0,2,0,0
 	.db	'ptypes_xe167.h',0,1,0,0
 	.db	'APDB.h',0,1,0,0
 	.db	'IO_Constants.h',0,1,0,0,0
@@ -702,8 +703,9 @@ _55:
 	.dw	3
 	.dl	_58-_57
 _57:
-	.db	2,1,-4,9,10,0,1,1,1,1,0,0,0,1,0
-	.db	'src/main.c',0,0,0,0,0
+	.db	2,1,-4,9,10,0,1,1,1,1,0,0,0,1
+	.db	'src',0,0
+	.db	'main.c',0,1,0,0,0
 _58:
 	.db	5,6,7,0,5,2
 	.dl	_5

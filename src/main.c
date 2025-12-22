@@ -2,9 +2,9 @@
 #include "IO_Driver.h"
 #include "IO_RTC.h"
 
-#include "utilities.h"
-#include "can_manager.h"
-#include "apps.h"
+#include "util/utilities.h"
+#include "can/can_manager.h"
+#include "sensors/apps.h"
 
 #define CYCLE_TIME MsToUs(5ul)
 
@@ -89,7 +89,7 @@ void main (void)
         /*******************************************/
         /*                OUTPUTS                  */
         /*******************************************/
-        //Outputs_Update();          // Control buzzer, lights, relay
+        //Outputs_Update();          // Control buzzer, lights
         CAN_Manager_ProcessTxMessages();  // Send CAN        
 
 

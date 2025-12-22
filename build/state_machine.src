@@ -1,48 +1,52 @@
 	; TASKING VX-toolset for C166: C compiler v4.0r1 Build 741 SN 09467762
-	; Options: -f cc32312a -c99 -Mh --fp-model=FT -Cxc2287 --core=xc16x -DTASKING_VIPER -D__USIC_MEM_TYPE=__PAGE_080_MEM_TYPE -D__MULTICAN_MEM_TYPE=__PAGE_080_MEM_TYPE -DTTC60 -DRTS_TTC_FLASH_DATE_YEAR=2025 -DRTS_TTC_FLASH_DATE_MONTH=12 -DRTS_TTC_FLASH_DATE_DAY=8 -DRTS_TTC_FLASH_DATE_HOUR=3 -DRTS_TTC_FLASH_DATE_MINUTE=42 -I..\..\..\Environment\inc -I..\..\..\Environment\inc_int -I..\..\..\Environment\bsp -I. --tradeoff=0 --no-tasking-sfr -ga --language=+cmp14,+div32,-gcc,-strings -OabcefgiklopRsY,+predict --source --mac -o build\state_machine.src
+	; Options: -f cc43824a -c99 -Mh --fp-model=FT -Cxc2287 --core=xc16x -DTASKING_VIPER -D__USIC_MEM_TYPE=__PAGE_080_MEM_TYPE -D__MULTICAN_MEM_TYPE=__PAGE_080_MEM_TYPE -DTTC60 -DRTS_TTC_FLASH_DATE_YEAR=2025 -DRTS_TTC_FLASH_DATE_MONTH=12 -DRTS_TTC_FLASH_DATE_DAY=22 -DRTS_TTC_FLASH_DATE_HOUR=1 -DRTS_TTC_FLASH_DATE_MINUTE=16 -I..\..\..\Environment\inc -I..\..\..\Environment\inc_int -I..\..\..\Environment\bsp -I. -Isrc --tradeoff=0 --no-tasking-sfr -ga --language=+cmp14,+div32,-gcc,-strings -OabcefgiklopRsY,+predict --source --mac -o build\state_machine.src
 	; Module start
 	.source	'src/state_machine.c'
 code_StateMachine_Update	.section	code, cluster 'StateMachine_Update', new
 	.global	_StateMachine_Update
 
 ; src/state_machine.c	     1  #include "IO_Constants.h"
-; src/state_machine.c	     2  #include "state_machine.h"
-; src/state_machine.c	     3  #include "apps.h"
-; src/state_machine.c	     4  #include "rtd.h"
-; src/state_machine.c	     5  
-; src/state_machine.c	     6  static VCU_State_t current_state;
-; src/state_machine.c	     7  
-; src/state_machine.c	     8  void StateMachine_Update(void)
+; src/state_machine.c	     2  
+; src/state_machine.c	     3  #include "state_machine.h"
+; src/state_machine.c	     4  
+; src/state_machine.c	     5  #include "sensors/apps.h"
+; src/state_machine.c	     6  #include "sensors/bse.h"
+; src/state_machine.c	     7  #include "io/rtd.h"
+; src/state_machine.c	     8  
+; src/state_machine.c	     9  static VCU_State_t current_state;
+; src/state_machine.c	    10  
+; src/state_machine.c	    11  void StateMachine_Update(void)
 ; Function _StateMachine_Update
 _3:
 _StateMachine_Update	.proc	far
 
-; src/state_machine.c	     9  {
-; src/state_machine.c	    10      const APPS_Data_t* apps = APPS_GetData();
+; src/state_machine.c	    12  {
+; src/state_machine.c	    13      const APPS_Data_t* apps = APPS_GetData();
 	call	_APPS_GetData
 _31:
 
-; src/state_machine.c	    11      const bool rtd_active = RTD_IsActive();
+; src/state_machine.c	    14      //const BSE_Data_t* bse = BSE_GetData();
+; src/state_machine.c	    15      const bool rtd_active = RTD_IsActive();
 	call	_RTD_IsActive
 _32:
 
-; src/state_machine.c	    12  
-; src/state_machine.c	    13      switch (current_state) {
-; src/state_machine.c	    14  
-; src/state_machine.c	    15          case VCU_STATE_NOT_READY:
-; src/state_machine.c	    16              break;
-; src/state_machine.c	    17          case VCU_STATE_PLAYING_RTD_SOUND:
-; src/state_machine.c	    18              break;
-; src/state_machine.c	    19          case VCU_STATE_DRIVING:
+; src/state_machine.c	    16  
+; src/state_machine.c	    17      switch (current_state) {
+; src/state_machine.c	    18  
+; src/state_machine.c	    19          case VCU_STATE_NOT_READY:
 ; src/state_machine.c	    20              break;
-; src/state_machine.c	    21          case VCU_STATE_SOFT_ERROR:
+; src/state_machine.c	    21          case VCU_STATE_PLAYING_RTD_SOUND:
 ; src/state_machine.c	    22              break;
-; src/state_machine.c	    23          case VCU_STATE_HARD_ERROR:
+; src/state_machine.c	    23          case VCU_STATE_DRIVING:
 ; src/state_machine.c	    24              break;
-; src/state_machine.c	    25          default:
+; src/state_machine.c	    25          case VCU_STATE_SOFT_ERROR:
 ; src/state_machine.c	    26              break;
-; src/state_machine.c	    27      }
-; src/state_machine.c	    27  }
+; src/state_machine.c	    27          case VCU_STATE_HARD_ERROR:
+; src/state_machine.c	    28              break;
+; src/state_machine.c	    29          default:
+; src/state_machine.c	    30              break;
+; src/state_machine.c	    31      }
+; src/state_machine.c	    31  }
 
 	ret
 _22:
@@ -189,12 +193,13 @@ _23:
 	.dl	_26-_25
 _25:
 	.db	2,1,-4,9,10,0,1,1,1,1,0,0,0,1
+	.db	'src',0
 	.db	'..\\..\\..\\Environment\\inc',0,0
-	.db	'src\\apps.h',0,0,0,0
-	.db	'src\\rtd.h',0,0,0,0
-	.db	'src/state_machine.c',0,0,0,0
-	.db	'ptypes_xe167.h',0,1,0,0
-	.db	'IO_Driver.h',0,1,0,0,0
+	.db	'src\\sensors\\apps.h',0,0,0,0
+	.db	'src\\io\\rtd.h',0,0,0,0
+	.db	'state_machine.c',0,1,0,0
+	.db	'ptypes_xe167.h',0,2,0,0
+	.db	'IO_Driver.h',0,2,0,0,0
 _26:
 _24:
 	; End of section
@@ -222,7 +227,7 @@ _18:
 	.db	2
 	.dl	_14
 	.db	3
-	.db	'StateMachine_Update',0,1,8,6,6,1,1,1
+	.db	'StateMachine_Update',0,1,11,6,6,1,1,1
 	.dl	_3,_22,_2
 	.db	12,19,146,176,2,0,64,36,146,161,2,0,33,4
 	.dl	_3,_22
@@ -242,14 +247,15 @@ _27:
 	.dw	3
 	.dl	_30-_29
 _29:
-	.db	2,1,-4,9,10,0,1,1,1,1,0,0,0,1,0
-	.db	'src/state_machine.c',0,0,0,0,0
+	.db	2,1,-4,9,10,0,1,1,1,1,0,0,0,1
+	.db	'src',0,0
+	.db	'state_machine.c',0,1,0,0,0
 _30:
 	.db	5,43,7,0,5,2
 	.dl	_3
-	.db	3,9,1,5,41,9
+	.db	3,12,1,5,41,9
 	.dw	_31-_3
-	.db	3,1,1,5,1,9
+	.db	3,2,1,5,1,9
 	.dw	_32-_31
 	.db	3,17,1,7,9
 	.dw	_22-_32

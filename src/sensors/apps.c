@@ -3,8 +3,9 @@
 #include "IO_RTC.h"
 
 #include "apps.h"
-#include "apps_config.h"
-#include "moving_average.h"
+
+#include "config/apps_config.h"
+#include "util/moving_average.h"
 #include "debug_defines.h"
 
 static APPS_Data_t apps_data;
@@ -29,14 +30,22 @@ static ubyte2 APPS_VoltageToPedalTravel(ubyte2 mv, ubyte2 min_mv, ubyte2 max_mv)
 static void APPS_UpdateChannel(ubyte1 adc_channel, MovingAverage_Data_t* ma, APPS_Sensor_t* sensor,
                                ubyte2 min_mv, ubyte2 max_mv)
 {
-    IO_ErrorType err;
-    ubyte4 current_time;
-    bool data_fresh;
+    /* Local Variables */
+    IO_ErrorType err;       // error for function calls
+    ubyte4 current_time;    // time for checking staleness
+    bool data_fresh;        // staleness check
+
+    if (ma == NULL || sensor == NULL) {
+        // TODO Could this be handled better
+        return;
+    }
 
     sensor->valid = FALSE;
     sensor->adc_err = FALSE;
     sensor->stale = FALSE;
     sensor->out_of_range = FALSE;
+    
+    
 
     // Read raw ADC
     err = IO_ADC_Get(adc_channel, &sensor->raw_mv, &data_fresh);
@@ -96,6 +105,10 @@ void APPS_Init(void)
 
 void APPS_Update(void)
 {
+
+    /* Local Variables */
+    ubyte2 diff; // used for implausibility
+
     apps_data.valid = FALSE;
     apps_data.apps_value = 0;
     apps_data.implausible = FALSE;
@@ -112,9 +125,12 @@ void APPS_Update(void)
     }
     #endif
 
-    ubyte2 diff = (apps_data.apps1.value > apps_data.apps2.value) ?
+    // Absolute difference between both values
+    diff = (apps_data.apps1.value > apps_data.apps2.value) ?
                     (apps_data.apps1.value - apps_data.apps2.value) :
                     (apps_data.apps2.value - apps_data.apps1.value);
+
+    // More than 10 percent?
     #ifndef IGNORE_APPS_ERRORS
     if (diff > APPS_IMPLAUSIBILITY_DEVIATION) {
         apps_data.implausible = TRUE;

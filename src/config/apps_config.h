@@ -1,7 +1,7 @@
 #ifndef APPS_CONFIG_H
 #define APPS_CONFIG_H
 
-#include "utilities.h"
+#include "util/utilities.h"
 
 /*******************************************/
 /*             Sensor Pins                 */
@@ -34,6 +34,7 @@
 /* Voltage range above max and below min that doesn't count as an error */
 #define APPS_VOLTAGE_TOLERANCE 250
 
+/* Travel below 1 percent will count as 0 */
 #define APPS_DEADZONE (APPS_RESOLUTION / 100)
 
 

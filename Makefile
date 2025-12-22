@@ -34,7 +34,8 @@ IODRIVER_DIR = ..\..\..\Environment
 #
 include ../../build/settings.mk
 
-INCDIRS += -I"."
+# CALEB MODIFIED THIS to search for everything in src
+INCDIRS += -I"." -Isrc
 
 
 # library directory
@@ -44,8 +45,9 @@ IODRIVER_LDIR = $(subst \,/,$(IODRIVER_DIR)\lib)
 # list of source, and object files
 #
 # test module files
-FILES = $(notdir $(basename $(wildcard src/*.c)))
-OBJ_FILES := $(addprefix build/, $(addsuffix .obj, $(notdir $(FILES))))
+# CALEB MODIFIED THIS to include subtree one level down
+SRCS := $(wildcard src/*.c src/*/*.c src/*/*/*.c)
+OBJ_FILES := $(patsubst src/%.c,build/%.obj,$(SRCS))
 
 # bsp files
 BSP_SDIR = $(subst \,/,$(BSP_PATH))
@@ -90,9 +92,12 @@ build/main.elf : $(IODRIVER_LDIR)/$(LIB_NAME) $(BSP_OBJ_FILES) $(OBJ_FILES)
 
 	
 # build test files
+# CALEB MODIFIED THIS to support subfolders
 build/%.obj : src/%.c
 	@echo compiling: $<
+	@if not exist "$(dir $@)" mkdir "$(dir $@)"
 	@"$(TSK_VIPER_CC)" -c -o $@ $(TSK_VIPER_COMP_FLAGS) $(INCDIRS) $<
+
 
 clean:
 	@echo cleaning up test module files
