@@ -4,7 +4,11 @@
 
 #include "util/units.h"
 #include "can/can_manager.h"
+#include "config/can_config.h"
+#include "state_machine.h"
+#include "io/rtd.h"
 #include "sensors/apps.h"
+#include "sensors/bse.h"
 
 /* Application Database,
  * needed for TTC-Downloader
@@ -59,8 +63,12 @@ void main (void)
 
     /* Set up FIFOs for all CAN messages */
     CAN_Manager_Init();
+
+    RTD_Init();
     APPS_Init();
-    
+    BSE_Init();
+    StateMachine_Init();
+
 
     /*******************************************/
     /*           MAIN CONTROL LOOP             */
@@ -73,7 +81,7 @@ void main (void)
         /*******************************************/
         /*                 INPUTS                  */
         /*******************************************/
-        //RTD_Update();
+        RTD_Update();
         APPS_Update();
         BSE_Update();
         CAN_Manager_ProcessRxMessages();  // Read CAN
@@ -81,7 +89,7 @@ void main (void)
         /*******************************************/
         /*                 LOGIC                   */
         /*******************************************/
-        //StateMachine_Update();
+        StateMachine_Update();
         //TorqueController_Update();
         
         /*******************************************/

@@ -1,0 +1,29 @@
+#ifndef TORQUE_CONFIG_H
+#define TORQUE_CONFIG_H
+
+#include "IO_Constants.h"
+
+
+// TODO THESE DONT BELONG HERE
+#define MOTOR_FORWARDS 1
+#define MOTOR_BACKWARDS 0
+
+#define INVERTER_DISABLE 0
+#define INVERTER_ENABLE 1
+
+
+
+#define MAX_TORQUE 200
+
+#define PEDAL_TRAVEL_FOR_MAX_TORQUE 90 // Percent
+
+#define MOTOR_DIRECTION MOTOR_FORWARDS // backwards for dyno testing
+
+#define BRAKE_PRESSURE_FOR_MAX_REGEN 500
+
+#define REGEN_TORQUE_MAX 230 // UNUSED
+
+#define REGEN_PARABOLA_CONST 0.00025
+#define REGEN_LINEAR_CONST 0.114
+
+#endif // TORQUE_CONFIG_H

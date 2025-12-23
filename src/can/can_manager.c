@@ -5,28 +5,14 @@
 #include "can_manager.h"
 #include "can_util.h"
 #include "util/units.h"
+#include "config/can_config.h"
 
-#define CONTROLS_CAN_CHANNEL IO_CAN_CHANNEL_0
-#define TELEMETRY_CAN_CHANNEL IO_CAN_CHANNEL_1
-
-// Buffer size for every rx message, will pretty much always be at 0 or 1
-// since we poll (200hz) faster than we will receive (50hz)
-#define RX_FIFO_BUFFER_SIZE 8
-
-// Buffer size for an entire tx channel
-#define TX_FIFO_BUFFER_SIZE 32
-
-
-// RX Message IDs
-#define CAN_ID_INV_STATUS       0x000000AB
-
-// TX Message IDs
-#define CAN_ID_TORQUE_COMMAND   0x000000C0
-
-// RX FIFO handles
+/* RX FIFO handles
+    You need one FIFO for each frame */
 static ubyte1 inverter_status_rx_handle;
 
-// TX FIFO handles
+/* TX FIFO handles
+    Only need one FIFO for each channel */
 static ubyte1 controls_tx_fifo_handle;
 static ubyte1 telemetry_tx_fifo_handle;
 
@@ -121,14 +107,9 @@ void CAN_Manager_ProcessTxMessages(void)
     CAN_Util_WriteFIFO(controls_tx_fifo_handle, &tx_frame);
 }
 
-//getters for rx
+/* Getters */
+
 const InverterStatus_RX_Data_t* CAN_Manager_GetInverterStatusData(void)
 {
     return &inverter_status_rx_data;
-}
-
-//setters for tx TODO
-void CAN_Manager_SetTorqueCommandData(sbyte2 torque_nm, bool enable)
-{
-
 }

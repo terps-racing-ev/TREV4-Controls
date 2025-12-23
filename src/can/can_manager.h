@@ -3,7 +3,10 @@
 
 #include "IO_Constants.h"
 
-#define BAUD_RATE 500
+
+void CAN_Manager_Init(void);
+void CAN_Manager_ProcessRxMessages(void);
+void CAN_Manager_ProcessTxMessages(void);
 
 typedef struct {
     ubyte4  run_faults;
@@ -13,8 +16,6 @@ typedef struct {
     bool    data_vld;
 } InverterStatus_RX_Data_t;
 
-void CAN_Manager_Init(void);
-void CAN_Manager_ProcessRxMessages(void);
-void CAN_Manager_ProcessTxMessages(void);
+const InverterStatus_RX_Data_t* CAN_Manager_GetInverterStatusData(void);
 
 #endif // CAN_MANAGER_H
