@@ -7,6 +7,7 @@
 void CAN_Manager_Init(void);
 void CAN_Manager_ProcessRxMessages(void);
 void CAN_Manager_ProcessTxMessages(void);
+void CAN_Manager_Print(ubyte4 CAN_id, ubyte2 data);
 
 typedef struct {
     ubyte4  run_faults;

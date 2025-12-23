@@ -107,6 +107,21 @@ void CAN_Manager_ProcessTxMessages(void)
     CAN_Util_WriteFIFO(controls_tx_fifo_handle, &tx_frame);
 }
 
+void CAN_Manager_Print(ubyte4 CAN_id, ubyte2 data)
+{
+    IO_CAN_DATA_FRAME debug_frame;
+    debug_frame.id = CAN_id;
+    debug_frame.id_format = IO_CAN_EXT_FRAME;
+    debug_frame.length = 8;
+    CAN_Util_ClearData(&debug_frame);
+    
+    debug_frame.data[0] = data & 0xFF;
+    debug_frame.data[1] = data >> 8;
+
+    CAN_Util_WriteFIFO(controls_tx_fifo_handle, &debug_frame);
+    CAN_Util_WriteFIFO(telemetry_tx_fifo_handle, &debug_frame);
+}
+
 /* Getters */
 
 const InverterStatus_RX_Data_t* CAN_Manager_GetInverterStatusData(void)
