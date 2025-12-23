@@ -4,7 +4,7 @@
 
 #include "can_manager.h"
 #include "can_util.h"
-#include "util/utilities.h"
+#include "util/units.h"
 
 #define CONTROLS_CAN_CHANNEL IO_CAN_CHANNEL_0
 #define TELEMETRY_CAN_CHANNEL IO_CAN_CHANNEL_1

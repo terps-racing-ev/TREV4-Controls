@@ -2,11 +2,9 @@
 #include "IO_Driver.h"
 #include "IO_RTC.h"
 
-#include "util/utilities.h"
+#include "util/units.h"
 #include "can/can_manager.h"
 #include "sensors/apps.h"
-
-#define CYCLE_TIME MsToUs(5ul)
 
 /* Application Database,
  * needed for TTC-Downloader
@@ -45,8 +43,8 @@ APDB appl_db =
 
 void main (void)
 {
-
-    ubyte4 timestamp;
+    /* Local Variables */
+    ubyte4 timestamp;       // Keep track of cycle time
 
     /*******************************************/
     /*             INITIALIZATION              */
@@ -77,7 +75,7 @@ void main (void)
         /*******************************************/
         //RTD_Update();
         APPS_Update();
-        //BSE_Update();
+        BSE_Update();
         CAN_Manager_ProcessRxMessages();  // Read CAN
         
         /*******************************************/
@@ -94,6 +92,6 @@ void main (void)
 
 
         IO_Driver_TaskEnd();
-        while (IO_RTC_GetTimeUS(timestamp) < CYCLE_TIME);
+        while (IO_RTC_GetTimeUS(timestamp) < CYCLE_TIME_US);
     }
 }

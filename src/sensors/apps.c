@@ -12,7 +12,7 @@ static APPS_Data_t apps_data;
 static MovingAverage_Data_t apps1_ma;
 static MovingAverage_Data_t apps2_ma;
 
-static ubyte2 APPS_VoltageToPedalTravel(ubyte2 mv, ubyte2 min_mv, ubyte2 max_mv)
+static ubyte2 VoltageToPedalTravel(ubyte2 mv, ubyte2 min_mv, ubyte2 max_mv)
 {
     if (mv < min_mv) {
         return 0;
@@ -27,26 +27,21 @@ static ubyte2 APPS_VoltageToPedalTravel(ubyte2 mv, ubyte2 min_mv, ubyte2 max_mv)
 }
 
 
-static void APPS_UpdateChannel(ubyte1 adc_channel, MovingAverage_Data_t* ma, APPS_Sensor_t* sensor,
-                               ubyte2 min_mv, ubyte2 max_mv)
+static void UpdateChannel(ubyte1 adc_channel, MovingAverage_Data_t* ma, APPS_Sensor_t* sensor,
+                          ubyte2 min_mv, ubyte2 max_mv)
 {
     /* Local Variables */
     IO_ErrorType err;       // error for function calls
-    ubyte4 current_time;    // time for checking staleness
     bool data_fresh;        // staleness check
 
     if (ma == NULL || sensor == NULL) {
-        // TODO Could this be handled better
         return;
     }
 
     sensor->valid = FALSE;
     sensor->adc_err = FALSE;
-    sensor->stale = FALSE;
     sensor->out_of_range = FALSE;
     
-    
-
     // Read raw ADC
     err = IO_ADC_Get(adc_channel, &sensor->raw_mv, &data_fresh);
     #ifndef IGNORE_APPS_ERRORS
@@ -54,22 +49,15 @@ static void APPS_UpdateChannel(ubyte1 adc_channel, MovingAverage_Data_t* ma, APP
         sensor->adc_err = TRUE;
         return;
     }
-    #endif
-
-    // Only update moving average if data is fresh
-    if (data_fresh) {
-        MovingAverage_Update(ma, sensor->raw_mv, &sensor->filt_mv);
-        sensor->last_update_us = IO_RTC_GetTimeUS(0);
-    }
-    
-    // Check staleness, this way data doesn't have to be perfectly fresh before we mark invalid
-    current_time = IO_RTC_GetTimeUS(0);
-    #ifndef IGNORE_APPS_ERRORS
-    if (current_time - sensor->last_update_us > APPS_MAX_STALENESS) {
+    /* This is a harsh check since APPS_Update preserves its value
+        and the caller is expected to provide some tolerance */
+    if (!data_fresh) {
         sensor->stale = TRUE;
         return;
     }
     #endif
+
+    MovingAverage_Update(ma, sensor->raw_mv, &sensor->filt_mv);
 
     // Bounds check, filtered mv is used for leniency
     #ifndef IGNORE_APPS_ERRORS
@@ -81,28 +69,32 @@ static void APPS_UpdateChannel(ubyte1 adc_channel, MovingAverage_Data_t* ma, APP
     #endif
     
     // Sensor reading is all good
-    sensor->out_of_range = FALSE;
     sensor->valid = TRUE;
     
     // Scale filtered voltage to pedal travel
-    sensor->value = APPS_VoltageToPedalTravel(sensor->filt_mv, min_mv, max_mv);
+    sensor->value = VoltageToPedalTravel(sensor->filt_mv, min_mv, max_mv);
 }
 
 void APPS_Init(void)
 {
-    IO_ADC_ChannelInit(IO_PIN_APPS_1, IO_ADC_RATIOMETRIC,0, 0, IO_APPS_1_SUPPLY, NULL);
+    IO_ADC_ChannelInit(IO_PIN_APPS_1, IO_ADC_RATIOMETRIC, 0, 0, IO_APPS_1_SUPPLY, NULL);
     IO_ADC_ChannelInit(IO_PIN_APPS_2, IO_ADC_RATIOMETRIC, 0, 0, IO_APPS_2_SUPPLY, NULL);
 
     MovingAverage_Init(&apps1_ma, APPS_FILTER_WINDOW_SIZE);
     MovingAverage_Init(&apps2_ma, APPS_FILTER_WINDOW_SIZE);
     
+    apps_data.apps_value = 0;
+    apps_data.valid = FALSE;
+
     // Initialize sensor structs
-    apps_data.apps1.last_update_us = 0;
-    apps_data.apps2.last_update_us = 0;
     apps_data.apps1.valid = FALSE;
     apps_data.apps2.valid = FALSE;
 }
 
+/*
+Preserves the last valid APPS value even upon error.
+It is up to the caller to decide when to actually invalidate reading.
+*/
 void APPS_Update(void)
 {
 
@@ -110,13 +102,12 @@ void APPS_Update(void)
     ubyte2 diff; // used for implausibility
 
     apps_data.valid = FALSE;
-    apps_data.apps_value = 0;
     apps_data.implausible = FALSE;
 
-    APPS_UpdateChannel(IO_PIN_APPS_1, &apps1_ma, &apps_data.apps1,
-                       APPS_1_MIN_VOLTAGE, APPS_1_MAX_VOLTAGE);
-    APPS_UpdateChannel(IO_PIN_APPS_2, &apps2_ma, &apps_data.apps2,
-                       APPS_2_MIN_VOLTAGE, APPS_2_MAX_VOLTAGE);
+    UpdateChannel(IO_PIN_APPS_1, &apps1_ma, &apps_data.apps1,
+                  APPS_1_MIN_VOLTAGE, APPS_1_MAX_VOLTAGE);
+    UpdateChannel(IO_PIN_APPS_2, &apps2_ma, &apps_data.apps2,
+                  APPS_2_MIN_VOLTAGE, APPS_2_MAX_VOLTAGE);
     
     // Individual sensor check
     #ifndef IGNORE_APPS_ERRORS

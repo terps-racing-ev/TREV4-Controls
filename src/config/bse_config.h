@@ -1,7 +1,7 @@
 #ifndef APPS_CONFIG_H
 #define APPS_CONFIG_H
 
-#include "util/utilities.h"
+#include "util/units.h"
 
 /*******************************************/
 /*             Sensor Pin                  */
@@ -16,7 +16,7 @@
 /*                Limits                   */
 /*******************************************/
 
-#define APPS_FILTER_WINDOW_SIZE 8   // Corresponds to 40ms
+#define APPS_FILTER_WINDOW_SIZE MsToCycles(40)
 
 #define BSE_MAX_VOLTAGE 4500
 #define BSE_MIN_VOLTAGE 500

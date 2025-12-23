@@ -8,15 +8,31 @@
 
 static VCU_State_t current_state;
 
+// TODO add HVC summary struct
+static bool NoFaults(APPS_Data_t* apps, BSE_Data_t* bse_data) 
+{
+    return (apps->valid && bse_data->valid);
+}
+
+
 void StateMachine_Update(void)
 {
     const APPS_Data_t* apps = APPS_GetData();
-    //const BSE_Data_t* bse = BSE_GetData();
+    const BSE_Data_t* bse = BSE_GetData();
     const bool rtd_active = RTD_IsActive();
+    // TODO read all the messages we need
 
     switch (current_state) {
 
         case VCU_STATE_NOT_READY:
+    
+            if (rtd_active && bse->brakes_engaged) {
+                if (NoFaults(apps, bse)) {
+                    current_state = VCU_STATE_PLAYING_RTD_SOUND;
+                }
+            }
+            // TODO set some output structs
+            
             break;
         case VCU_STATE_PLAYING_RTD_SOUND:
             break;

@@ -12,9 +12,9 @@ typedef struct {
     ubyte1 window_size;
 } MovingAverage_Data_t;
 
-IO_ErrorType MovingAverage_Init(MovingAverage_Data_t* ma, ubyte1 window_size);
+void MovingAverage_Init(MovingAverage_Data_t* ma, ubyte1 window_size);
 
-IO_ErrorType MovingAverage_Update(MovingAverage_Data_t* ma, ubyte2 new_val, ubyte2* filtered_val);
+ubyte2 MovingAverage_Update(MovingAverage_Data_t* ma, ubyte2 new_val);
 
 
 #endif // MOVING_AVERAGE_H

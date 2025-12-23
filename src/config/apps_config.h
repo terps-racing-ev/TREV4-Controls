@@ -1,7 +1,7 @@
 #ifndef APPS_CONFIG_H
 #define APPS_CONFIG_H
 
-#include "util/utilities.h"
+#include "util/units.h"
 
 /*******************************************/
 /*             Sensor Pins                 */
@@ -21,7 +21,7 @@
 /*******************************************/
 
 #define APPS_RESOLUTION 1000
-#define APPS_FILTER_WINDOW_SIZE 8   // Corresponds to 40ms
+#define APPS_FILTER_WINDOW_SIZE MsToCycles(40)
 
 /* APPS 1 Bounds */
 #define APPS_1_MAX_VOLTAGE 4400
