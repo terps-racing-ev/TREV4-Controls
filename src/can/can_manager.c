@@ -107,10 +107,10 @@ void CAN_Manager_ProcessTxMessages(void)
     CAN_Util_WriteFIFO(controls_tx_fifo_handle, &tx_frame);
 }
 
-void CAN_Manager_Print(ubyte4 CAN_id, ubyte2 data)
+void CAN_Manager_Print(ubyte4 can_id, ubyte2 data)
 {
     IO_CAN_DATA_FRAME debug_frame;
-    debug_frame.id = CAN_id;
+    debug_frame.id = can_id;
     debug_frame.id_format = IO_CAN_EXT_FRAME;
     debug_frame.length = 8;
     CAN_Util_ClearData(&debug_frame);
@@ -120,6 +120,47 @@ void CAN_Manager_Print(ubyte4 CAN_id, ubyte2 data)
 
     CAN_Util_WriteFIFO(controls_tx_fifo_handle, &debug_frame);
     CAN_Util_WriteFIFO(telemetry_tx_fifo_handle, &debug_frame);
+}
+
+static void CAN_Manager_PackAPPSFrames(IO_CAN_DATA_FRAME* apps_frame0, IO_CAN_DATA_FRAME* apps_frame1)
+{
+    apps_frame0->id = CAN_ID_APPS0;
+    apps_frame0->id_format = IO_CAN_EXT_FRAME;
+    apps_frame0->length = 8;
+    CAN_Util_ClearData(apps_frame0);
+    
+    apps_frame1->id = CAN_ID_APPS1;
+    apps_frame1->id_format = IO_CAN_EXT_FRAME;
+    apps_frame1->length = 8;
+    CAN_Util_ClearData(apps_frame1);
+    
+    const APPS_Data_t* apps_data = APPS_GetData();
+    
+    apps_frame0->data[0] = apps_data->apps2.filt_mv & 0xFF;
+    apps_frame0->data[1] = apps_data->apps2.filt_mv >> 8;
+    apps_frame0->data[2] = apps_data->apps2.raw_mv & 0xFF;
+    apps_frame0->data[3] = apps_data->apps2.raw_mv >> 8;
+    apps_frame0->data[4] = apps_data->apps1.filt_mv & 0xFF;
+    apps_frame0->data[5] = apps_data->apps1.filt_mv >> 8;
+    apps_frame0->data[6] = apps_data->apps1.raw_mv & 0xFF;
+    apps_frame0->data[7] = apps_data->apps1.raw_mv >> 8;
+    
+    apps_frame1->data[0] = (apps_data->apps1.valid << 7) |
+                           (apps_data->apps1.out_of_range << 6) |
+                           (apps_data->apps1.adc_err << 5) |
+                           (apps_data->apps1.stale << 4) |
+                           (apps_data->apps2.valid << 3) |
+                           (apps_data->apps2.out_of_range << 2) |
+                           (apps_data->apps2.adc_err << 1) |
+                           apps_data->apps2.stale;
+    apps_frame1->data[1] = apps_data->apps2.value & 0xFF;
+    apps_frame1->data[2] = apps_data->apps2.value >> 8;
+    apps_frame1->data[3] = apps_data->apps1.value & 0xFF;
+    apps_frame1->data[4] = apps_data->apps1.value >> 8;
+    apps_frame1->data[5] = (apps_data->valid << 4) | apps_data->implausible;
+    apps_frame1->data[6] = apps_data->apps_value & 0xFF;
+    apps_frame1->data[7] = apps_data->apps_value >> 8;
+    
 }
 
 /* Getters */
