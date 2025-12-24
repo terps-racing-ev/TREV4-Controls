@@ -15,7 +15,7 @@
 
 #define MAX_TORQUE 200
 
-#define PEDAL_TRAVEL_FOR_MAX_TORQUE 90 // Percent
+#define PERCENT_TRAVEL_FOR_MAX_TORQUE 90
 
 #define MOTOR_DIRECTION MOTOR_FORWARDS // backwards for dyno testing
 

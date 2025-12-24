@@ -8,6 +8,8 @@ typedef struct {
     ubyte2  psi;
     bool    brakes_engaged;
                     // psi > BRAKES_ENGAGED_THRESHOLD
+    bool    hard_braking;
+                    // psi > BRAKE_PLAUSIBILITY_THRESHOLD
 
     ubyte2  raw_mv;
     ubyte2  filt_mv;

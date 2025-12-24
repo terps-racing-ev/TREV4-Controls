@@ -16,7 +16,7 @@
 /*                Limits                   */
 /*******************************************/
 
-#define APPS_FILTER_WINDOW_SIZE MsToCycles(40)
+#define BSE_FILTER_WINDOW_SIZE MsToCycles(40)
 
 #define BSE_MAX_VOLTAGE 4500
 #define BSE_MIN_VOLTAGE 500
@@ -35,7 +35,7 @@
 /*******************************************/
 
 /* EV.4.7.1 - Threshold for "Hard" Braking */
-#define BSE_BRAKE_PLAUSIBILITY_THRESHOLD 500 //PSI
+#define BRAKE_PLAUSIBILITY_THRESHOLD 500 //PSI
 
 #define APPS_MAX_STALENESS MsToUs(100ul)
 

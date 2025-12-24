@@ -40,6 +40,7 @@ static void UpdateChannel(ubyte1 adc_channel, MovingAverage_Data_t* ma, APPS_Sen
 
     sensor->valid = FALSE;
     sensor->adc_err = FALSE;
+    sensor->stale = FALSE;
     sensor->out_of_range = FALSE;
     
     // Read raw ADC
@@ -57,7 +58,7 @@ static void UpdateChannel(ubyte1 adc_channel, MovingAverage_Data_t* ma, APPS_Sen
     }
     #endif
 
-    MovingAverage_Update(ma, sensor->raw_mv, &sensor->filt_mv);
+    sensor->filt_mv = MovingAverage_Update(ma, sensor->raw_mv);
 
     // Bounds check, filtered mv is used for leniency
     #ifndef IGNORE_APPS_ERRORS
