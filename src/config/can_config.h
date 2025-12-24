@@ -23,8 +23,8 @@
 
 /* TX Message IDs */
 #define CAN_ID_TORQUE_COMMAND   0x000000C0
-#define CAN_ID_APPS0            0x001ACCE0
-#define CAN_ID_APPS1            0x001ACCE1
+#define CAN_ID_APPS_VOLTAGES    0x001ACCE0
+#define CAN_ID_APPS_VALUES      0x001ACCE1
 
 
 #endif
