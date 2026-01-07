@@ -17,6 +17,17 @@ typedef struct {
     bool    data_vld;
 } InverterStatus_RX_Data_t;
 
+typedef struct {
+    sbyte2  torque_cmd;     // x10
+    sbyte2  torque_feedback;    // x10
+    sbyte2  motor_speed;    // x1
+    sbyte2  dc_bus_voltage; // x10
+
+    ubyte4  last_rx_timestamp;
+    bool    data_vld;
+} InverterHighSpeed_RX_Data_t;
+
 const InverterStatus_RX_Data_t* CAN_Manager_GetInverterStatusData(void);
+const InverterHighSpeed_RX_Data_t* CAN_Manager_GetInverterHighSpeedData(void);
 
 #endif // CAN_MANAGER_H

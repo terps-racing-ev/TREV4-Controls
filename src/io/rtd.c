@@ -2,7 +2,7 @@
 #include "IO_DIO.h"
 
 #include "rtd.h"
-
+#include "config/dio_config.h"
 #include "util/debounce.h"
 
 static RTD_Data_t rtd;
@@ -44,9 +44,9 @@ void RTD_Update(void)
 
 bool RTD_IsActive(void)
 {
-    #ifndef IGNORE_RTD_SWITCH
-    return (rtd.state == RTD_ON);
+    #if IGNORE_RTD_SWITCH
+        return TRUE;
     #else
-    return TRUE;
+        return (rtd.state == RTD_ON);
     #endif
 }

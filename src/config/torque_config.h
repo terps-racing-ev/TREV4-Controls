@@ -4,13 +4,15 @@
 #include "IO_Constants.h"
 
 
-// TODO THESE DONT BELONG HERE
+// TODO THESE DONT BELONG HERE OR DO THEY
 #define MOTOR_FORWARDS 1
 #define MOTOR_BACKWARDS 0
 
 #define INVERTER_DISABLE 0
 #define INVERTER_ENABLE 1
 
+#define INVERTER_SPEED_ENABLE 1
+#define INVERTER_SPEED_DISABLE 0
 
 
 #define MAX_TORQUE 200
@@ -19,8 +21,10 @@
 
 #define MOTOR_DIRECTION MOTOR_FORWARDS // backwards for dyno testing
 
+/* REGEN */
+#define REGEN_ENABLED TRUE
 #define BRAKE_PRESSURE_FOR_MAX_REGEN 500
-
+#define MIN_RPM_FOR_REGEN 500 // Depends on ratio and wheel
 #define REGEN_TORQUE_MAX 230 // UNUSED
 
 #define REGEN_PARABOLA_CONST 0.00025

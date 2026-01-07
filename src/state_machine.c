@@ -4,19 +4,12 @@
 
 #include "sensors/apps.h"
 #include "sensors/bse.h"
+#include "config/apps_config.h"
+#include "config/bse_config.h"
 #include "io/rtd.h"
+#include "io/buzzer.h"
 
 static VCU_State_t current_state;
-
-// TODO add HVC summary struct, sdc, shoud rtd go in here?
-static bool HardFaultPresent(const APPS_Data_t* apps, const BSE_Data_t* bse) 
-{
-    return (!apps->valid || !bse->valid);
-}
-
-static bool SoftFaultPresent(const APPS_Data_t* apps) {
-    return (apps->implausible);
-}
 
 void StateMachine_Init(void)
 {
@@ -30,11 +23,14 @@ void StateMachine_Update(void)
     const bool rtd_active = RTD_IsActive();
     // TODO read all the messages we need
 
+    const bool hard_fault = (!apps->valid || !bse->valid);
+    const bool bap_fault = (apps->above_bap_threshold && bse->hard_braking);
+
     switch (current_state) {
 
         case VCU_STATE_NOT_READY:
             if (rtd_active && bse->brakes_engaged) {
-                if (HardFaultPresent(apps, bse) == FALSE) {
+                if (!hard_fault && !bap_fault) {
                     current_state = VCU_STATE_PLAYING_RTD_SOUND;
                 }
             }
@@ -43,20 +39,39 @@ void StateMachine_Update(void)
             break;
 
         case VCU_STATE_PLAYING_RTD_SOUND:
-            // TODO wait for buzzer to do his thang, make cancellable
-            current_state = VCU_STATE_DRIVING;
-            break;
-
-        case VCU_STATE_DRIVING:
-            if (HardFaultPresent(apps, bse) == TRUE) {
+            if (!rtd_active) {
+                current_state = VCU_STATE_NOT_READY;
+                Buzzer_Stop();
+            }
+            else if (hard_fault) {
                 current_state = VCU_STATE_HARD_FAULT;
-            } else if (SoftFaultPresent(apps) == TRUE) {
-                current_state = VCU_STATE_SOFT_FAULT;
+            }
+            // TODO this inactive wording is confusing
+            else if (Buzzer_Play() == BUZZER_STATE_INACTIVE) {
+                current_state = VCU_STATE_DRIVING;
             }
             break;
 
-        case VCU_STATE_SOFT_FAULT:
-            if (SoftFaultPresent(apps) == FALSE) {
+        case VCU_STATE_DRIVING:
+            if (!rtd_active) {
+                current_state = VCU_STATE_NOT_READY;   
+            }
+            else if (hard_fault) {
+                current_state = VCU_STATE_HARD_FAULT;
+            } 
+            else if (bap_fault) {
+                current_state = VCU_STATE_BAP_FAULT;
+            }
+            break;
+
+        case VCU_STATE_BAP_FAULT:
+            if (!rtd_active) {
+                current_state = VCU_STATE_NOT_READY;
+            }
+            else if (hard_fault) {
+                current_state = VCU_STATE_HARD_FAULT;
+            } 
+            else if (apps->below_bap_reestablish_threshold) {
                 current_state = VCU_STATE_DRIVING;
             }
             break;

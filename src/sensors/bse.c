@@ -51,7 +51,7 @@ void BSE_Update(void)
 
     // Read raw ADC
     err = IO_ADC_Get(IO_PIN_BSE, &bse_data.raw_mv, &data_fresh);
-    #ifndef IGNORE_BSE_ERRORS
+    #if !IGNORE_BSE_ERRORS
     if (err != IO_E_OK) {
         bse_data.adc_err = TRUE;
         return;
@@ -65,7 +65,7 @@ void BSE_Update(void)
     bse_data.filt_mv = MovingAverage_Update(&bse_ma, bse_data.raw_mv);
 
     // Bounds check
-    #ifndef IGNORE_BSE_ERRORS
+    #if !IGNORE_BSE_ERRORS
     if (bse_data.filt_mv < BSE_MIN_VOLTAGE - BSE_VOLTAGE_TOLERANCE ||
         bse_data.filt_mv > BSE_MAX_VOLTAGE + BSE_VOLTAGE_TOLERANCE) {
         bse_data.out_of_range = TRUE;

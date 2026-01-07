@@ -23,6 +23,7 @@ typedef struct {
     APPS_Sensor_t   apps1;
     APPS_Sensor_t   apps2;
 
+    bool    implausible;
     /*
     APPS may not be valid for any of the following reasons:
     - one of the ADCs is old
@@ -32,7 +33,10 @@ typedef struct {
     */
     bool    valid;    // apps1.valid && apps2.valid && !implausible
 
-    bool    implausible;
+     /* Brake-Accel Plausibility */
+    bool    above_bap_threshold;           /* apps_value > APPS_BAP_THRESHOLD */
+    bool    below_bap_reestablish_threshold; /* apps_value < APPS_BAP_REESTABLISH_THRESHOLD */
+
 } APPS_Data_t;
 
 void APPS_Init(void);

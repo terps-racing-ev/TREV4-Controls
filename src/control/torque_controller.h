@@ -8,9 +8,10 @@ typedef struct {
     sbyte2 apps_torque;
     sbyte2 regen_torque;
     
-    sbyte2 inv_torque; // work on these namings...
+    sbyte2 inv_torque_scaled;
     bool inv_enable;
     bool inv_direction;
+    bool inv_speed_mode;
 
 } TorqueController_Data_T;
 

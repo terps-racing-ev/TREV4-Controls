@@ -3,13 +3,6 @@
 
 #include "IO_Constants.h"
 
-#include "util/units.h"
-
-/* RTD -> pin 263 (aka digital in 0) (switched to ground with pullup) */
-#define IO_PIN_RTD IO_DI_00 // TODO put this and apps in one hardware file?
-
-#define RTD_DB_THRESHOLD MsToCycles(40)
-
 #define RTD_ON FALSE
 #define RTD_OFF TRUE
 

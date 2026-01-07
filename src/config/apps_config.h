@@ -49,11 +49,11 @@
 #define APPS_IMPLAUSIBILITY_PERSISTENCE_PERIOD MsToUs(100ul)
 
 /* EV.4.7.1 - The APPS signals more than 25% Pedal Travel */
-#define APPS_BRAKE_PLAUSIBILITY_THRESHOLD (APPS_RESOLUTION / 4)
+#define APPS_BAP_THRESHOLD (APPS_RESOLUTION / 4)
 
 /* EV.4.7.2.b - The Motor shut down must stay active until the 
 APPS signals less than 5% Pedal Travel, with or without brake operation */
-#define APPS_THRESHHOLD_REESTABLISH_PLAUSIBILITY (APPS_RESOLUTION / 20)
+#define APPS_BAP_REESTABLISH_THRESHOLD (APPS_RESOLUTION / 20)
 
 #define APPS_MAX_STALENESS MsToUs(100ul)
 

@@ -7,7 +7,7 @@ typedef enum {
     VCU_STATE_NOT_READY = 0,
     VCU_STATE_PLAYING_RTD_SOUND = 1,
     VCU_STATE_DRIVING = 2,
-    VCU_STATE_SOFT_FAULT = 3,
+    VCU_STATE_BAP_FAULT = 3,
     VCU_STATE_HARD_FAULT = 4
 } VCU_State_t;
 

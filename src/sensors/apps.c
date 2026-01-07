@@ -45,28 +45,28 @@ static void UpdateChannel(ubyte1 adc_channel, MovingAverage_Data_t* ma, APPS_Sen
     
     // Read raw ADC
     err = IO_ADC_Get(adc_channel, &sensor->raw_mv, &data_fresh);
-    #ifndef IGNORE_APPS_ERRORS
-    if (err != IO_E_OK) {
-        sensor->adc_err = TRUE;
-        return;
-    }
-    /* This is a harsh check since APPS_Update preserves its value
-        and the caller is expected to provide some tolerance */
-    if (!data_fresh) {
-        sensor->stale = TRUE;
-        return;
-    }
+    #if !IGNORE_APPS_ERRORS
+        if (err != IO_E_OK) {
+            sensor->adc_err = TRUE;
+            return;
+        }
+        /* This is a harsh check since APPS_Update preserves its value
+            and the caller is expected to provide some tolerance */
+        if (!data_fresh) {
+            sensor->stale = TRUE;
+            return;
+        }
     #endif
 
     sensor->filt_mv = MovingAverage_Update(ma, sensor->raw_mv);
 
     // Bounds check, filtered mv is used for leniency
-    #ifndef IGNORE_APPS_ERRORS
-    if (sensor->filt_mv < min_mv - APPS_VOLTAGE_TOLERANCE ||
-        sensor->filt_mv > max_mv + APPS_VOLTAGE_TOLERANCE) {
-        sensor->out_of_range = TRUE;
-        return;
-    }
+    #if !IGNORE_APPS_ERRORS
+        if (sensor->filt_mv < min_mv - APPS_VOLTAGE_TOLERANCE ||
+            sensor->filt_mv > max_mv + APPS_VOLTAGE_TOLERANCE) {
+            sensor->out_of_range = TRUE;
+            return;
+        }
     #endif
     
     // Sensor reading is all good
@@ -111,7 +111,7 @@ void APPS_Update(void)
                   APPS_2_MIN_VOLTAGE, APPS_2_MAX_VOLTAGE);
     
     // Individual sensor check
-    #ifndef IGNORE_APPS_ERRORS
+    #if !IGNORE_APPS_ERRORS
     if (!(apps_data.apps1.valid && apps_data.apps2.valid)) {
         return;
     }
@@ -123,7 +123,7 @@ void APPS_Update(void)
                     (apps_data.apps2.value - apps_data.apps1.value);
 
     // More than 10 percent?
-    #ifndef IGNORE_APPS_ERRORS
+    #if !IGNORE_APPS_ERRORS
     if (diff > APPS_IMPLAUSIBILITY_DEVIATION) {
         apps_data.implausible = TRUE;
         return;
@@ -134,8 +134,13 @@ void APPS_Update(void)
     apps_data.valid = TRUE;
     apps_data.implausible = FALSE;
     
+    // Final averaged value
     apps_data.apps_value = (ubyte2)((ubyte4)apps_data.apps1.value + apps_data.apps2.value) / 2;
-    return;
+
+    // Set additional flags
+    apps_data.above_bap_threshold = apps_data.apps_value > APPS_BAP_THRESHOLD;
+    apps_data.below_bap_reestablish_threshold = apps_data.apps_value < APPS_BAP_REESTABLISH_THRESHOLD;
+
 }
 
 const APPS_Data_t* APPS_GetData(void)
