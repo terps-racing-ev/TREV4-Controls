@@ -7,8 +7,11 @@
 #include "config/can_config.h"
 #include "state_machine.h"
 #include "io/rtd.h"
+#include "io/buzzer.h"
+#include "io/lights.h"
 #include "sensors/apps.h"
 #include "sensors/bse.h"
+#include "control/torque_controller.h"
 
 /* Application Database,
  * needed for TTC-Downloader
@@ -67,6 +70,8 @@ void main (void)
     RTD_Init();
     APPS_Init();
     BSE_Init();
+    Lights_Init();
+    Buzzer_Init();
     StateMachine_Init();
 
 
@@ -90,12 +95,13 @@ void main (void)
         /*                 LOGIC                   */
         /*******************************************/
         StateMachine_Update();
-        //TorqueController_Update();
+        TorqueController_Update();
         
         /*******************************************/
         /*                OUTPUTS                  */
         /*******************************************/
-        //Outputs_Update();          // Control buzzer, lights
+        Buzzer_Update();
+        Lights_Update();
         CAN_Manager_ProcessTxMessages();  // Send CAN        
 
 

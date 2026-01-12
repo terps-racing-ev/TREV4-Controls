@@ -32,7 +32,7 @@ ubyte1 telemetry_rx_error_ctr;
 **************************************************************************/
 static InverterStatus_RX_Data_t inverter_status_rx_data = {0};
 static InverterHighSpeed_RX_Data_t inverter_high_speed_rx_data = {0};
-
+static HVCSummary_RX_Data_t hvc_summary_rx_data = {0};
 
 // TODO justification to make these a new file?
 static void PackAPPSVoltages(IO_CAN_DATA_FRAME* apps_voltages_frame)
@@ -156,6 +156,7 @@ void CAN_Manager_Init(void)
                     , 0);
 }
 
+// TODO add deinit and reinit on failure
 void CAN_Manager_ProcessRxMessages(void)
 {
     // TODO definitely make this a loop...
@@ -198,6 +199,8 @@ void CAN_Manager_ProcessRxMessages(void)
     if (curr_time - inverter_high_speed_rx_data.last_rx_timestamp > MSG_TIMEOUT_US) {
         inverter_high_speed_rx_data.data_vld = FALSE;
     }
+
+    // TODO rx hvc summary
 }
 
 void CAN_Manager_ProcessTxMessages(void)
@@ -244,4 +247,9 @@ const InverterStatus_RX_Data_t* CAN_Manager_GetInverterStatusData(void)
 const InverterHighSpeed_RX_Data_t* CAN_Manager_GetInverterHighSpeedData(void)
 {
     return &inverter_high_speed_rx_data;
+}
+
+const HVCSummary_RX_Data_t* CAN_Manager_GetHVCSummaryData(void)
+{
+    return &hvc_summary_rx_data;
 }

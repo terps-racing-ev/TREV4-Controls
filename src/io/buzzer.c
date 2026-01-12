@@ -2,6 +2,7 @@
 #include "IO_DIO.h"
 #include "IO_RTC.h"
 
+#include "state_machine.h"
 #include "buzzer.h"
 #include "config/dio_config.h"
 
@@ -17,27 +18,44 @@ void Buzzer_Init(void)
     buzzer_state = BUZZER_STATE_INACTIVE;
 }
 
-// TODO sus, i feel like you could get stuck in infinite buzzer glitch
-Buzzer_State_t Buzzer_Play(void)
+void Buzzer_Update(void)
 {
-    if (BUZZER_STATE_INACTIVE) {
-        // when this state has just been entered, turn on the buzzer and a timer
-        IO_RTC_StartTime(&buzzer_timestamp);
-        buzzer_state = BUZZER_STATE_IN_PROG;
+    const VCU_State_t vcu_state = StateMachine_GetState();
 
-        // TODO we can make this fancy af
-        IO_DO_Set(IO_PIN_BUZZER, TRUE);
+    if (vcu_state == VCU_STATE_PLAYING_RTD_SOUND) {
+        switch (buzzer_state) {
+            case BUZZER_STATE_INACTIVE:
+                // when this state has just been entered, turn on the buzzer and a timer
+                buzzer_state = BUZZER_STATE_IN_PROG;
+                IO_RTC_StartTime(&buzzer_timestamp);
+                
+                // TODO we can make this fancy af
+                IO_DO_Set(IO_PIN_BUZZER, TRUE);
+                break;
+            
+            case BUZZER_STATE_IN_PROG:
+                IO_DO_Set(IO_PIN_BUZZER, TRUE);
+                if (IO_RTC_GetTimeUS(buzzer_timestamp) > RTD_SOUND_DURATION_US) {
+                    buzzer_state = BUZZER_STATE_INACTIVE;
+                    IO_DO_Set(IO_PIN_BUZZER, FALSE);
+                }
+                break;
 
-    } else if (IO_RTC_GetTimeUS(buzzer_timestamp) > RTD_SOUND_DURATION_US) {
+            case BUZZER_STATE_DONE:
+                IO_DO_Set(IO_PIN_BUZZER, FALSE);
+                buzzer_state = BUZZER_STATE_INACTIVE;
+                break;
+
+            default:
+                break;
+        }
+    } else {
         buzzer_state = BUZZER_STATE_INACTIVE;
         IO_DO_Set(IO_PIN_BUZZER, FALSE);
     }
-
-    return buzzer_state;
 }
 
-void Buzzer_Stop(void)
+Buzzer_State_t Buzzer_GetState(void)
 {
-    buzzer_state = BUZZER_STATE_INACTIVE;
-    IO_DO_Set(IO_PIN_BUZZER, FALSE);
+    return buzzer_state;
 }
