@@ -2,6 +2,7 @@
 #define CAN_CONFIG_H
 
 #include "IO_CAN.h"
+#include "util/units.h"
 
 /* Channels */
 #define CONTROLS_CAN_CHANNEL IO_CAN_CHANNEL_0
