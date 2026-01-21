@@ -36,7 +36,7 @@ void Buzzer_Update(void)
             case BUZZER_STATE_IN_PROG:
                 IO_DO_Set(IO_PIN_BUZZER, TRUE);
                 if (IO_RTC_GetTimeUS(buzzer_timestamp) > RTD_SOUND_DURATION_US) {
-                    buzzer_state = BUZZER_STATE_INACTIVE;
+                    buzzer_state = BUZZER_STATE_DONE;
                     IO_DO_Set(IO_PIN_BUZZER, FALSE);
                 }
                 break;

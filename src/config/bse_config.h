@@ -1,5 +1,5 @@
-#ifndef APPS_CONFIG_H
-#define APPS_CONFIG_H
+#ifndef BSE_CONFIG_H
+#define BSE_CONFIG_H
 
 #include "util/units.h"
 
@@ -37,6 +37,4 @@
 /* EV.4.7.1 - Threshold for "Hard" Braking */
 #define BRAKE_PLAUSIBILITY_THRESHOLD 500 //PSI
 
-#define APPS_MAX_STALENESS MsToUs(100ul)
-
-#endif // APPS_CONFIG_H
+#endif // BSE_CONFIG_H

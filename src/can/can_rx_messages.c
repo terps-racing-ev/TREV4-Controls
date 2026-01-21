@@ -31,7 +31,9 @@ void CAN_RX_UnpackInverterHighSpeed(IO_CAN_DATA_FRAME* frame, void* data)
 void CAN_RX_UnpackHVCSummary(IO_CAN_DATA_FRAME* frame, void* data)
 {
     HVCSummary_RX_Data_t* rx_data = (HVCSummary_RX_Data_t*)data;
-    //TODO
+    //TODO for now say everything is good
     (void)frame;
-    (void)rx_data;
+    rx_data->bms_ok = TRUE;
+    rx_data->imd_ok = TRUE;
+    rx_data->sdc_ok = TRUE;
 }

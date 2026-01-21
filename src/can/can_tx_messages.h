@@ -6,6 +6,7 @@
 
 void CAN_TX_PackAPPSVoltages(IO_CAN_DATA_FRAME* frame);
 void CAN_TX_PackAPPSValues(IO_CAN_DATA_FRAME* frame);
-void CAN_TX_PackTorqueCommand(IO_CAN_DATA_FRAME* frame);
+void CAN_TX_PackInvTorqueCommand(IO_CAN_DATA_FRAME* frame);
+void CAN_TX_PackInvReadWrite(IO_CAN_DATA_FRAME* frame);
 
 #endif // CAN_TX_MESSAGES_H

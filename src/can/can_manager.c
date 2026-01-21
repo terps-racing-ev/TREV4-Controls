@@ -7,6 +7,7 @@
 #include "can_tx_messages.h"
 #include "can_rx_messages.h"
 #include "config/can_config.h"
+#include "state_machine.h"
 
 /* TX FIFO handles
     Only need one FIFO for each channel */
@@ -51,7 +52,7 @@ static CAN_RX_Message_t rx_messages[] = {
         .id = 0, //TODO
         .timeout_us = MSG_TIMEOUT_US,
         .data = &hvc_summary_rx_data,
-        .unpack_fn = NULL
+        .unpack_fn = CAN_RX_UnpackHVCSummary
     }
 };
 
@@ -142,12 +143,20 @@ void CAN_Manager_ProcessTxMessages(void)
 {
     // Reuse one frame for every tx
     IO_CAN_DATA_FRAME tx_frame;
+    const VCU_State_t vcu_state = StateMachine_GetState();
 
     // TODO maybe this could be an array
+    // conditional send kinda ruins things
 
-    /* Torque */
-    CAN_TX_PackTorqueCommand(&tx_frame);
+    /* Inverter */
+    CAN_TX_PackInvTorqueCommand(&tx_frame);
     CAN_Util_WriteFIFO(controls_tx_fifo_handle, &tx_frame);
+
+    // TODO bad
+    if(vcu_state == VCU_STATE_PLAYING_RTD_SOUND){
+        CAN_TX_PackInvReadWrite(&tx_frame);
+        CAN_Util_WriteFIFO(controls_tx_fifo_handle, &tx_frame);
+    }
 
     /* APPS */
     CAN_TX_PackAPPSValues(&tx_frame);

@@ -55,6 +55,4 @@
 APPS signals less than 5% Pedal Travel, with or without brake operation */
 #define APPS_BAP_REESTABLISH_THRESHOLD (APPS_RESOLUTION / 20)
 
-#define APPS_MAX_STALENESS MsToUs(100ul)
-
 #endif // APPS_CONFIG_H

@@ -3,6 +3,7 @@
 
 #include "rtd.h"
 #include "config/dio_config.h"
+#include "debug_defines.h"
 #include "util/debounce.h"
 
 static RTD_Data_t rtd;

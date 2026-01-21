@@ -22,9 +22,10 @@ void StateMachine_Update(void)
     const APPS_Data_t* apps = APPS_GetData();
     const BSE_Data_t* bse = BSE_GetData();
     const bool rtd_active = RTD_IsActive();
-    const HVCSummary_RX_Data_t* hvc_summary = CAN_Manager_GetHVCSummaryData();
     const Buzzer_State_t buzzer_state = Buzzer_GetState();
+    
     // TODO read all the messages we need
+    const HVCSummary_RX_Data_t* hvc_summary = CAN_Manager_GetHVCSummaryData();
 
     const bool hard_fault = (!apps->valid || !bse->valid || !hvc_summary->sdc_ok);
     const bool bap_fault = (apps->above_bap_threshold && bse->hard_braking);

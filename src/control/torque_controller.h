@@ -4,7 +4,6 @@
 #include "IO_Constants.h"
 
 typedef struct {
-
     sbyte2 apps_torque;
     sbyte2 regen_torque;
     
