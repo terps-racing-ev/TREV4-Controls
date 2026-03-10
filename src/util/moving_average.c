@@ -36,3 +36,8 @@ ubyte2 MovingAverage_Update(MovingAverage_Data_t* ma, ubyte2 new_val)
 
     return (ubyte2)(ma->sum / ma->window_size);
 }
+
+float4 MovingAverage_EWMA(float4 curr_val, float4 new_val, float4 weight)
+{
+    return curr_val*(1.0f-weight) + new_val*weight;
+}

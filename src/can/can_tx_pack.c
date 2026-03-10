@@ -1,4 +1,4 @@
-#include "can_tx_messages.h"
+#include "can_tx_pack.h"
 #include "can_util.h"
 #include "config/can_config.h"
 #include "sensors/apps.h"
@@ -54,7 +54,7 @@ void CAN_TX_PackInvTorqueCommand(IO_CAN_DATA_FRAME* frame)
     const TorqueController_Data_T* torque_data = TorqueController_GetData();
 
     frame->id = CAN_ID_INV_TORQUE_COMMAND;
-    frame->id_format = IO_CAN_EXT_FRAME;
+    frame->id_format = IO_CAN_STD_FRAME;
     frame->length = 8;
     CAN_Util_ClearData(frame);
 
@@ -74,7 +74,7 @@ void CAN_TX_PackInvReadWrite(IO_CAN_DATA_FRAME* frame)
 {
     // TODO rn this only does clear faults but thats allw e need it to do rly
     frame->id = CAN_ID_INV_READ_WRITE;
-    frame->id_format = IO_CAN_EXT_FRAME;
+    frame->id_format = IO_CAN_STD_FRAME;
     frame->length = 8;
     CAN_Util_ClearData(frame);
 
@@ -86,4 +86,23 @@ void CAN_TX_PackInvReadWrite(IO_CAN_DATA_FRAME* frame)
     frame->data[5] = 0;
     frame->data[6] = 0;
     frame->data[7] = 0;
+}
+
+void CAN_TX_PackVCUSummary(IO_CAN_DATA_FRAME* frame)
+{
+
+}
+
+
+
+void CAN_TX_PackVCUSettings(IO_CAN_DATA_FRAME* frame)
+{
+    frame->id = CAN_ID_VCU_SETTINGS;
+    frame->id_format = IO_CAN_STD_FRAME;
+    frame->length = 8;
+}
+
+void CAN_TX_PackVCUExitDriveReason(IO_CAN_DATA_FRAME* frame)
+{
+    
 }

@@ -1,5 +1,5 @@
-#ifndef CAN_RX_MESSAGES_H
-#define CAN_RX_MESSAGES_H
+#ifndef CAN_RX_UNPACK_H
+#define CAN_RX_UNPACK_H
 
 #include "IO_Constants.h"
 #include "IO_CAN.h"
@@ -30,4 +30,4 @@ void CAN_RX_UnpackInverterStatus(IO_CAN_DATA_FRAME* frame, void* data);
 void CAN_RX_UnpackInverterHighSpeed(IO_CAN_DATA_FRAME* frame, void* data);
 void CAN_RX_UnpackHVCSummary(IO_CAN_DATA_FRAME* frame, void* data);
 
-#endif // CAN_RX_MESSAGES_H
+#endif // CAN_RX_UNPACK_H
