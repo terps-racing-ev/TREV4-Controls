@@ -12,6 +12,7 @@
 #include "sensors/apps.h"
 #include "sensors/bse.h"
 #include "control/torque_controller.h"
+#include "settings/runtime_config.h"
 
 /* Application Database,
  * needed for TTC-Downloader
@@ -60,6 +61,8 @@ void main (void)
     /* Initialize the IO driver (without safety functions) */
     IO_Driver_Init(NULL);
 
+    RuntimeConfig_Init();
+
     /* NOTE: turns 5v sensor supply 1 on */
     IO_POWER_Set (IO_ADC_SENSOR_SUPPLY_0, IO_POWER_ON);
     IO_POWER_Set (IO_ADC_SENSOR_SUPPLY_1, IO_POWER_ON);
@@ -86,6 +89,7 @@ void main (void)
         /*******************************************/
         /*                 INPUTS                  */
         /*******************************************/
+        RuntimeConfig_Task();
         RTD_Update();
         APPS_Update();
         BSE_Update();

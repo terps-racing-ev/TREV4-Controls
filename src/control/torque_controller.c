@@ -2,6 +2,7 @@
 #include "config/torque_config.h"
 #include "config/apps_config.h"
 #include "can/can_manager.h"
+#include "settings/runtime_config.h"
 #include "sensors/apps.h"
 #include "sensors/bse.h"
 #include "state_machine.h"
@@ -12,17 +13,18 @@ static TorqueController_Data_T torque_data;
 
 static sbyte2 PedalTravelToTorque(ubyte2 pedal_travel)
 {
-    const ubyte2 pedal_travel_for_max_torque = (ubyte2)((ubyte4)(APPS_RESOLUTION * PERCENT_TRAVEL_FOR_MAX_TORQUE) / 100);
+    const ubyte2 pedal_travel_for_max_torque = (ubyte2)((((ubyte4)APPS_RESOLUTION) * (ubyte4)PERCENT_TRAVEL_FOR_MAX_TORQUE) / 100);
+    const sbyte2 max_torque = RuntimeConfig_GetMaxTorque();
 
     if (pedal_travel < APPS_DEADZONE) {
         return 0;
     }
 
     if (pedal_travel > pedal_travel_for_max_torque) {
-        return (sbyte2)MAX_TORQUE;
+        return max_torque;
     }
 
-    return (sbyte2)(((sbyte4)(pedal_travel - APPS_DEADZONE) * (sbyte4)MAX_TORQUE) /
+    return (sbyte2)(((sbyte4)(pedal_travel - APPS_DEADZONE) * (sbyte4)max_torque) /
                     (sbyte4)(pedal_travel_for_max_torque - APPS_DEADZONE));
 }
 

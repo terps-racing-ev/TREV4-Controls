@@ -101,7 +101,8 @@ build/%.obj : src/%.c
 
 clean:
 	@echo cleaning up test module files
-	-@del /F /Q build\*.*
+	-@if exist build rmdir /S /Q build
+	-@if not exist build mkdir build
 	@echo done.
 	
 #---------------------------------------------

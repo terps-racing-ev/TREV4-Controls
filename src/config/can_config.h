@@ -22,14 +22,11 @@
 // TODO watch out for slower messages need to make multiple
 #define MSG_TIMEOUT_US      MsToUs(1000)
 
-/* TX Rates */
+/* TX Periods */
 #define CAN_TX_RATE_5MS         MsToUs(5)
 #define CAN_TX_RATE_10MS        MsToUs(10)
 #define CAN_TX_RATE_100MS       MsToUs(100)
 #define CAN_TX_RATE_1000MS      MsToUs(1000)
-
-/* CAN Manager TX process period */
-#define CAN_TX_PROCESS_CYCLE_US CAN_TX_RATE_5MS
 
 /* RX Message IDs */
 #define CAN_ID_INV_STATUS       0x0AB // TODO do we need this
@@ -42,7 +39,9 @@
 #define CAN_ID_APPS_VOLTAGES        0x0D1ACCE0
 #define CAN_ID_APPS_VALUES          0x0D1ACCE1
 #define CAN_ID_VCU_SUMMARY          0x0D1001F0
+#define CAN_ID_BSE                  0x0D100B5E
 #define CAN_ID_VCU_SETTINGS         0x0D1000CF
+#define CAN_ID_VCU_CONFIG_SET       0x0D1000CE
 #define CAN_ID_EXIT_DRIVE_REASON    0x0D10DEAD
 
 

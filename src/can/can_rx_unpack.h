@@ -26,8 +26,14 @@ typedef struct {
     sbyte2  pack_soc;
 } HVCSummary_RX_Data_t;
 
+typedef struct {
+    ubyte2  param_id;
+    sbyte4  value;
+} VCUConfigSet_RX_Data_t;
+
 void CAN_RX_UnpackInverterStatus(IO_CAN_DATA_FRAME* frame, void* data);
 void CAN_RX_UnpackInverterHighSpeed(IO_CAN_DATA_FRAME* frame, void* data);
 void CAN_RX_UnpackHVCSummary(IO_CAN_DATA_FRAME* frame, void* data);
+void CAN_RX_UnpackVCUConfigSet(IO_CAN_DATA_FRAME* frame, void* data);
 
 #endif // CAN_RX_UNPACK_H

@@ -15,7 +15,8 @@
 #define INVERTER_SPEED_DISABLE 0
 
 
-#define MAX_TORQUE 5
+/* Default values for runtime-configurable parameters (EEPROM-backed). */
+#define MAX_TORQUE_DEFAULT 5
 
 #define PERCENT_TRAVEL_FOR_MAX_TORQUE 90
 

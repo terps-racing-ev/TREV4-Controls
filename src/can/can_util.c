@@ -3,6 +3,9 @@
 
 #include "can_util.h"
 
+/**************************************************************************
+*                   P U B L I C    F U N C T I O N S
+**************************************************************************/
 
 void CAN_Util_ClearData(IO_CAN_DATA_FRAME* frame) {
     for (int i = 0; i < 8; i++) {
@@ -48,9 +51,13 @@ IO_ErrorType CAN_Util_WriteFIFO(ubyte1 handle, const IO_CAN_DATA_FRAME* src_data
         return IO_E_INVALID_PARAMETER;
     }
     
+    /* For TX FIFOs, IO_CAN_FIFOStatus() can return IO_E_BUSY simply because
+       transmission is ongoing. That does not imply the FIFO is full.
+       Allow enqueue while BUSY and let IO_CAN_WriteFIFO() report FIFO_FULL
+       when capacity is exhausted. */
     status = IO_CAN_FIFOStatus(handle);
-    
-    if (status == IO_E_OK || status == IO_E_CAN_OLD_DATA) {
+
+    if ((status == IO_E_OK) || (status == IO_E_BUSY) || (status == IO_E_CAN_OLD_DATA)) {
         status = IO_CAN_WriteFIFO(handle, src_data_frame, 1);
     }
     
