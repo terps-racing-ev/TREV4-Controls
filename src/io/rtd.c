@@ -28,11 +28,8 @@ It is up to the caller to decide when to actually invalidate reading.
 */
 void RTD_Update(void)
 {
-    /* Local Variables */
-    bool raw_val;       // raw input
-    IO_ErrorType err;   // error for function call
-
-    err = IO_DI_Get(IO_PIN_RTD, &raw_val);
+    bool raw_val = FALSE;       // raw input
+    const IO_ErrorType err = IO_DI_Get(IO_PIN_RTD, &raw_val);
     if (err != IO_E_OK) {
         rtd.valid = FALSE;
         return;

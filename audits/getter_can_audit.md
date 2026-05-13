@@ -16,9 +16,8 @@ From `src/can/can_manager.c` / `src/can/can_tx_pack.c`:
 - `CAN_ID_INV_TORQUE_COMMAND` (`CAN_TX_PackInvTorqueCommand`)
 - `CAN_ID_INV_READ_WRITE` (`CAN_TX_PackInvReadWrite`)
 - `CAN_ID_VCU_SUMMARY` (`CAN_TX_PackVCUSummary`)
-- `CAN_ID_VCU_SETTINGS` (`CAN_TX_PackVCUSettings`)
+- `CAN_ID_CONFIG` (`CAN_TX_PackConfig`)
 
-Notes:
 - `CAN_TX_PackVCUExitDriveReason` exists but is currently empty and not scheduled.
 
 ## Getter inventory and CAN coverage
@@ -87,11 +86,7 @@ Not sent today:
 Files: `src/settings/runtime_config.h`, `src/settings/runtime_config.c`
 
 Sent today:
-- `CAN_ID_VCU_SETTINGS` broadcasts one runtime parameter per message via `RuntimeConfig_GetNextBroadcastParam()`.
-- Current parameter set is 1 item: `RUNTIME_PARAM_MAX_TORQUE`.
-
-Gaps / caveats:
-- `RuntimeConfig_GetMaxTorque()` is not directly packed, but the underlying parameter value is broadcast via `CAN_ID_VCU_SETTINGS` (as `param_id=1`).
+- `CAN_ID_CONFIG` publishes one runtime parameter per frame using `byte0 = mux (RuntimeParamId_t)` and `byte1-2 = value (i16 little-endian)`, with round-robin transmit across configured runtime parameters.
 
 ### `CAN_Manager_Get*Data()` (RX mirror getters)
 Files: `src/can/can_manager.h`, `src/can/can_manager.c`, `src/can/can_rx_unpack.h`, `src/can/can_rx_unpack.c`

@@ -2,7 +2,7 @@
 #define RTD_H
 
 #include "IO_Constants.h"
-
+// TODO CHEKC THE CAN IO BUFFERS WHAT WE NEED
 #define RTD_ON FALSE
 #define RTD_OFF TRUE
 

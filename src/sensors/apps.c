@@ -30,10 +30,6 @@ static ubyte2 VoltageToPedalTravel(ubyte2 mv, ubyte2 min_mv, ubyte2 max_mv)
 static void UpdateChannel(ubyte1 adc_channel, MovingAverage_Data_t* ma, APPS_Sensor_t* sensor,
                           ubyte2 min_mv, ubyte2 max_mv)
 {
-    /* Local Variables */
-    IO_ErrorType err;       // error for function calls
-    bool data_fresh;        // staleness check
-
     if (ma == NULL || sensor == NULL) {
         return;
     }
@@ -44,7 +40,8 @@ static void UpdateChannel(ubyte1 adc_channel, MovingAverage_Data_t* ma, APPS_Sen
     sensor->out_of_range = FALSE;
     
     // Read raw ADC
-    err = IO_ADC_Get(adc_channel, &sensor->raw_mv, &data_fresh);
+    bool data_fresh = FALSE;        // staleness check
+    const IO_ErrorType err = IO_ADC_Get(adc_channel, &sensor->raw_mv, &data_fresh);
     #if !IGNORE_APPS_ERRORS
         if (err != IO_E_OK) {
             sensor->adc_err = TRUE;
@@ -98,10 +95,6 @@ It is up to the caller to decide when to actually invalidate reading.
 */
 void APPS_Update(void)
 {
-
-    /* Local Variables */
-    ubyte2 diff; // used for implausibility
-
     apps_data.valid = FALSE;
     apps_data.implausible = FALSE;
 
@@ -118,7 +111,7 @@ void APPS_Update(void)
     #endif
 
     // Absolute difference between both values
-    diff = (apps_data.apps1.value > apps_data.apps2.value) ?
+    const ubyte2 diff = (apps_data.apps1.value > apps_data.apps2.value) ?
                     (apps_data.apps1.value - apps_data.apps2.value) :
                     (apps_data.apps2.value - apps_data.apps1.value);
 

@@ -1,4 +1,4 @@
-#include "settings/runtime_config.h"
+#include "runtime_config.h"
 
 #include "IO_EEPROM.h"
 #include "IO_RTC.h"
@@ -9,16 +9,19 @@
 *                          P R I V A T E    T Y P E S
 **************************************************************************/
 
+// these all have to be sbyte2 here so the general function works and shi
 typedef struct {
-    sbyte4 max_torque;
+    sbyte2 max_torque;
+    sbyte2 motor_direction;
+    sbyte2 regen_enabled;
 } RuntimeConfig_Data_t;
 
 typedef struct {
-    ubyte2  id;
-    sbyte4* value;
-    sbyte4  def_value;
-    sbyte4  min_value;
-    sbyte4  max_value;
+    ubyte1  id;
+    sbyte2* value;
+    sbyte2  default_value;
+    sbyte2  min_value;
+    sbyte2  max_value;
 } RuntimeConfig_ParamDesc_t;
 
 typedef enum {
@@ -50,11 +53,10 @@ typedef enum {
 #define RUNTIME_CFG_HEADER_LEN        ((ubyte2)12)
 
 /* Record:
-   u16 param_id
-   u16 reserved
-   i32 value
+    u8 param_id
+    i16 value
 */
-#define RUNTIME_CFG_RECORD_LEN        ((ubyte2)8)
+#define RUNTIME_CFG_RECORD_LEN        ((ubyte2)3)
 
 /* Total EEPROM blob length (fixed). */
 #define RUNTIME_CFG_EEPROM_LEN        ((ubyte2)(RUNTIME_CFG_HEADER_LEN + (RUNTIME_CFG_RECORD_LEN * RUNTIME_CFG_MAX_PARAMS)))
@@ -74,18 +76,30 @@ static ubyte1 eeprom_buf[RUNTIME_CFG_EEPROM_LEN];
 static bool write_pending;
 static ubyte4 last_write_trigger_ts;
 
-/* Settings broadcast support */
-static bool broadcast_kick;
-static ubyte2 broadcast_param_id;
-static ubyte2 broadcast_rr_index;
+/* Request-based config TX trigger */
+static bool config_tx_pending;
 
 static RuntimeConfig_ParamDesc_t param_descs[] = {
     {
-        .id = (ubyte2)RUNTIME_PARAM_MAX_TORQUE,
+        .id = RUNTIME_PARAM_MAX_TORQUE,
         .value = &runtime_cfg.max_torque,
-        .def_value = (sbyte4)MAX_TORQUE_DEFAULT,
+        .default_value = MAX_TORQUE_DEFAULT,
         .min_value = 0,
         .max_value = 230,
+    },
+    {
+        .id = RUNTIME_PARAM_MOTOR_DIRECTION,
+        .value = &runtime_cfg.motor_direction,
+        .default_value = MOTOR_DIRECTION_DEFAULT,
+        .min_value = MOTOR_REVERSE,
+        .max_value = MOTOR_FORWARDS,
+    },
+    {
+        .id = RUNTIME_PARAM_REGEN_ENABLED,
+        .value = &runtime_cfg.regen_enabled,
+        .default_value = REGEN_ENABLED_DEFAULT,
+        .min_value = 0,
+        .max_value = 1,
     },
 };
 
@@ -95,10 +109,9 @@ static RuntimeConfig_ParamDesc_t param_descs[] = {
 *                  P R I V A T E    F U N C T I O N S
 **************************************************************************/
 
-static RuntimeConfig_ParamDesc_t* FindParam(const ubyte2 param_id)
+static RuntimeConfig_ParamDesc_t* FindParam(const RuntimeParamId_t param_id)
 {
-    ubyte2 i;
-    for (i = 0; i < PARAM_COUNT; i++) {
+    for (ubyte2 i = 0; i < PARAM_COUNT; i++) {
         if (param_descs[i].id == param_id) {
             return &param_descs[i];
         }
@@ -106,7 +119,7 @@ static RuntimeConfig_ParamDesc_t* FindParam(const ubyte2 param_id)
     return NULL;
 }
 
-static sbyte4 ClampI32(const sbyte4 v, const sbyte4 min_v, const sbyte4 max_v)
+static sbyte2 ClampI16(const sbyte4 v, const sbyte2 min_v, const sbyte2 max_v)
 {
     if (v < min_v) {
         return min_v;
@@ -114,16 +127,15 @@ static sbyte4 ClampI32(const sbyte4 v, const sbyte4 min_v, const sbyte4 max_v)
     if (v > max_v) {
         return max_v;
     }
-    return v;
+    return (sbyte2)v;
 }
 
 static void ApplyDefaults(void)
 {
-    ubyte2 i;
-    for (i = 0; i < PARAM_COUNT; i++) {
-        *param_descs[i].value = ClampI32(param_descs[i].def_value,
-                                        param_descs[i].min_value,
-                                        param_descs[i].max_value);
+    for (ubyte2 i = 0; i < PARAM_COUNT; i++) {
+        *param_descs[i].value = ClampI16(param_descs[i].default_value,
+                        param_descs[i].min_value,
+                        param_descs[i].max_value);
     }
 }
 
@@ -154,23 +166,22 @@ static void WriteU32LE(ubyte1* const p, const ubyte4 v)
     p[3] = (ubyte1)((v >> 24) & 0xFF);
 }
 
-static void WriteI32LE(ubyte1* const p, const sbyte4 v)
+static void WriteI16LE(ubyte1* const p, const sbyte2 v)
 {
-    WriteU32LE(p, (ubyte4)v);
+    WriteU16LE(p, (ubyte2)v);
 }
 
-static sbyte4 ReadI32LE(const ubyte1* const p)
+static sbyte2 ReadI16LE(const ubyte1* const p)
 {
-    return (sbyte4)ReadU32LE(p);
+    return (sbyte2)ReadU16LE(p);
 }
 
 /* FNV-1a 32-bit over the entire blob; checksum field is treated as 0. */
 static ubyte4 ComputeBlobChecksum(const ubyte1* const blob)
 {
     ubyte4 hash = 2166136261UL;
-    ubyte2 i;
 
-    for (i = 0; i < RUNTIME_CFG_EEPROM_LEN; i++) {
+    for (ubyte2 i = 0; i < RUNTIME_CFG_EEPROM_LEN; i++) {
         ubyte1 b = blob[i];
 
         /* Checksum field is at offset 8..11. */
@@ -187,10 +198,6 @@ static ubyte4 ComputeBlobChecksum(const ubyte1* const blob)
 
 static void PackToEepromBlob(ubyte1* const blob)
 {
-    ubyte2 i;
-    ubyte2 offset;
-    ubyte4 checksum;
-
     /* Header */
     WriteU32LE(&blob[0], RUNTIME_CFG_MAGIC);
     WriteU16LE(&blob[4], RUNTIME_CFG_VERSION);
@@ -198,40 +205,30 @@ static void PackToEepromBlob(ubyte1* const blob)
     WriteU32LE(&blob[8], 0);
 
     /* Records (fixed slots). Fill unused slots with 0xFF-ish values for clarity. */
-    offset = RUNTIME_CFG_HEADER_LEN;
-    for (i = 0; i < RUNTIME_CFG_MAX_PARAMS; i++) {
+    ubyte2 offset = RUNTIME_CFG_HEADER_LEN;
+    for (ubyte2 i = 0; i < RUNTIME_CFG_MAX_PARAMS; i++) {
         if (i < PARAM_COUNT) {
-            WriteU16LE(&blob[offset + 0], param_descs[i].id);
-            WriteU16LE(&blob[offset + 2], 0);
-            WriteI32LE(&blob[offset + 4], *param_descs[i].value);
+            blob[offset + 0] = param_descs[i].id;
+            WriteI16LE(&blob[offset + 1], *param_descs[i].value);
         }
         else {
-            WriteU16LE(&blob[offset + 0], 0xFFFF);
-            WriteU16LE(&blob[offset + 2], 0xFFFF);
-            WriteU32LE(&blob[offset + 4], 0xFFFFFFFFUL);
+            blob[offset + 0] = 0xFF;
+            WriteU16LE(&blob[offset + 1], 0xFFFF);
         }
 
         offset = (ubyte2)(offset + RUNTIME_CFG_RECORD_LEN);
     }
 
-    checksum = ComputeBlobChecksum(blob);
+    const ubyte4 checksum = ComputeBlobChecksum(blob);
     WriteU32LE(&blob[8], checksum);
 }
 
 static bool UnpackFromEepromBlob(const ubyte1* const blob)
 {
-    ubyte4 magic;
-    ubyte2 version;
-    ubyte2 record_count;
-    ubyte4 stored_checksum;
-    ubyte4 computed_checksum;
-    ubyte2 i;
-    ubyte2 offset;
-
-    magic = ReadU32LE(&blob[0]);
-    version = ReadU16LE(&blob[4]);
-    record_count = ReadU16LE(&blob[6]);
-    stored_checksum = ReadU32LE(&blob[8]);
+    const ubyte4 magic = ReadU32LE(&blob[0]);
+    const ubyte2 version = ReadU16LE(&blob[4]);
+    const ubyte2 record_count = ReadU16LE(&blob[6]);
+    const ubyte4 stored_checksum = ReadU32LE(&blob[8]);
 
     if (magic != RUNTIME_CFG_MAGIC) {
         return FALSE;
@@ -245,20 +242,20 @@ static bool UnpackFromEepromBlob(const ubyte1* const blob)
         return FALSE;
     }
 
-    computed_checksum = ComputeBlobChecksum(blob);
+    const ubyte4 computed_checksum = ComputeBlobChecksum(blob);
     if (computed_checksum != stored_checksum) {
         return FALSE;
     }
 
     /* Apply records (ignore unknown param IDs). */
-    offset = RUNTIME_CFG_HEADER_LEN;
-    for (i = 0; i < record_count; i++) {
-        const ubyte2 pid = ReadU16LE(&blob[offset + 0]);
-        const sbyte4 val = ReadI32LE(&blob[offset + 4]);
+    ubyte2 offset = RUNTIME_CFG_HEADER_LEN;
+    for (ubyte2 i = 0; i < record_count; i++) {
+        const ubyte1 pid = blob[offset + 0];
+        const sbyte2 val = ReadI16LE(&blob[offset + 1]);
         RuntimeConfig_ParamDesc_t* desc = FindParam(pid);
 
         if (desc != NULL) {
-            *desc->value = ClampI32(val, desc->min_value, desc->max_value);
+            *desc->value = ClampI16(val, desc->min_value, desc->max_value);
         }
 
         offset = (ubyte2)(offset + RUNTIME_CFG_RECORD_LEN);
@@ -279,9 +276,7 @@ void RuntimeConfig_Init(void)
     write_pending = FALSE;
     last_write_trigger_ts = 0;
 
-    broadcast_kick = TRUE;
-    broadcast_param_id = (ubyte2)RUNTIME_PARAM_MAX_TORQUE;
-    broadcast_rr_index = 0;
+    config_tx_pending = FALSE;
 }
 
 void RuntimeConfig_Task(void)
@@ -331,78 +326,69 @@ void RuntimeConfig_Task(void)
     }
 }
 
-bool RuntimeConfig_SetI32(const ubyte2 param_id, const sbyte4 value)
+bool RuntimeConfig_IsEepromLoadComplete(void)
+{
+    return ((eeprom_state == EEPROM_STATE_READY) ||
+            (eeprom_state == EEPROM_STATE_WRITE_WAIT));
+}
+
+bool RuntimeConfig_Set(const RuntimeParamId_t param_id, const sbyte2 value)
 {
     RuntimeConfig_ParamDesc_t* desc = FindParam(param_id);
-    sbyte4 clamped;
 
     if (desc == NULL) {
         return FALSE;
     }
 
-    clamped = ClampI32(value, desc->min_value, desc->max_value);
+    const sbyte2 clamped = ClampI16(value, desc->min_value, desc->max_value);
 
     if (*desc->value != clamped) {
         *desc->value = clamped;
 
         write_pending = TRUE;
-
-        /* Next broadcast should prioritize the updated parameter. */
-        broadcast_kick = TRUE;
-        broadcast_param_id = desc->id;
+        /* Any successful SET should be followed by an immediate config TX. */
+        config_tx_pending = TRUE;
     }
 
     return TRUE;
 }
 
-bool RuntimeConfig_GetI32(const ubyte2 param_id, sbyte4* const out_value)
+bool RuntimeConfig_GetI32(const RuntimeParamId_t param_id, sbyte2* const out_value)
 {
-    RuntimeConfig_ParamDesc_t* desc;
-
     if (out_value == NULL) {
         return FALSE;
     }
 
-    desc = FindParam(param_id);
+    RuntimeConfig_ParamDesc_t* const desc = FindParam(param_id);
     if (desc == NULL) {
         return FALSE;
     }
 
-    *out_value = *desc->value;
+    *out_value = (sbyte2)*desc->value;
     return TRUE;
 }
 
-sbyte2 RuntimeConfig_GetMaxTorque(void)
+ubyte1 RuntimeConfig_GetMaxTorque(void)
 {
-    /* Stored as i32 but guaranteed clamped into 0..230. */
-    return (sbyte2)runtime_cfg.max_torque;
+    return runtime_cfg.max_torque;
 }
 
-bool RuntimeConfig_GetNextBroadcastParam(ubyte2* const out_param_id, sbyte4* const out_value)
+bool RuntimeConfig_GetMotorDirection(void)
 {
-    RuntimeConfig_ParamDesc_t* desc;
+    return runtime_cfg.motor_direction;
+}
 
-    if ((out_param_id == NULL) || (out_value == NULL) || (PARAM_COUNT == 0)) {
-        return FALSE;
+bool RuntimeConfig_GetRegenEnabled(void)
+{
+    return runtime_cfg.regen_enabled;
+}
+
+bool RuntimeConfig_ConfigTxTrigger(void)
+{
+    if (config_tx_pending) {
+        config_tx_pending = FALSE;
+        return TRUE;
     }
 
-    if (broadcast_kick) {
-        broadcast_kick = FALSE;
-        desc = FindParam(broadcast_param_id);
-        if (desc != NULL) {
-            *out_param_id = desc->id;
-            *out_value = *desc->value;
-            return TRUE;
-        }
-        /* If the param ID vanished, fall back to round-robin below. */
-    }
-
-    if (broadcast_rr_index >= PARAM_COUNT) {
-        broadcast_rr_index = 0;
-    }
-
-    desc = &param_descs[broadcast_rr_index++];
-    *out_param_id = desc->id;
-    *out_value = *desc->value;
-    return TRUE;
+    return FALSE;
 }

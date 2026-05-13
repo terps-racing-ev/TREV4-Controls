@@ -77,10 +77,14 @@ endif
 
 LSL_FILE=application.lsl
 
+.PHONY: all rebuild clean postbuild
+
 #
 # rules for building
 
-all : build/main.elf postbuild
+all : rebuild
+
+rebuild : clean build/main.elf postbuild
 
 # call linker
 build/main.elf : $(IODRIVER_LDIR)/$(LIB_NAME) $(BSP_OBJ_FILES) $(OBJ_FILES)
@@ -102,7 +106,7 @@ build/%.obj : src/%.c
 clean:
 	@echo cleaning up test module files
 	-@if exist build rmdir /S /Q build
-	-@if not exist build mkdir build
+	@if not exist build mkdir build
 	@echo done.
 	
 #---------------------------------------------

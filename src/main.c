@@ -12,7 +12,7 @@
 #include "sensors/apps.h"
 #include "sensors/bse.h"
 #include "control/torque_controller.h"
-#include "settings/runtime_config.h"
+#include "config/runtime_config.h"
 
 /* Application Database,
  * needed for TTC-Downloader
@@ -51,9 +51,6 @@ APDB appl_db =
 
 void main (void)
 {
-    /* Local Variables */
-    ubyte4 timestamp;       // Keep track of cycle time
-
     /*******************************************/
     /*             INITIALIZATION              */
     /*******************************************/
@@ -83,6 +80,7 @@ void main (void)
     /*******************************************/    
     while (1)
     {
+        ubyte4 timestamp = 0;       // Keep track of cycle time
         IO_RTC_StartTime(&timestamp);
         IO_Driver_TaskBegin();
 
@@ -98,6 +96,7 @@ void main (void)
         /*******************************************/
         /*                 LOGIC                   */
         /*******************************************/
+        Lights_Update(); // eh this is output but lwk has logic in it that statemachine will need
         StateMachine_Update();
         TorqueController_Update();
         
@@ -105,11 +104,11 @@ void main (void)
         /*                OUTPUTS                  */
         /*******************************************/
         Buzzer_Update();
-        Lights_Update();
         CAN_Manager_ProcessTxMessages();  // Send CAN        
 
 
         IO_Driver_TaskEnd();
+        // TODO would be cool to get cpu load here
         while (IO_RTC_GetTimeUS(timestamp) < CYCLE_TIME_US);
     }
 }

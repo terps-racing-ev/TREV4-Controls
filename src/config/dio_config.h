@@ -17,6 +17,8 @@
 
 #define TSSI_BLINK_PERIOD_US MsToUs(250)
 
+#define HVC_STARTUP_GRACE_US MsToUs(10000)
+
 /* RTD -> pin 263 (aka digital in 0) (switched to ground with pullup) */
 #define IO_PIN_RTD IO_DI_00
 #define RTD_DB_THRESHOLD MsToCycles(40)

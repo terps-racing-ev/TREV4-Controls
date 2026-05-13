@@ -40,9 +40,7 @@ void BSE_Init(void)
 
 void BSE_Update(void)
 {
-    /* Local Variables */
-    IO_ErrorType err;       // error for function calls
-    bool data_fresh;        // staleness check
+    bool data_fresh = FALSE;        // staleness check
 
     bse_data.valid = FALSE;
     bse_data.out_of_range = FALSE;
@@ -50,7 +48,7 @@ void BSE_Update(void)
     bse_data.stale = FALSE;
 
     // Read raw ADC
-    err = IO_ADC_Get(IO_PIN_BSE, &bse_data.raw_mv, &data_fresh);
+    const IO_ErrorType err = IO_ADC_Get(IO_PIN_BSE, &bse_data.raw_mv, &data_fresh);
     #if !IGNORE_BSE_ERRORS
     if (err != IO_E_OK) {
         bse_data.adc_err = TRUE;

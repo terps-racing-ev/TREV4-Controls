@@ -2,7 +2,7 @@
 #define UNITS_H
 
 
-#define CYCLE_TIME_MS 5
+#define CYCLE_TIME_MS 10
 #define CYCLE_TIME_US MsToUs(CYCLE_TIME_MS)
 
 /* macro to convert a milliseconds time to microseconds (for rtc functions) */

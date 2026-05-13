@@ -5,5 +5,6 @@
 
 void Lights_Init(void);
 void Lights_Update(void);
+bool Lights_isRedCar(void);
 
 #endif

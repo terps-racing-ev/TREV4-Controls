@@ -1,5 +1,5 @@
-#ifndef CAN_TX_PACK_H
-#define CAN_TX_PACK_H
+#ifndef CAN_TX_H
+#define CAN_TX_H
 
 #include "IO_Constants.h"
 #include "IO_CAN.h"
@@ -10,7 +10,9 @@ void CAN_TX_PackInvTorqueCommand(IO_CAN_DATA_FRAME* frame);
 void CAN_TX_PackInvReadWrite(IO_CAN_DATA_FRAME* frame);
 void CAN_TX_PackVCUSummary(IO_CAN_DATA_FRAME* frame);
 void CAN_TX_PackBSE(IO_CAN_DATA_FRAME* frame);
-void CAN_TX_PackVCUSettings(IO_CAN_DATA_FRAME* frame);
-void CAN_TX_PackVCUExitDriveReason(IO_CAN_DATA_FRAME* frame);
+void CAN_TX_PackConfig(IO_CAN_DATA_FRAME* frame);
+void CAN_TX_PackCANHealth(IO_CAN_DATA_FRAME* frame);
+void CAN_TX_PackCANHealthFifo(IO_CAN_DATA_FRAME* frame);
+void CAN_TX_PackDeadCar(IO_CAN_DATA_FRAME* frame);
 
-#endif // CAN_TX_PACK_H
+#endif // CAN_TX_H

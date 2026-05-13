@@ -4,8 +4,6 @@
 
 void MovingAverage_Init(MovingAverage_Data_t* ma, ubyte1 window_size)
 {
-    ubyte1 i;   // Index
-    
     if (ma == NULL || window_size == 0 || window_size > MAX_WINDOW_SIZE) {
         return;
     }
@@ -13,7 +11,7 @@ void MovingAverage_Init(MovingAverage_Data_t* ma, ubyte1 window_size)
     ma->window_size = window_size;
     ma->sum = 0;
     ma->index = 0;
-    for (i = 0; i < MAX_WINDOW_SIZE; i++) {
+    for (ubyte1 i = 0; i < MAX_WINDOW_SIZE; i++) {
         ma->window[i] = 0;
     }
 }
