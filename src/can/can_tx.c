@@ -138,17 +138,24 @@ void CAN_TX_PackConfig(IO_CAN_DATA_FRAME* frame)
 {
     static ubyte1 config_tx_cycle_idx = 0;
     sbyte2 param_value = 0;
+    RuntimeParamId_t param_id = RUNTIME_PARAM_MAX_TORQUE;
 
-    config_tx_cycle_idx++;
-    if (config_tx_cycle_idx >= RUNTIME_PARAM_COUNT) {
-        config_tx_cycle_idx = 0;
+    const bool use_immediate_mux = RuntimeConfig_ConsumeImmediateConfigTxParam(&param_id);
+
+    if (!use_immediate_mux) {
+        config_tx_cycle_idx++;
+        if (config_tx_cycle_idx >= RUNTIME_PARAM_COUNT) {
+            config_tx_cycle_idx = 0;
+        }
+
+        param_id = (RuntimeParamId_t)config_tx_cycle_idx;
     }
 
-    (void)RuntimeConfig_GetI32((RuntimeParamId_t)config_tx_cycle_idx, &param_value);
+    (void)RuntimeConfig_GetI32(param_id, &param_value);
 
     const ubyte2 packed_value = (ubyte2)(param_value);
 
-    frame->data[0] = (ubyte1)config_tx_cycle_idx;
+    frame->data[0] = (ubyte1)param_id;
     frame->data[1] = (ubyte1)(packed_value & 0xFF);
     frame->data[2] = (ubyte1)(packed_value >> 8);
 }

@@ -14,7 +14,7 @@ static TorqueController_Data_T torque_data;
 static sbyte2 PedalTravelToTorque(ubyte2 pedal_travel)
 {
     const ubyte2 pedal_travel_for_max_torque = (ubyte2)((((ubyte4)APPS_RESOLUTION) * (ubyte4)PERCENT_TRAVEL_FOR_MAX_TORQUE) / 100);
-    const ubyte1 max_torque = 20;//RuntimeConfig_GetMaxTorque();
+    const ubyte1 max_torque = MAX_TORQUE_DEFAULT;//RuntimeConfig_GetMaxTorque();
 
     if (pedal_travel < APPS_DEADZONE) {
         return 0;

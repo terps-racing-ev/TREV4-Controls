@@ -36,22 +36,21 @@
 #define CAN_ID_INV_STATUS           0x0AB // TODO do we need this
 #define CAN_ID_INV_HIGH_SPEED       0x0B0
 #define CAN_ID_HVC_SUMMARY          0x004001F0
+//                                      +---- 0 because the user sends it
+//                                      |
+//                                      V
 #define CAN_ID_SET_VCU_CONFIG       0x000000CF
 
 /* TX Message IDs */
 #define CAN_ID_INV_TORQUE_COMMAND   0x0C0
 #define CAN_ID_INV_READ_WRITE       0x0C1
+#define CAN_ID_CONFIG               0x001000CF
 #define CAN_ID_APPS_VOLTAGES        0x0D1ACCE0
 #define CAN_ID_APPS_VALUES          0x0D1ACCE1
 #define CAN_ID_VCU_SUMMARY          0x0D1001F0
 #define CAN_ID_BSE                  0x0D100B5E
 #define CAN_ID_DEAD_CAR             0x0D10DEAD
-#define CAN_ID_CONFIG               0x0D1000CF
 #define CAN_ID_CAN_HEALTH           0x0D100CA9
 #define CAN_ID_CAN_HEALTH_FIFO      0x0D10F1F0
-
-/* Mirror all DAQ TX frames onto the controls bus as well. */
-#define CAN_DEBUG_MIRROR_DAQ_TX_TO_CONTROLS 1
-
 
 #endif

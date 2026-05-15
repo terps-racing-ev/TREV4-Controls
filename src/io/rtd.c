@@ -3,7 +3,7 @@
 
 #include "rtd.h"
 #include "config/dio_config.h"
-#include "debug_defines.h"
+#include "config/runtime_config.h"
 #include "util/debounce.h"
 
 static RTD_Data_t rtd;
@@ -42,9 +42,12 @@ void RTD_Update(void)
 
 bool RTD_IsActive(void)
 {
-    #if IGNORE_RTD_SWITCH
+    sbyte2 dbg_bits = 0;
+    (void)RuntimeConfig_GetI32(RUNTIME_PARAM_DEBUG_DEFINES, &dbg_bits);
+
+    if (dbg_bits & DEBUG_BIT_IGNORE_RTD_SWITCH) {
         return TRUE;
-    #else
-        return (rtd.state == RTD_ON);
-    #endif
+    }
+
+    return (rtd.state == RTD_ON);
 }

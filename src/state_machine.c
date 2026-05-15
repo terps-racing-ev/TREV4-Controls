@@ -44,6 +44,18 @@ void StateMachine_Update(void)
     const bool hard_fault = (!apps->valid || !bse->valid || !hvc_summary->sdc_ok || is_red_car);
     const bool bap_fault = (apps->above_bap_threshold && bse->hard_braking);
 
+    bool ready_to_drive = TRUE;
+    ready_to_drive &= rtd_active;
+    {
+        sbyte2 dbg_bits = 0;
+        (void)RuntimeConfig_GetI32(RUNTIME_PARAM_DEBUG_DEFINES, &dbg_bits);
+        const bool ignore_rtd_brakes = (dbg_bits & DEBUG_BIT_IGNORE_RTD_BRAKES);
+
+        if (!ignore_rtd_brakes) {
+            ready_to_drive &= bse->brakes_engaged;
+        }
+    }
+
     /* red car check since it isn't a state rn */
     if (!was_red_car && is_red_car) {
         dead_car_tx_pending = TRUE;
@@ -59,7 +71,7 @@ void StateMachine_Update(void)
             break;
 
         case VCU_STATE_NOT_READY:
-            if (rtd_active) {//} && bse->brakes_engaged) {
+            if (ready_to_drive) {
                 if (!hard_fault && !bap_fault) {
                     current_state = VCU_STATE_PLAYING_RTD_SOUND;
                     clear_faults_tx_pending = TRUE;

@@ -29,7 +29,7 @@
 
 /* APPS 2 Bounds */
 #define APPS_2_MAX_VOLTAGE 0
-#define APPS_2_MIN_VOLTAGE 3854
+#define APPS_2_MIN_VOLTAGE 1120
 
 /* Voltage range above max and below min that doesn't count as an error */
 #define APPS_VOLTAGE_TOLERANCE 250

@@ -6,7 +6,7 @@
 
 #include "config/bse_config.h"
 #include "util/moving_average.h"
-#include "debug_defines.h"
+#include "config/runtime_config.h"
 
 static BSE_Data_t bse_data;
 static MovingAverage_Data_t bse_ma;
@@ -49,27 +49,39 @@ void BSE_Update(void)
 
     // Read raw ADC
     const IO_ErrorType err = IO_ADC_Get(IO_PIN_BSE, &bse_data.raw_mv, &data_fresh);
-    #if !IGNORE_BSE_ERRORS
-    if (err != IO_E_OK) {
-        bse_data.adc_err = TRUE;
-        return;
+    {
+        sbyte2 dbg_bits = 0;
+        (void)RuntimeConfig_GetI32(RUNTIME_PARAM_DEBUG_DEFINES, &dbg_bits);
+        const bool ignore_bse_errors = (dbg_bits & DEBUG_BIT_IGNORE_BSE_ERRORS);
+
+        if (!ignore_bse_errors) {
+            if (err != IO_E_OK) {
+                bse_data.adc_err = TRUE;
+                return;
+            }
+            if (!data_fresh) {
+                bse_data.stale = TRUE;
+                return;
+            }
+        }
     }
-    if (!data_fresh) {
-        bse_data.stale = TRUE;
-        return;
-    }
-    #endif
 
     bse_data.filt_mv = MovingAverage_Update(&bse_ma, bse_data.raw_mv);
 
     // Bounds check
-    #if !IGNORE_BSE_ERRORS
-    if (bse_data.filt_mv < BSE_MIN_VOLTAGE - BSE_VOLTAGE_TOLERANCE ||
-        bse_data.filt_mv > BSE_MAX_VOLTAGE + BSE_VOLTAGE_TOLERANCE) {
-        bse_data.out_of_range = TRUE;
-        return;
+    {
+        sbyte2 dbg_bits = 0;
+        (void)RuntimeConfig_GetI32(RUNTIME_PARAM_DEBUG_DEFINES, &dbg_bits);
+        const bool ignore_bse_errors = (dbg_bits & DEBUG_BIT_IGNORE_BSE_ERRORS);
+
+        if (!ignore_bse_errors) {
+            if (bse_data.filt_mv < BSE_MIN_VOLTAGE - BSE_VOLTAGE_TOLERANCE ||
+                bse_data.filt_mv > BSE_MAX_VOLTAGE + BSE_VOLTAGE_TOLERANCE) {
+                bse_data.out_of_range = TRUE;
+                return;
+            }
+        }
     }
-    #endif
 
     // Sensor reading is all good
     bse_data.valid = TRUE;

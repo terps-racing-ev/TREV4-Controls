@@ -14,6 +14,7 @@ typedef struct {
     sbyte2 max_torque;
     sbyte2 motor_direction;
     sbyte2 regen_enabled;
+    sbyte2 debug_defines;
 } RuntimeConfig_Data_t;
 
 typedef struct {
@@ -77,7 +78,8 @@ static bool write_pending;
 static ubyte4 last_write_trigger_ts;
 
 /* Request-based config TX trigger */
-static bool config_tx_pending;
+static bool config_tx_immediate_pending;
+static RuntimeParamId_t config_tx_immediate_param;
 
 static RuntimeConfig_ParamDesc_t param_descs[] = {
     {
@@ -100,6 +102,13 @@ static RuntimeConfig_ParamDesc_t param_descs[] = {
         .default_value = REGEN_ENABLED_DEFAULT,
         .min_value = 0,
         .max_value = 1,
+    },
+    {
+        .id = RUNTIME_PARAM_DEBUG_DEFINES,
+        .value = &runtime_cfg.debug_defines,
+        .default_value = 0,
+        .min_value = 0,
+        .max_value = 32767,
     },
 };
 
@@ -276,7 +285,8 @@ void RuntimeConfig_Init(void)
     write_pending = FALSE;
     last_write_trigger_ts = 0;
 
-    config_tx_pending = FALSE;
+    config_tx_immediate_pending = FALSE;
+    config_tx_immediate_param = RUNTIME_PARAM_MAX_TORQUE;
 }
 
 void RuntimeConfig_Task(void)
@@ -344,10 +354,11 @@ bool RuntimeConfig_Set(const RuntimeParamId_t param_id, const sbyte2 value)
 
     if (*desc->value != clamped) {
         *desc->value = clamped;
-
         write_pending = TRUE;
-        /* Any successful SET should be followed by an immediate config TX. */
-        config_tx_pending = TRUE;
+
+        /* Queue one-shot config echo for this mux after EEPROM write completes. */
+        config_tx_immediate_param = param_id;
+        config_tx_immediate_pending = TRUE;
     }
 
     return TRUE;
@@ -385,10 +396,26 @@ bool RuntimeConfig_GetRegenEnabled(void)
 
 bool RuntimeConfig_ConfigTxTrigger(void)
 {
-    if (config_tx_pending) {
-        config_tx_pending = FALSE;
-        return TRUE;
+    return (config_tx_immediate_pending &&
+            (eeprom_state == EEPROM_STATE_READY) &&
+            !write_pending);
+}
+
+bool RuntimeConfig_ConsumeImmediateConfigTxParam(RuntimeParamId_t* const out_param_id)
+{
+    if (out_param_id == NULL) {
+        return FALSE;
     }
 
-    return FALSE;
+    if (!config_tx_immediate_pending) {
+        return FALSE;
+    }
+
+    if ((eeprom_state != EEPROM_STATE_READY) || write_pending) {
+        return FALSE;
+    }
+
+    *out_param_id = config_tx_immediate_param;
+    config_tx_immediate_pending = FALSE;
+    return TRUE;
 }

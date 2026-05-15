@@ -7,6 +7,7 @@
 #include "config/dio_config.h"
 #include "can/can_rx.h"
 #include "can/can_manager.h"
+#include "config/runtime_config.h"
 
 static bool red_car;
 static bool red_light_state;
@@ -41,17 +42,26 @@ void Lights_Update(void)
         IO_DO_Set(BRAKE_LIGHT_PIN, FALSE);
     }
 
+    sbyte2 dbg_bits = 0;
+    (void)RuntimeConfig_GetI32(RUNTIME_PARAM_DEBUG_DEFINES, &dbg_bits);
+    const bool always_green = (dbg_bits & DEBUG_BIT_ALWAYS_GREEN);
+
+    if (always_green) {
+        red_car = FALSE;
+    }
+    else {
     /* Logic for Red Car */
     if (!hvc_valid) {
         /* Allow HVC time to come online at boot. */
-        red_car = FALSE;//;in_hvc_grace ? FALSE : TRUE;
+        red_car = in_hvc_grace ? FALSE : TRUE;
     }
     else if (!hvc->imd_ok || !hvc->bms_ok) {
-        red_car = FALSE;//TRUE;
+        red_car = TRUE;
     }
     // Red car can only clear if sdc is good
     else if (hvc->imd_ok && hvc->bms_ok && hvc->sdc_ok) {
         red_car = FALSE;
+    }
     }
 
     /* Actuation for TSSI */

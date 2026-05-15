@@ -6,7 +6,7 @@
 
 #include "config/apps_config.h"
 #include "util/moving_average.h"
-#include "debug_defines.h"
+#include "config/runtime_config.h"
 
 static APPS_Data_t apps_data;
 static MovingAverage_Data_t apps1_ma;
@@ -42,29 +42,41 @@ static void UpdateChannel(ubyte1 adc_channel, MovingAverage_Data_t* ma, APPS_Sen
     // Read raw ADC
     bool data_fresh = FALSE;        // staleness check
     const IO_ErrorType err = IO_ADC_Get(adc_channel, &sensor->raw_mv, &data_fresh);
-    #if !IGNORE_APPS_ERRORS
-        if (err != IO_E_OK) {
-            sensor->adc_err = TRUE;
-            return;
+    {
+        sbyte2 dbg_bits = 0;
+        (void)RuntimeConfig_GetI32(RUNTIME_PARAM_DEBUG_DEFINES, &dbg_bits);
+        const bool ignore_apps_errors = (dbg_bits & DEBUG_BIT_IGNORE_APPS_ERRORS);
+
+        if (!ignore_apps_errors) {
+            if (err != IO_E_OK) {
+                sensor->adc_err = TRUE;
+                return;
+            }
+            /* This is a harsh check since APPS_Update preserves its value
+                and the caller is expected to provide some tolerance */
+            if (!data_fresh) {
+                sensor->stale = TRUE;
+                return;
+            }
         }
-        /* This is a harsh check since APPS_Update preserves its value
-            and the caller is expected to provide some tolerance */
-        if (!data_fresh) {
-            sensor->stale = TRUE;
-            return;
-        }
-    #endif
+    }
 
     sensor->filt_mv = MovingAverage_Update(ma, sensor->raw_mv);
 
     // Bounds check, filtered mv is used for leniency
-    #if !IGNORE_APPS_ERRORS
-        if (sensor->filt_mv < min_mv - APPS_VOLTAGE_TOLERANCE ||
-            sensor->filt_mv > max_mv + APPS_VOLTAGE_TOLERANCE) {
-            sensor->out_of_range = TRUE;
-            return;
+    {
+        sbyte2 dbg_bits = 0;
+        (void)RuntimeConfig_GetI32(RUNTIME_PARAM_DEBUG_DEFINES, &dbg_bits);
+        const bool ignore_apps_errors = (dbg_bits & DEBUG_BIT_IGNORE_APPS_ERRORS);
+
+        if (!ignore_apps_errors) {
+            if (sensor->filt_mv < min_mv - APPS_VOLTAGE_TOLERANCE ||
+                sensor->filt_mv > max_mv + APPS_VOLTAGE_TOLERANCE) {
+                sensor->out_of_range = TRUE;
+                return;
+            }
         }
-    #endif
+    }
     
     // Sensor reading is all good
     sensor->valid = TRUE;
@@ -103,32 +115,57 @@ void APPS_Update(void)
     UpdateChannel(IO_PIN_APPS_2, &apps2_ma, &apps_data.apps2,
                   APPS_2_MIN_VOLTAGE, APPS_2_MAX_VOLTAGE);
     
-    // Individual sensor check
-    #if !IGNORE_APPS_ERRORS
-    if (!(apps_data.apps1.valid && apps_data.apps2.valid)) {
-        return;
+    /* Individual sensor check */
+    {
+        sbyte2 dbg_bits = 0;
+        (void)RuntimeConfig_GetI32(RUNTIME_PARAM_DEBUG_DEFINES, &dbg_bits);
+        const bool ignore_apps_errors = (dbg_bits & DEBUG_BIT_IGNORE_APPS_ERRORS);
+
+        if (!ignore_apps_errors) {
+            if (!(apps_data.apps1.valid && apps_data.apps2.valid)) {
+                return;
+            }
+        }
     }
-    #endif
 
     // Absolute difference between both values
     const ubyte2 diff = (apps_data.apps1.value > apps_data.apps2.value) ?
                     (apps_data.apps1.value - apps_data.apps2.value) :
                     (apps_data.apps2.value - apps_data.apps1.value);
 
-    // More than 10 percent?
-    #if !IGNORE_APPS_ERRORS
-    if (diff > APPS_IMPLAUSIBILITY_DEVIATION) {
-        apps_data.implausible = TRUE;
-        return;
+    /* More than 10 percent? */
+    {
+        sbyte2 dbg_bits = 0;
+        (void)RuntimeConfig_GetI32(RUNTIME_PARAM_DEBUG_DEFINES, &dbg_bits);
+        const bool ignore_apps_errors = (dbg_bits & DEBUG_BIT_IGNORE_APPS_ERRORS);
+
+        if (!ignore_apps_errors) {
+            if (diff > APPS_IMPLAUSIBILITY_DEVIATION) {
+                apps_data.implausible = TRUE;
+                return;
+            }
+        }
     }
-    #endif
 
     // APPS is all good
     apps_data.valid = TRUE;
     apps_data.implausible = FALSE;
     
     // Final averaged value
-    apps_data.apps_value = (ubyte2)((ubyte4)apps_data.apps1.value + apps_data.apps2.value) / 2;
+    {
+        sbyte2 dbg_bits = 0;
+        (void)RuntimeConfig_GetI32(RUNTIME_PARAM_DEBUG_DEFINES, &dbg_bits);
+
+        if (dbg_bits & DEBUG_BIT_USE_APPS1_ONLY) {
+            apps_data.apps_value = apps_data.apps1.value;
+        }
+        else if (dbg_bits & DEBUG_BIT_USE_APPS2_ONLY) {
+            apps_data.apps_value = apps_data.apps2.value;
+        }
+        else {
+            apps_data.apps_value = (ubyte2)((ubyte4)apps_data.apps1.value + apps_data.apps2.value) / 2;
+        }
+    }
 
     // Set additional flags
     apps_data.above_bap_threshold = apps_data.apps_value > APPS_BAP_THRESHOLD;
