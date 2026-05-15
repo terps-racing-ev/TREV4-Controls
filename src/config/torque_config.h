@@ -14,6 +14,9 @@
 #define INVERTER_SPEED_ENABLE 1
 #define INVERTER_SPEED_DISABLE 0
 
+/* Drivetrain geometry (fixed). */
+#define GEAR_RATIO 3.4545f
+#define WHEEL_DIAMETER_DEFAULT 16
 
 /* Default values for runtime-configurable parameters (EEPROM-backed). */
 #define MAX_TORQUE_DEFAULT 5

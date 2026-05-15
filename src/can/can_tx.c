@@ -82,28 +82,29 @@ void CAN_TX_PackVCUSummary(IO_CAN_DATA_FRAME* frame)
 {
     static ubyte1 heartbeat;
     const VCU_State_t state = StateMachine_GetState();
-    const InverterHighSpeed_RX_Data_t* inv = CAN_RX_GetInverterHighSpeedData();
+    const TorqueController_Data_T* torque = TorqueController_GetData();
     const bool rtd_active = RTD_IsActive();
     const bool is_red_car = Lights_isRedCar();
     const Buzzer_State_t buzzer_state = Buzzer_GetState();
 
-    sbyte2 motor_speed = inv->motor_speed;
-    if (motor_speed < 0) {
-        motor_speed = (sbyte2)(-motor_speed);
+    /* Saturate speed_mph_x100 to ubyte2 max (65535 = 655.35 mph). */
+    ubyte2 speed_mph_x100 = (ubyte2)(torque->speed_mph_x100);
+    if (torque->speed_mph_x100 > 65535U) {
+        speed_mph_x100 = 65535U;
     }
-    const ubyte2 speed = (ubyte2)motor_speed;
 
     /* DAQBus.dbc / VCU_Summary
        byte0: VCU_Heartbeat
        byte1: VCU_State
-         byte2-3: VCU_Speed (currently inverter motor speed, abs(rpm))
-         byte4 bit0: VCU_RTD_Active
-         byte45 VCU_Buzzer_State
+       byte2-3: VCU_Speed (vehicle speed in mph x100)
+       byte4 bit0: VCU_RTD_Active
+       byte4 bit1: VCU_IsRedCar
+       byte5: VCU_Buzzer_State
      */
     frame->data[0] = heartbeat++;
     frame->data[1] = (ubyte1)state;
-    frame->data[2] = speed & 0xFF;
-    frame->data[3] = speed >> 8;
+    frame->data[2] = speed_mph_x100 & 0xFF;
+    frame->data[3] = speed_mph_x100 >> 8;
     frame->data[4] = rtd_active;
     frame->data[4] |= is_red_car << 1;
     frame->data[5] = (ubyte1)buzzer_state;

@@ -12,6 +12,7 @@ typedef struct {
     bool inv_direction;
     bool inv_speed_mode;
 
+    ubyte4 speed_mph_x100;  /* Vehicle speed in mph, scaled x100 for integer math */
 } TorqueController_Data_T;
 
 void TorqueController_Init(void);

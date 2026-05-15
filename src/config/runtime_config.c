@@ -15,6 +15,7 @@ typedef struct {
     sbyte2 motor_direction;
     sbyte2 regen_enabled;
     sbyte2 debug_defines;
+    sbyte2 wheel_diameter;
 } RuntimeConfig_Data_t;
 
 typedef struct {
@@ -109,6 +110,13 @@ static RuntimeConfig_ParamDesc_t param_descs[] = {
         .default_value = 0,
         .min_value = 0,
         .max_value = 32767,
+    },
+    {
+        .id = RUNTIME_PARAM_WHEEL_DIAMETER,
+        .value = &runtime_cfg.wheel_diameter,
+        .default_value = WHEEL_DIAMETER_DEFAULT,
+        .min_value = 8,
+        .max_value = 30,
     },
 };
 

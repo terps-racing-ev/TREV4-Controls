@@ -34,12 +34,41 @@ static sbyte2 PSIToTorque(ubyte2 psi)
     return 0;
 }
 
+static ubyte4 ComputeSpeedMPHx100(sbyte2 motor_rpm, sbyte2 wheel_diameter_in)
+{
+    /* Compute vehicle speed in mph x100 from motor RPM and wheel diameter (inches).
+     * Formula: speed_mph = (motor_rpm / GEAR_RATIO) * pi * diameter_in / (60 * 12)
+     * With fixed-point x100 and integer arithmetic:
+     *   speed_mph_x100 = (motor_rpm * diameter_in * 12627) / 100000
+     *   where 12627 ≈ (3.14159 * 10000 / 3.4545) / 7.2
+     * Note: Speed is unsigned (always positive/magnitude).
+     */
+    const ubyte2 SPEED_SCALE_NUM = 12627U;
+    const ubyte4 SPEED_SCALE_DENOM = 100000UL;
+    
+    ubyte4 rpm_u = (ubyte4)motor_rpm;
+    ubyte4 diameter_u = (ubyte4)wheel_diameter_in;
+    
+    /* Compute with intermediate values to prevent overflow. */
+    ubyte4 temp = rpm_u * diameter_u;
+    temp = (temp * (ubyte4)SPEED_SCALE_NUM);
+    ubyte4 result = temp / SPEED_SCALE_DENOM;
+    
+    /* Saturate to ubyte2 max (65535 mph x100 = 655.35 mph). */
+    if (result > 65535UL) {
+        result = 65535UL;
+    }
+    
+    return result;
+}
+
 void TorqueController_Init(void)
 {
     torque_data.inv_torque_scaled = 0;
     torque_data.inv_direction = MOTOR_FORWARDS;//RuntimeConfig_GetMotorDirection();
     torque_data.inv_enable = INVERTER_DISABLE;
     torque_data.inv_speed_mode = INVERTER_SPEED_DISABLE;
+    torque_data.speed_mph_x100 = 0;
 }
 
 void TorqueController_Update(void)
@@ -48,6 +77,11 @@ void TorqueController_Update(void)
     const APPS_Data_t* apps = APPS_GetData();
     const BSE_Data_t* bse = BSE_GetData();
     const InverterHighSpeed_RX_Data_t* inv_data = CAN_RX_GetInverterHighSpeedData();
+
+    /* Compute vehicle speed from inverter RPM and wheel diameter config. */
+    sbyte2 wheel_diameter = WHEEL_DIAMETER_DEFAULT;
+    (void)RuntimeConfig_GetI32(RUNTIME_PARAM_WHEEL_DIAMETER, &wheel_diameter);
+    torque_data.speed_mph_x100 = ComputeSpeedMPHx100(inv_data->motor_speed, wheel_diameter);
 
     if (state != VCU_STATE_DRIVING) {
         torque_data.inv_torque_scaled = 0;
