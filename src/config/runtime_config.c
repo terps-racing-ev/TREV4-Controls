@@ -16,6 +16,12 @@ typedef struct {
     sbyte2 regen_enabled;
     sbyte2 debug_defines;
     sbyte2 wheel_diameter;
+    sbyte2 traction_control_enabled;
+    sbyte2 traction_control_target_slip_x1000;
+    sbyte2 traction_control_kp_x1000;
+    sbyte2 traction_control_ki_x1000;
+    sbyte2 traction_control_kd_x1000;
+    sbyte2 traction_control_min_front_rpm;
 } RuntimeConfig_Data_t;
 
 typedef struct {
@@ -117,6 +123,48 @@ static RuntimeConfig_ParamDesc_t param_descs[] = {
         .default_value = WHEEL_DIAMETER_DEFAULT,
         .min_value = 8,
         .max_value = 30,
+    },
+    {
+        .id = RUNTIME_PARAM_TRACTION_CONTROL_ENABLED,
+        .value = &runtime_cfg.traction_control_enabled,
+        .default_value = TRACTION_CONTROL_ENABLED_DEFAULT,
+        .min_value = 0,
+        .max_value = 1,
+    },
+    {
+        .id = RUNTIME_PARAM_TRACTION_CONTROL_TARGET_SLIP_X1000,
+        .value = &runtime_cfg.traction_control_target_slip_x1000,
+        .default_value = TRACTION_CONTROL_TARGET_SLIP_X1000_DEFAULT,
+        .min_value = 1000,
+        .max_value = 5000,
+    },
+    {
+        .id = RUNTIME_PARAM_TRACTION_CONTROL_KP_X1000,
+        .value = &runtime_cfg.traction_control_kp_x1000,
+        .default_value = TRACTION_CONTROL_KP_X1000_DEFAULT,
+        .min_value = 0,
+        .max_value = 32767,
+    },
+    {
+        .id = RUNTIME_PARAM_TRACTION_CONTROL_KI_X1000,
+        .value = &runtime_cfg.traction_control_ki_x1000,
+        .default_value = TRACTION_CONTROL_KI_X1000_DEFAULT,
+        .min_value = 0,
+        .max_value = 32767,
+    },
+    {
+        .id = RUNTIME_PARAM_TRACTION_CONTROL_KD_X1000,
+        .value = &runtime_cfg.traction_control_kd_x1000,
+        .default_value = TRACTION_CONTROL_KD_X1000_DEFAULT,
+        .min_value = 0,
+        .max_value = 32767,
+    },
+    {
+        .id = RUNTIME_PARAM_TRACTION_CONTROL_MIN_FRONT_RPM,
+        .value = &runtime_cfg.traction_control_min_front_rpm,
+        .default_value = TRACTION_CONTROL_MIN_FRONT_RPM_DEFAULT,
+        .min_value = 0,
+        .max_value = 32767,
     },
 };
 

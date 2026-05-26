@@ -5,6 +5,7 @@
 #include "sensors/apps.h"
 #include "sensors/bse.h"
 #include "control/torque_controller.h"
+#include "control/traction_control.h"
 
 #include "state_machine.h"
 #include "io/rtd.h"
@@ -207,6 +208,23 @@ void CAN_TX_PackCANHealthFifo(IO_CAN_DATA_FRAME* frame)
     if (fifo_mux_idx >= CAN_HEALTH_FIFO_COUNT) {
         fifo_mux_idx = 0;
     }
+}
+
+void CAN_TX_PackTractionControl(IO_CAN_DATA_FRAME* frame)
+{
+    const TractionControl_Data_t* tc = TractionControl_GetData();
+
+    frame->data[0] = (ubyte1)(tc->rear_wheel_rpm & 0xFF);
+    frame->data[1] = (ubyte1)(tc->rear_wheel_rpm >> 8);
+    frame->data[2] = (ubyte1)(tc->avg_front_rpm & 0xFF);
+    frame->data[3] = (ubyte1)(tc->avg_front_rpm >> 8);
+    frame->data[4] = (ubyte1)(tc->slip_ratio_x1000 & 0xFF);
+    frame->data[5] = (ubyte1)(tc->slip_ratio_x1000 >> 8);
+    frame->data[6] = (ubyte1)tc->torque_limit_nm;
+    frame->data[7] = (ubyte1)((tc->enabled << 0) |
+                              (tc->active << 1) |
+                              (tc->front_left_valid << 2) |
+                              (tc->front_right_valid << 3));
 }
 
 void CAN_TX_PackDeadCar(IO_CAN_DATA_FRAME* frame)

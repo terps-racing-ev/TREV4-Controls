@@ -73,6 +73,7 @@ void main (void)
     Lights_Init();
     Buzzer_Init();
     StateMachine_Init();
+    TorqueController_Init();
 
 
     /*******************************************/

@@ -21,6 +21,7 @@ static ubyte1 controls_tx_ext_fifo_handle;
 // currently no std messages being send on daq
 static ubyte1 daq_tx_ext_fifo_handle;
 
+// TODO combine this with can recovery to be one health module
 static CAN_Manager_Health_t can_health;
 
 /**************************************************************************
@@ -54,6 +55,20 @@ static CAN_RX_Message_t rx_messages[CAN_RX_MSG_COUNT] = {
         .id = CAN_ID_SET_VCU_CONFIG,
         .timeout_us = MSG_TIMEOUT_US,
         .decode_fn = CAN_RX_UnpackSetVCUConfig
+    },
+    [CAN_RX_MSG_FRONT_LEFT_RPM] = {
+        .channel = DAQ_CAN_CHANNEL,
+        .id_format = IO_CAN_EXT_FRAME,
+        .id = CAN_ID_FRONT_LEFT_RPM,
+        .timeout_us = MSG_TIMEOUT_US,
+        .decode_fn = CAN_RX_UnpackFrontLeftRpm
+    },
+    [CAN_RX_MSG_FRONT_RIGHT_RPM] = {
+        .channel = DAQ_CAN_CHANNEL,
+        .id_format = IO_CAN_EXT_FRAME,
+        .id = CAN_ID_FRONT_RIGHT_RPM,
+        .timeout_us = MSG_TIMEOUT_US,
+        .decode_fn = CAN_RX_UnpackFrontRightRpm
     },
 };
 
@@ -132,6 +147,14 @@ static CAN_TX_Message_t tx_messages[CAN_TX_MSG_COUNT] = {
         .period_cycles = CAN_TX_RATE_100MS,
         .tx_trigger_fn = NULL,
         .pack_fn = CAN_TX_PackCANHealthFifo
+    },
+    [CAN_TX_MSG_TRACTION_CONTROL] = {
+        .channel = DAQ_CAN_CHANNEL,
+        .id_format = IO_CAN_EXT_FRAME,
+        .id = CAN_ID_TRACTION_CONTROL,
+        .period_cycles = CAN_TX_RATE_10MS,
+        .tx_trigger_fn = NULL,
+        .pack_fn = CAN_TX_PackTractionControl
     },
     [CAN_TX_MSG_DEAD_CAR] = {
         .channel = DAQ_CAN_CHANNEL,

@@ -5,6 +5,8 @@
 static InverterStatus_RX_Data_t inverter_status_rx_data = {0};
 static InverterHighSpeed_RX_Data_t inverter_high_speed_rx_data = {0};
 static HVCSummary_RX_Data_t hvc_summary_rx_data = {0};
+static FrontWheelRpm_RX_Data_t front_left_rpm_rx_data = {0};
+static FrontWheelRpm_RX_Data_t front_right_rpm_rx_data = {0};
 
 
 const InverterStatus_RX_Data_t* CAN_RX_GetInverterStatusData(void)
@@ -15,6 +17,16 @@ const InverterStatus_RX_Data_t* CAN_RX_GetInverterStatusData(void)
 const InverterHighSpeed_RX_Data_t* CAN_RX_GetInverterHighSpeedData(void)
 {
     return &inverter_high_speed_rx_data;
+}
+
+const FrontWheelRpm_RX_Data_t* CAN_RX_GetFrontLeftRpmData(void)
+{
+    return &front_left_rpm_rx_data;
+}
+
+const FrontWheelRpm_RX_Data_t* CAN_RX_GetFrontRightRpmData(void)
+{
+    return &front_right_rpm_rx_data;
 }
 
 const HVCSummary_RX_Data_t* CAN_RX_GetHVCSummaryData(void)
@@ -90,4 +102,25 @@ void CAN_RX_UnpackSetVCUConfig(IO_CAN_DATA_FRAME* frame)
     const sbyte4 value = (sbyte4)((sbyte2)raw_value);
 
     (void)RuntimeConfig_Set(mux, value);
+}
+
+static void CAN_RX_UnpackFrontRpm(IO_CAN_DATA_FRAME* frame,
+                                  FrontWheelRpm_RX_Data_t* const out_data)
+{
+    if ((frame == NULL) || (out_data == NULL) || (frame->length < 7)) {
+        return;
+    }
+
+    out_data->rpm = (ubyte2)((ubyte2)frame->data[5] |
+                             ((ubyte2)frame->data[6] << 8));
+}
+
+void CAN_RX_UnpackFrontLeftRpm(IO_CAN_DATA_FRAME* frame)
+{
+    CAN_RX_UnpackFrontRpm(frame, &front_left_rpm_rx_data);
+}
+
+void CAN_RX_UnpackFrontRightRpm(IO_CAN_DATA_FRAME* frame)
+{
+    CAN_RX_UnpackFrontRpm(frame, &front_right_rpm_rx_data);
 }

@@ -26,15 +26,23 @@ typedef struct {
     sbyte2  pack_soc;
 } HVCSummary_RX_Data_t;
 
+typedef struct {
+    ubyte2 rpm;
+} FrontWheelRpm_RX_Data_t;
+
 /* RX message entrypoints (frame -> module-owned struct). */
 void CAN_RX_UnpackInverterStatus(IO_CAN_DATA_FRAME* frame);
 void CAN_RX_UnpackInverterHighSpeed(IO_CAN_DATA_FRAME* frame);
 void CAN_RX_UnpackHVCSummary(IO_CAN_DATA_FRAME* frame);
 void CAN_RX_UnpackSetVCUConfig(IO_CAN_DATA_FRAME* frame);
+void CAN_RX_UnpackFrontLeftRpm(IO_CAN_DATA_FRAME* frame);
+void CAN_RX_UnpackFrontRightRpm(IO_CAN_DATA_FRAME* frame);
 
 /* RX message storage + public getters. */
 const InverterStatus_RX_Data_t* CAN_RX_GetInverterStatusData(void);
 const InverterHighSpeed_RX_Data_t* CAN_RX_GetInverterHighSpeedData(void);
 const HVCSummary_RX_Data_t* CAN_RX_GetHVCSummaryData(void);
+const FrontWheelRpm_RX_Data_t* CAN_RX_GetFrontLeftRpmData(void);
+const FrontWheelRpm_RX_Data_t* CAN_RX_GetFrontRightRpmData(void);
 
 #endif // CAN_RX_H

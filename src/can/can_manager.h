@@ -1,10 +1,50 @@
 #ifndef CAN_MANAGER_H
 #define CAN_MANAGER_H
 
-
 #include "IO_Constants.h"
 #include "IO_CAN.h"
 
+/********************
+* ADD MESSAGES HERE
+********************/
+typedef enum {
+    CAN_RX_MSG_INV_STATUS,
+    CAN_RX_MSG_INV_HIGH_SPEED,
+    CAN_RX_MSG_HVC_SUMMARY,
+    CAN_RX_MSG_SET_VCU_CONFIG,
+    CAN_RX_MSG_FRONT_LEFT_RPM,
+    CAN_RX_MSG_FRONT_RIGHT_RPM,
+
+    CAN_RX_MSG_COUNT
+} CAN_RX_MessageId_t;
+
+typedef enum {
+    CAN_TX_MSG_INV_TORQUE_COMMAND,
+    CAN_TX_MSG_INV_READ_WRITE,
+    CAN_TX_MSG_APPS_VALUES,
+    CAN_TX_MSG_APPS_VOLTAGES,
+    CAN_TX_MSG_VCU_SUMMARY,
+    CAN_TX_MSG_BSE,
+    CAN_TX_MSG_CONFIG,
+    CAN_TX_MSG_CAN_HEALTH,
+    CAN_TX_MSG_CAN_HEALTH_FIFO,
+    CAN_TX_MSG_TRACTION_CONTROL,
+    CAN_TX_MSG_DEAD_CAR,
+
+    CAN_TX_MSG_COUNT
+} CAN_TX_MessageId_t;
+
+typedef enum {
+    CAN_HEALTH_TX_FIFO_CONTROLS_STD = 0,
+    CAN_HEALTH_TX_FIFO_CONTROLS_EXT,
+    CAN_HEALTH_TX_FIFO_DAQ_EXT,
+
+    CAN_HEALTH_TX_FIFO_COUNT
+} CAN_HealthTxFifoId_t;
+
+/********************
+* Common structs
+********************/
 typedef struct {
     const ubyte1 channel;
     const ubyte1 id_format;
@@ -28,41 +68,6 @@ typedef struct {
     ubyte4 cycles_until_tx;
 } CAN_TX_Message_t;
 
-
-/********************
-* ADD MESSAGES HERE
-********************/
-typedef enum {
-    CAN_RX_MSG_INV_STATUS,
-    CAN_RX_MSG_INV_HIGH_SPEED,
-    CAN_RX_MSG_HVC_SUMMARY,
-    CAN_RX_MSG_SET_VCU_CONFIG,
-
-    CAN_RX_MSG_COUNT
-} CAN_RX_MessageId_t;
-
-typedef enum {
-    CAN_TX_MSG_INV_TORQUE_COMMAND,
-    CAN_TX_MSG_INV_READ_WRITE,
-    CAN_TX_MSG_APPS_VALUES,
-    CAN_TX_MSG_APPS_VOLTAGES,
-    CAN_TX_MSG_VCU_SUMMARY,
-    CAN_TX_MSG_BSE,
-    CAN_TX_MSG_CONFIG,
-    CAN_TX_MSG_CAN_HEALTH,
-    CAN_TX_MSG_CAN_HEALTH_FIFO,
-    CAN_TX_MSG_DEAD_CAR,
-
-    CAN_TX_MSG_COUNT
-} CAN_TX_MessageId_t;
-
-typedef enum {
-    CAN_HEALTH_TX_FIFO_CONTROLS_STD = 0,
-    CAN_HEALTH_TX_FIFO_CONTROLS_EXT,
-    CAN_HEALTH_TX_FIFO_DAQ_EXT,
-
-    CAN_HEALTH_TX_FIFO_COUNT
-} CAN_HealthTxFifoId_t;
 
 #define CAN_HEALTH_FIFO_RX_OFFSET CAN_HEALTH_TX_FIFO_COUNT
 #define CAN_HEALTH_FIFO_COUNT (CAN_HEALTH_TX_FIFO_COUNT + CAN_RX_MSG_COUNT)

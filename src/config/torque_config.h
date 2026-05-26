@@ -34,4 +34,12 @@
 #define REGEN_PARABOLA_CONST 0.00025
 #define REGEN_LINEAR_CONST 0.114
 
+/* Traction control defaults (runtime-configurable, fractional values x1000). */
+#define TRACTION_CONTROL_ENABLED_DEFAULT             FALSE
+#define TRACTION_CONTROL_TARGET_SLIP_X1000_DEFAULT   1100
+#define TRACTION_CONTROL_KP_X1000_DEFAULT            5000
+#define TRACTION_CONTROL_KI_X1000_DEFAULT            0
+#define TRACTION_CONTROL_KD_X1000_DEFAULT            0
+#define TRACTION_CONTROL_MIN_FRONT_RPM_DEFAULT       10
+
 #endif // TORQUE_CONFIG_H

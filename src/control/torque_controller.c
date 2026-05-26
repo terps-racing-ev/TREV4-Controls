@@ -7,6 +7,7 @@
 #include "sensors/bse.h"
 #include "state_machine.h"
 #include "torque_controller.h"
+#include "traction_control.h"
 
 
 static TorqueController_Data_T torque_data;
@@ -69,6 +70,7 @@ void TorqueController_Init(void)
     torque_data.inv_enable = INVERTER_DISABLE;
     torque_data.inv_speed_mode = INVERTER_SPEED_DISABLE;
     torque_data.speed_mph_x100 = 0;
+    TractionControl_Init();
 }
 
 void TorqueController_Update(void)
@@ -84,6 +86,7 @@ void TorqueController_Update(void)
     torque_data.speed_mph_x100 = ComputeSpeedMPHx100(inv_data->motor_speed, wheel_diameter);
 
     if (state != VCU_STATE_DRIVING) {
+        (void)TractionControl_ApplyLimit(0, inv_data->motor_speed);
         torque_data.inv_torque_scaled = 0;
         torque_data.inv_direction = MOTOR_FORWARDS;//RuntimeConfig_GetMotorDirection();
         torque_data.inv_enable = INVERTER_DISABLE;
@@ -98,10 +101,13 @@ void TorqueController_Update(void)
     // TODO all this logic will have to be improved with launch control
     if (RuntimeConfig_GetRegenEnabled() && bse->brakes_engaged && 
         inv_data->motor_speed > MIN_RPM_FOR_REGEN) {
+        (void)TractionControl_ApplyLimit(0, inv_data->motor_speed);
         torque_data.regen_torque = PSIToTorque(bse->psi);
         torque_data.inv_torque_scaled = torque_data.regen_torque * 10;
     } else {
-        torque_data.inv_torque_scaled = torque_data.apps_torque * 10;
+        const sbyte2 limited_torque = TractionControl_ApplyLimit(torque_data.apps_torque,
+                                                                 inv_data->motor_speed);
+        torque_data.inv_torque_scaled = limited_torque * 10;
     }
 
     // TODO should we check errors again? since statemachine is one cycle behind
