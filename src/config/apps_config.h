@@ -24,12 +24,12 @@
 #define APPS_FILTER_WINDOW_SIZE MsToCycles(40)
 
 /* APPS 1 Bounds */
-#define APPS_1_MAX_VOLTAGE 4400
-#define APPS_1_MIN_VOLTAGE 1039
+#define APPS_1_MAX_VOLTAGE 3243
+#define APPS_1_MIN_VOLTAGE 1477
 
 /* APPS 2 Bounds */
-#define APPS_2_MAX_VOLTAGE 0
-#define APPS_2_MIN_VOLTAGE 1120
+#define APPS_2_MAX_VOLTAGE 2800
+#define APPS_2_MIN_VOLTAGE 1100
 
 /* Voltage range above max and below min that doesn't count as an error */
 #define APPS_VOLTAGE_TOLERANCE 250
