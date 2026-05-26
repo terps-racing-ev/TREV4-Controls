@@ -19,7 +19,7 @@
 #define WHEEL_DIAMETER_DEFAULT 16
 
 /* Default values for runtime-configurable parameters (EEPROM-backed). */
-#define MAX_TORQUE_DEFAULT 5
+#define MAX_TORQUE_DEFAULT 150
 
 #define PERCENT_TRAVEL_FOR_MAX_TORQUE 90
 
