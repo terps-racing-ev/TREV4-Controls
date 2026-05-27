@@ -248,6 +248,10 @@ static CAN_HealthTxFifoId_t CAN_Manager_GetTxHealthFifoId(const CAN_TX_Message_t
 
 static void CAN_Manager_RunRecovery(void)
 {
+    if (!CAN_RECOVERY_ENABLED) {
+        return;
+    }
+
     CAN_Recovery_RunRecovery(CAN_Manager_Init, CAN_Manager_DeInit);
 
     if (!CAN_Recovery_IsReady()) {
