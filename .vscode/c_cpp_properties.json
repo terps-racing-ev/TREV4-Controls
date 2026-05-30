@@ -1,0 +1,27 @@
+{
+    "configurations": [
+        {
+            "name": "Tasking C166",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/../../inc",
+                "${workspaceFolder}/../../inc_int",
+                "${workspaceFolder}/../../bsp"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE",
+                "TASKING_VIPER",
+                "__USIC_MEM_TYPE=__PAGE_080_MEM_TYPE",
+                "__MULTICAN_MEM_TYPE=__PAGE_080_MEM_TYPE",
+                "TTC60"
+            ],
+            "compilerPath": "C:/Program Files (x86)/TASKING/C166-VX v4.0r1/bin/cc166.exe",
+            "cStandard": "c99",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "windows-gcc-x64"
+        }
+    ],
+    "version": 4
+}
