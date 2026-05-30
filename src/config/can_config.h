@@ -46,7 +46,7 @@
 /* TX Message IDs */
 #define CAN_ID_INV_TORQUE_COMMAND   0x0C0
 #define CAN_ID_INV_READ_WRITE       0x0C1
-#define CAN_ID_CONFIG               0x001000CF
+#define CAN_ID_CONFIG               0x0D1000CF
 #define CAN_ID_APPS_VOLTAGES        0x0D1ACCE0
 #define CAN_ID_APPS_VALUES          0x0D1ACCE1
 #define CAN_ID_VCU_SUMMARY          0x0D1001F0
