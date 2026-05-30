@@ -28,6 +28,7 @@
 #define CAN_TX_RATE_1000MS       MsToCycles(1000)
 
 /* CAN channel recovery policy */
+#define CAN_RECOVERY_ENABLE (0u) // Set to 1 to enable automatic recovery from bus-off and non-OK states
 #define CAN_RECOVERY_BUS_OFF_TRIGGER_CYCLES      MsToCycles(20)   // Time CAN must stay bus-off before recovery starts
 #define CAN_RECOVERY_NON_OK_TRIGGER_CYCLES       MsToCycles(100)  // Time CAN must remain non-OK before recovery starts
 #define CAN_RECOVERY_COOLDOWN_CYCLES             MsToCycles(500)  // Wait between recovery attempts
