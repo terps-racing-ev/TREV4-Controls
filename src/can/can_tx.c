@@ -6,6 +6,7 @@
 #include "sensors/bse.h"
 #include "control/torque_controller.h"
 #include "control/traction_control.h"
+#include "control/power_limit.h"
 
 #include "state_machine.h"
 #include "io/rtd.h"
@@ -73,6 +74,22 @@ void CAN_TX_PackInvReadWrite(IO_CAN_DATA_FRAME* frame)
     frame->data[1] = 0;
     frame->data[2] = 1;
     frame->data[3] = 0;
+    frame->data[4] = 0;
+    frame->data[5] = 0;
+    frame->data[6] = 0;
+    frame->data[7] = 0;
+}
+
+void CAN_TX_PackInverterCurrentLimit(IO_CAN_DATA_FRAME* frame)
+{
+    const PowerLimit_Data_t* limit = PowerLimit_GetData();
+
+    /* byte0-1: discharge current limit (DCL) in Amps, LE
+       byte2-3: charge current limit (CCL) in Amps, LE */
+    frame->data[0] = (ubyte1)(limit->dcl_amps & 0xFF);
+    frame->data[1] = (ubyte1)(limit->dcl_amps >> 8);
+    frame->data[2] = (ubyte1)(limit->ccl_amps & 0xFF);
+    frame->data[3] = (ubyte1)(limit->ccl_amps >> 8);
     frame->data[4] = 0;
     frame->data[5] = 0;
     frame->data[6] = 0;

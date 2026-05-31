@@ -8,6 +8,7 @@ void CAN_TX_PackAPPSVoltages(IO_CAN_DATA_FRAME* frame);
 void CAN_TX_PackAPPSValues(IO_CAN_DATA_FRAME* frame);
 void CAN_TX_PackInvTorqueCommand(IO_CAN_DATA_FRAME* frame);
 void CAN_TX_PackInvReadWrite(IO_CAN_DATA_FRAME* frame);
+void CAN_TX_PackInverterCurrentLimit(IO_CAN_DATA_FRAME* frame);
 void CAN_TX_PackVCUSummary(IO_CAN_DATA_FRAME* frame);
 void CAN_TX_PackBSE(IO_CAN_DATA_FRAME* frame);
 void CAN_TX_PackConfig(IO_CAN_DATA_FRAME* frame);

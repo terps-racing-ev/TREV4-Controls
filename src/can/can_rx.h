@@ -27,6 +27,10 @@ typedef struct {
 } HVCSummary_RX_Data_t;
 
 typedef struct {
+    ubyte4  inv_voltage_mv;
+} HVCVSense_RX_Data_t;
+
+typedef struct {
     ubyte2 rpm;
 } FrontWheelRpm_RX_Data_t;
 
@@ -34,6 +38,7 @@ typedef struct {
 void CAN_RX_UnpackInverterStatus(IO_CAN_DATA_FRAME* frame);
 void CAN_RX_UnpackInverterHighSpeed(IO_CAN_DATA_FRAME* frame);
 void CAN_RX_UnpackHVCSummary(IO_CAN_DATA_FRAME* frame);
+void CAN_RX_UnpackHVCVSense(IO_CAN_DATA_FRAME* frame);
 void CAN_RX_UnpackSetVCUConfig(IO_CAN_DATA_FRAME* frame);
 void CAN_RX_UnpackFrontLeftRpm(IO_CAN_DATA_FRAME* frame);
 void CAN_RX_UnpackFrontRightRpm(IO_CAN_DATA_FRAME* frame);
@@ -42,6 +47,7 @@ void CAN_RX_UnpackFrontRightRpm(IO_CAN_DATA_FRAME* frame);
 const InverterStatus_RX_Data_t* CAN_RX_GetInverterStatusData(void);
 const InverterHighSpeed_RX_Data_t* CAN_RX_GetInverterHighSpeedData(void);
 const HVCSummary_RX_Data_t* CAN_RX_GetHVCSummaryData(void);
+const HVCVSense_RX_Data_t* CAN_RX_GetHVCVSenseData(void);
 const FrontWheelRpm_RX_Data_t* CAN_RX_GetFrontLeftRpmData(void);
 const FrontWheelRpm_RX_Data_t* CAN_RX_GetFrontRightRpmData(void);
 

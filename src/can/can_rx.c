@@ -6,6 +6,7 @@ static InverterStatus_RX_Data_t inverter_status_rx_data = {0};
 static InverterHighSpeed_RX_Data_t inverter_high_speed_rx_data = {0};
 static HVCSummary_RX_Data_t hvc_summary_rx_data = {0};
 static HVCSummary_RX_Data_t hvc_summary_effective_data = {0};
+static HVCVSense_RX_Data_t hvc_vsense_rx_data = {0};
 static FrontWheelRpm_RX_Data_t front_left_rpm_rx_data = {0};
 static FrontWheelRpm_RX_Data_t front_right_rpm_rx_data = {0};
 
@@ -51,6 +52,11 @@ const HVCSummary_RX_Data_t* CAN_RX_GetHVCSummaryData(void)
     return &hvc_summary_effective_data;
 }
 
+const HVCVSense_RX_Data_t* CAN_RX_GetHVCVSenseData(void)
+{
+    return &hvc_vsense_rx_data;
+}
+
 void CAN_RX_UnpackInverterStatus(IO_CAN_DATA_FRAME* frame)
 {
     // TODO
@@ -87,6 +93,19 @@ void CAN_RX_UnpackHVCSummary(IO_CAN_DATA_FRAME* frame)
     hvc_summary_rx_data.sdc_ok = (bool)(((frame->data[0] >> 0) & 1) == 0);
     hvc_summary_rx_data.imd_ok = (bool)(((frame->data[0] >> 1) & 1) == 0);
     hvc_summary_rx_data.bms_ok = (bool)(((frame->data[0] >> 2) & 1) == 0);
+}
+
+void CAN_RX_UnpackHVCVSense(IO_CAN_DATA_FRAME* frame)
+{
+    if (frame == NULL) {
+        return;
+    }
+
+    /* HVC IO_VSense: Inv_Voltage_mV is a 32-bit LE value at byte offset 4. */
+    hvc_vsense_rx_data.inv_voltage_mv = (ubyte4)((ubyte4)frame->data[4] |
+                                                 ((ubyte4)frame->data[5] << 8) |
+                                                 ((ubyte4)frame->data[6] << 16) |
+                                                 ((ubyte4)frame->data[7] << 24));
 }
 
 void CAN_RX_UnpackSetVCUConfig(IO_CAN_DATA_FRAME* frame)

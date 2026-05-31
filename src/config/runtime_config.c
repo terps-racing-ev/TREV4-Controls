@@ -4,6 +4,7 @@
 #include "IO_RTC.h"
 
 #include "config/torque_config.h"
+#include "config/power_config.h"
 
 /**************************************************************************
 *                          P R I V A T E    T Y P E S
@@ -22,6 +23,8 @@ typedef struct {
     sbyte2 traction_control_ki_x1000;
     sbyte2 traction_control_kd_x1000;
     sbyte2 traction_control_min_front_rpm;
+    sbyte2 power_limit_enabled;
+    sbyte2 power_cap_kw;
 } RuntimeConfig_Data_t;
 
 typedef struct {
@@ -165,6 +168,20 @@ static RuntimeConfig_ParamDesc_t param_descs[] = {
         .default_value = TRACTION_CONTROL_MIN_FRONT_RPM_DEFAULT,
         .min_value = 0,
         .max_value = 32767,
+    },
+    {
+        .id = RUNTIME_PARAM_POWER_LIMIT_ENABLED,
+        .value = &runtime_cfg.power_limit_enabled,
+        .default_value = POWER_LIMIT_ENABLED_DEFAULT,
+        .min_value = 0,
+        .max_value = 1,
+    },
+    {
+        .id = RUNTIME_PARAM_POWER_CAP_KW,
+        .value = &runtime_cfg.power_cap_kw,
+        .default_value = POWER_CAP_KW_DEFAULT,
+        .min_value = POWER_CAP_KW_MIN,
+        .max_value = POWER_CAP_KW_MAX,
     },
 };
 

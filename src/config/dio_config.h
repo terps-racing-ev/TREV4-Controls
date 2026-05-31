@@ -16,8 +16,7 @@
 #define TSSI_GREEN_PIN IO_DO_01
 
 #define TSSI_BLINK_PERIOD_US MsToUs(250)
-
-#define HVC_STARTUP_GRACE_US MsToUs(10000)
+#define RED_CAR_STARTUP_GRACE_US MsToUs(5000)
 
 /* RTD -> pin 263 (aka digital in 0) (switched to ground with pullup) */
 #define IO_PIN_RTD IO_DI_00

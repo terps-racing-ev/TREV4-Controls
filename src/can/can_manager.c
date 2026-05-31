@@ -9,6 +9,7 @@
 #include "can_recovery.h"
 #include "config/can_config.h"
 #include "config/runtime_config.h"
+#include "control/power_limit.h"
 #include "state_machine.h"
 
 /**************************************************************************
@@ -48,6 +49,13 @@ static CAN_RX_Message_t rx_messages[CAN_RX_MSG_COUNT] = {
         .id = CAN_ID_HVC_SUMMARY,
         .timeout_us = MSG_TIMEOUT_US,
         .decode_fn = CAN_RX_UnpackHVCSummary
+    },
+    [CAN_RX_MSG_HVC_VSENSE] = {
+        .channel = CONTROLS_CAN_CHANNEL,
+        .id_format = IO_CAN_EXT_FRAME,
+        .id = CAN_ID_HVC_VSENSE,
+        .timeout_us = MSG_TIMEOUT_US,
+        .decode_fn = CAN_RX_UnpackHVCVSense
     },
     [CAN_RX_MSG_SET_VCU_CONFIG] = {
         .channel = CONTROLS_CAN_CHANNEL,
@@ -91,6 +99,14 @@ static CAN_TX_Message_t tx_messages[CAN_TX_MSG_COUNT] = {
         .period_cycles = CAN_TX_RATE_NON_PERIODIC,
         .tx_trigger_fn = StateMachine_ClearFaultsTxTrigger,
         .pack_fn = CAN_TX_PackInvReadWrite
+    },
+    [CAN_TX_MSG_INV_CURRENT_LIMIT] = {
+        .channel = CONTROLS_CAN_CHANNEL,
+        .id_format = IO_CAN_STD_FRAME,
+        .id = CAN_ID_INV_CURRENT_LIMIT,
+        .period_cycles = CAN_TX_RATE_NON_PERIODIC,
+        .tx_trigger_fn = PowerLimit_TxTrigger,
+        .pack_fn = CAN_TX_PackInverterCurrentLimit
     },
     [CAN_TX_MSG_APPS_VALUES] = {
         .channel = DAQ_CAN_CHANNEL,

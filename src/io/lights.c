@@ -12,7 +12,7 @@
 static bool red_car;
 static bool red_light_state;
 static ubyte4 last_blink;
-static ubyte4 hvc_grace_start;
+static ubyte4 red_car_grace_start;
 
 void Lights_Init(void)
 {
@@ -22,7 +22,7 @@ void Lights_Init(void)
     IO_DO_Init( TSSI_RED_PIN );
 
     IO_RTC_StartTime(&last_blink);
-    IO_RTC_StartTime(&hvc_grace_start);
+    IO_RTC_StartTime(&red_car_grace_start);
     red_light_state = FALSE;
     red_car = FALSE;
 }
@@ -33,7 +33,7 @@ void Lights_Update(void)
     // the rx structs only get updated when it gets received so sus idk if worth 1000th rework tho
     const HVCSummary_RX_Data_t* hvc = CAN_RX_GetHVCSummaryData();
     const bool hvc_valid = CAN_Manager_RX_Data_Valid(CAN_RX_MSG_HVC_SUMMARY);
-    const bool in_hvc_grace = (IO_RTC_GetTimeUS(hvc_grace_start) < HVC_STARTUP_GRACE_US);
+    const bool in_red_car_grace = (IO_RTC_GetTimeUS(red_car_grace_start) < RED_CAR_STARTUP_GRACE_US);
 
     /* Brake Light */
     if (bse->brakes_engaged) {
@@ -46,22 +46,11 @@ void Lights_Update(void)
     (void)RuntimeConfig_GetI32(RUNTIME_PARAM_DEBUG_DEFINES, &dbg_bits);
     const bool always_green = (dbg_bits & DEBUG_BIT_ALWAYS_GREEN);
 
-    if (always_green) {
+    if (always_green || in_red_car_grace) {
         red_car = FALSE;
     }
     else {
-    /* Logic for Red Car */
-    if (!hvc_valid) {
-        /* Allow HVC time to come online at boot. */
-        red_car = in_hvc_grace ? FALSE : TRUE;
-    }
-    else if (!hvc->imd_ok || !hvc->bms_ok) {
-        red_car = TRUE;
-    }
-    // Red car can only clear if sdc is good
-    else if (hvc->imd_ok && hvc->bms_ok && hvc->sdc_ok) {
-        red_car = FALSE;
-    }
+        red_car = !hvc_valid || !hvc->imd_ok || !hvc->bms_ok;
     }
 
     /* Actuation for TSSI */

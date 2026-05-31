@@ -12,6 +12,7 @@
 #include "sensors/apps.h"
 #include "sensors/bse.h"
 #include "control/torque_controller.h"
+#include "control/power_limit.h"
 #include "config/runtime_config.h"
 
 /* Application Database,
@@ -74,6 +75,7 @@ void main (void)
     Buzzer_Init();
     StateMachine_Init();
     TorqueController_Init();
+    PowerLimit_Init();
 
 
     /*******************************************/
@@ -100,6 +102,7 @@ void main (void)
         Lights_Update(); // eh this is output but lwk has logic in it that statemachine will need
         StateMachine_Update();
         TorqueController_Update();
+        PowerLimit_Update();
         
         /*******************************************/
         /*                OUTPUTS                  */

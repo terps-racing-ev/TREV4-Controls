@@ -37,6 +37,7 @@
 #define CAN_ID_INV_STATUS           0x0AB // TODO do we need this
 #define CAN_ID_INV_HIGH_SPEED       0x0B0
 #define CAN_ID_HVC_SUMMARY          0x004001F0
+#define CAN_ID_HVC_VSENSE           0x004001F7
 #define CAN_ID_FRONT_LEFT_RPM       0x0DA10000
 #define CAN_ID_FRONT_RIGHT_RPM      0x0DA11000
 //                                      +---- 0 because the user sends it
@@ -47,6 +48,7 @@
 /* TX Message IDs */
 #define CAN_ID_INV_TORQUE_COMMAND   0x0C0
 #define CAN_ID_INV_READ_WRITE       0x0C1
+#define CAN_ID_INV_CURRENT_LIMIT    0x202
 #define CAN_ID_CONFIG               0x001000CF
 #define CAN_ID_APPS_VOLTAGES        0x0D1ACCE0
 #define CAN_ID_APPS_VALUES          0x0D1ACCE1
