@@ -50,12 +50,26 @@ static CAN_RX_Message_t rx_messages[CAN_RX_MSG_COUNT] = {
         .timeout_us = MSG_TIMEOUT_US,
         .decode_fn = CAN_RX_UnpackHVCSummary
     },
+    [CAN_RX_MSG_HVC_SOC] = {
+        .channel = CONTROLS_CAN_CHANNEL,
+        .id_format = IO_CAN_EXT_FRAME,
+        .id = CAN_ID_HVC_SOC,
+        .timeout_us = MSG_TIMEOUT_US,
+        .decode_fn = CAN_RX_UnpackHVCSOC
+    },
     [CAN_RX_MSG_HVC_VSENSE] = {
         .channel = CONTROLS_CAN_CHANNEL,
         .id_format = IO_CAN_EXT_FRAME,
         .id = CAN_ID_HVC_VSENSE,
         .timeout_us = MSG_TIMEOUT_US,
         .decode_fn = CAN_RX_UnpackHVCVSense
+    },
+    [CAN_RX_MSG_MOBO_POWER_TELEMETRY] = {
+        .channel = CONTROLS_CAN_CHANNEL,
+        .id_format = IO_CAN_EXT_FRAME,
+        .id = CAN_ID_MOBO_POWER_TELEMETRY,
+        .timeout_us = MSG_TIMEOUT_US,
+        .decode_fn = CAN_RX_UnpackMOBOPowerTelemetry
     },
     [CAN_RX_MSG_SET_VCU_CONFIG] = {
         .channel = CONTROLS_CAN_CHANNEL,

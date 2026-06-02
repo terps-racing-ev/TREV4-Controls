@@ -25,6 +25,15 @@ typedef struct {
     sbyte2 traction_control_min_front_rpm;
     sbyte2 power_limit_enabled;
     sbyte2 power_cap_kw;
+    sbyte2 regen_max_torque;
+    sbyte2 regen_min_torque;
+    sbyte2 regen_min_bse_rear_psi;
+    sbyte2 regen_min_bse_front_psi;
+    sbyte2 regen_max_bse_rear_psi;
+    sbyte2 regen_max_bse_front_psi;
+    sbyte2 regen_min_speed;
+    sbyte2 regen_max_soc;
+    sbyte2 regen_strategy;
 } RuntimeConfig_Data_t;
 
 typedef struct {
@@ -182,6 +191,69 @@ static RuntimeConfig_ParamDesc_t param_descs[] = {
         .default_value = POWER_CAP_KW_DEFAULT,
         .min_value = POWER_CAP_KW_MIN,
         .max_value = POWER_CAP_KW_MAX,
+    },
+    {
+        .id = RUNTIME_PARAM_REGEN_MAX_TORQUE,
+        .value = &runtime_cfg.regen_max_torque,
+        .default_value = REGEN_MAX_TORQUE_DEFAULT,
+        .min_value = 0,
+        .max_value = 230,
+    },
+    {
+        .id = RUNTIME_PARAM_REGEN_MIN_TORQUE,
+        .value = &runtime_cfg.regen_min_torque,
+        .default_value = REGEN_MIN_TORQUE_DEFAULT,
+        .min_value = 0,
+        .max_value = 230,
+    },
+    {
+        .id = RUNTIME_PARAM_REGEN_MIN_BSE_REAR_PSI,
+        .value = &runtime_cfg.regen_min_bse_rear_psi,
+        .default_value = REGEN_MIN_BSE_REAR_PSI_DEFAULT,
+        .min_value = 0,
+        .max_value = 10000,
+    },
+    {
+        .id = RUNTIME_PARAM_REGEN_MIN_BSE_FRONT_PSI,
+        .value = &runtime_cfg.regen_min_bse_front_psi,
+        .default_value = REGEN_MIN_BSE_FRONT_PSI_DEFAULT,
+        .min_value = 0,
+        .max_value = 10000,
+    },
+    {
+        .id = RUNTIME_PARAM_REGEN_MAX_BSE_REAR_PSI,
+        .value = &runtime_cfg.regen_max_bse_rear_psi,
+        .default_value = REGEN_MAX_BSE_REAR_PSI_DEFAULT,
+        .min_value = 0,
+        .max_value = 10000,
+    },
+    {
+        .id = RUNTIME_PARAM_REGEN_MAX_BSE_FRONT_PSI,
+        .value = &runtime_cfg.regen_max_bse_front_psi,
+        .default_value = REGEN_MAX_BSE_FRONT_PSI_DEFAULT,
+        .min_value = 0,
+        .max_value = 10000,
+    },
+    {
+        .id = RUNTIME_PARAM_REGEN_MIN_SPEED,
+        .value = &runtime_cfg.regen_min_speed,
+        .default_value = REGEN_MIN_SPEED_DEFAULT,
+        .min_value = 0,
+        .max_value = 32767,
+    },
+    {
+        .id = RUNTIME_PARAM_REGEN_MAX_SOC,
+        .value = &runtime_cfg.regen_max_soc,
+        .default_value = REGEN_MAX_SOC_DEFAULT,
+        .min_value = 0,
+        .max_value = 100,
+    },
+    {
+        .id = RUNTIME_PARAM_REGEN_STRATEGY,
+        .value = &runtime_cfg.regen_strategy,
+        .default_value = REGEN_STRATEGY_DEFAULT,
+        .min_value = REGEN_STRATEGY_FRONT_ONLY,
+        .max_value = REGEN_STRATEGY_AVERAGED,
     },
 };
 
@@ -454,17 +526,17 @@ bool RuntimeConfig_GetI32(const RuntimeParamId_t param_id, sbyte2* const out_val
 
 ubyte1 RuntimeConfig_GetMaxTorque(void)
 {
-    return runtime_cfg.max_torque;
+    return (ubyte1)runtime_cfg.max_torque;
 }
 
 bool RuntimeConfig_GetMotorDirection(void)
 {
-    return runtime_cfg.motor_direction;
+    return (runtime_cfg.motor_direction != 0);
 }
 
 bool RuntimeConfig_GetRegenEnabled(void)
 {
-    return runtime_cfg.regen_enabled;
+    return (runtime_cfg.regen_enabled != 0);
 }
 
 bool RuntimeConfig_ConfigTxTrigger(void)

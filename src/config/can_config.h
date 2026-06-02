@@ -37,7 +37,9 @@
 #define CAN_ID_INV_STATUS           0x0AB // TODO do we need this
 #define CAN_ID_INV_HIGH_SPEED       0x0B0
 #define CAN_ID_HVC_SUMMARY          0x004001F0
+#define CAN_ID_HVC_SOC              0x004001F4
 #define CAN_ID_HVC_VSENSE           0x004001F7
+#define CAN_ID_MOBO_POWER_TELEMETRY 0x00200010
 #define CAN_ID_FRONT_LEFT_RPM       0x0DA10000
 #define CAN_ID_FRONT_RIGHT_RPM      0x0DA11000
 //                                      +---- 0 because the user sends it

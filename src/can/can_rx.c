@@ -6,7 +6,9 @@ static InverterStatus_RX_Data_t inverter_status_rx_data = {0};
 static InverterHighSpeed_RX_Data_t inverter_high_speed_rx_data = {0};
 static HVCSummary_RX_Data_t hvc_summary_rx_data = {0};
 static HVCSummary_RX_Data_t hvc_summary_effective_data = {0};
+static HVCSOC_RX_Data_t hvc_soc_rx_data = {0};
 static HVCVSense_RX_Data_t hvc_vsense_rx_data = {0};
+static MOBO_PowerTelemetry_RX_Data_t mobo_power_telemetry_rx_data = {0};
 static FrontWheelRpm_RX_Data_t front_left_rpm_rx_data = {0};
 static FrontWheelRpm_RX_Data_t front_right_rpm_rx_data = {0};
 
@@ -52,9 +54,19 @@ const HVCSummary_RX_Data_t* CAN_RX_GetHVCSummaryData(void)
     return &hvc_summary_effective_data;
 }
 
+const HVCSOC_RX_Data_t* CAN_RX_GetHVCSOCData(void)
+{
+    return &hvc_soc_rx_data;
+}
+
 const HVCVSense_RX_Data_t* CAN_RX_GetHVCVSenseData(void)
 {
     return &hvc_vsense_rx_data;
+}
+
+const MOBO_PowerTelemetry_RX_Data_t* CAN_RX_GetMOBO_PowerTelemetryData(void)
+{
+    return &mobo_power_telemetry_rx_data;
 }
 
 void CAN_RX_UnpackInverterStatus(IO_CAN_DATA_FRAME* frame)
@@ -95,6 +107,17 @@ void CAN_RX_UnpackHVCSummary(IO_CAN_DATA_FRAME* frame)
     hvc_summary_rx_data.bms_ok = (bool)(((frame->data[0] >> 2) & 1) == 0);
 }
 
+void CAN_RX_UnpackHVCSOC(IO_CAN_DATA_FRAME* frame)
+{
+    if ((frame == NULL) || (frame->length < 2)) {
+        return;
+    }
+
+    /* HVC SOC.SOC_Percent is a 16-bit LE percentage with 0.01% scaling. */
+    hvc_soc_rx_data.pack_soc_percent_x100 = (ubyte2)((ubyte2)frame->data[0] |
+                                                     ((ubyte2)frame->data[1] << 8));
+}
+
 void CAN_RX_UnpackHVCVSense(IO_CAN_DATA_FRAME* frame)
 {
     if (frame == NULL) {
@@ -106,6 +129,18 @@ void CAN_RX_UnpackHVCVSense(IO_CAN_DATA_FRAME* frame)
                                                  ((ubyte4)frame->data[5] << 8) |
                                                  ((ubyte4)frame->data[6] << 16) |
                                                  ((ubyte4)frame->data[7] << 24));
+}
+
+void CAN_RX_UnpackMOBOPowerTelemetry(IO_CAN_DATA_FRAME* frame)
+{
+    if ((frame == NULL) || (frame->length < 6)) {
+        return;
+    }
+
+    /* MOBO_Power_Telemetry.BSE_PSI_Rear is a 16-bit LE value at byte offset 4. */
+    mobo_power_telemetry_rx_data.rear_brake_pressure_psi_x10 =
+        (ubyte2)((ubyte2)frame->data[4] |
+                 ((ubyte2)frame->data[5] << 8));
 }
 
 void CAN_RX_UnpackSetVCUConfig(IO_CAN_DATA_FRAME* frame)
@@ -121,9 +156,9 @@ void CAN_RX_UnpackSetVCUConfig(IO_CAN_DATA_FRAME* frame)
     const ubyte1 mux = frame->data[0];
     const ubyte2 raw_value = (ubyte2)((ubyte2)frame->data[1] |
                                       ((ubyte2)frame->data[2] << 8));
-    const sbyte4 value = (sbyte4)((sbyte2)raw_value);
+    const sbyte2 value = (sbyte2)raw_value;
 
-    (void)RuntimeConfig_Set(mux, value);
+    (void)RuntimeConfig_Set((RuntimeParamId_t)mux, value);
 }
 
 static void CAN_RX_UnpackFrontRpm(IO_CAN_DATA_FRAME* frame,
