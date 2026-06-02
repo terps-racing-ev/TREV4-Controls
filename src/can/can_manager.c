@@ -158,7 +158,7 @@ static CAN_TX_Message_t tx_messages[CAN_TX_MSG_COUNT] = {
         .channel = CONTROLS_CAN_CHANNEL,
         .id_format = IO_CAN_EXT_FRAME,
         .id = CAN_ID_CONFIG,
-        .period_cycles = CAN_TX_RATE_1000MS,
+        .period_cycles = CAN_TX_RATE_250MS,
         .tx_trigger_fn = RuntimeConfig_ConfigTxTrigger,
         .pack_fn = CAN_TX_PackConfig
     },
@@ -186,6 +186,14 @@ static CAN_TX_Message_t tx_messages[CAN_TX_MSG_COUNT] = {
         .tx_trigger_fn = NULL,
         .pack_fn = CAN_TX_PackTractionControl
     },
+    [CAN_TX_MSG_CAN_READBACK] = {
+        .channel = DAQ_CAN_CHANNEL,
+        .id_format = IO_CAN_EXT_FRAME,
+        .id = CAN_ID_CAN_READBACK,
+        .period_cycles = CAN_TX_RATE_100MS,
+        .tx_trigger_fn = NULL,
+        .pack_fn = CAN_TX_PackCANReadback
+    },
     [CAN_TX_MSG_DEAD_CAR] = {
         .channel = DAQ_CAN_CHANNEL,
         .id_format = IO_CAN_EXT_FRAME,
@@ -196,7 +204,115 @@ static CAN_TX_Message_t tx_messages[CAN_TX_MSG_COUNT] = {
     },
 };
 
+#define CAN_RX_EXACT_MASK 0x1FFFFFFF
+#define CAN_RX_CONTROLS_TELEMETRY_MASK 0x1F9FFE1F
+
 static void CAN_Manager_RunRecovery(void);
+
+static bool CAN_Manager_RxMessageOwnsFifo(CAN_RX_MessageId_t msg_id)
+{
+    switch (msg_id) {
+    case CAN_RX_MSG_HVC_SOC:
+    case CAN_RX_MSG_HVC_VSENSE:
+    case CAN_RX_MSG_MOBO_POWER_TELEMETRY:
+        return FALSE;
+    default:
+        return TRUE;
+    }
+}
+
+static ubyte4 CAN_Manager_GetRxFifoMask(CAN_RX_MessageId_t msg_id)
+{
+    if (msg_id == CAN_RX_MSG_HVC_SUMMARY) {
+        return CAN_RX_CONTROLS_TELEMETRY_MASK;
+    }
+
+    return CAN_RX_EXACT_MASK;
+}
+
+static CAN_RX_MessageId_t CAN_Manager_FindRxMessageForFrame(CAN_RX_MessageId_t fifo_msg_id,
+                                                            const IO_CAN_DATA_FRAME* frame)
+{
+    const CAN_RX_Message_t* const fifo_msg = &rx_messages[fifo_msg_id];
+
+    if (CAN_Manager_GetRxFifoMask(fifo_msg_id) == CAN_RX_EXACT_MASK) {
+        return fifo_msg_id;
+    }
+
+    for (ubyte1 i = 0; i < CAN_RX_MSG_COUNT; i++) {
+        const CAN_RX_Message_t* const msg = &rx_messages[i];
+
+        if ((msg->channel == fifo_msg->channel) &&
+            (msg->id == frame->id)) {
+            return (CAN_RX_MessageId_t)i;
+        }
+    }
+
+    return CAN_RX_MSG_COUNT;
+}
+
+static void CAN_Manager_DispatchRxFrame(CAN_RX_MessageId_t fifo_msg_id,
+                                        IO_CAN_DATA_FRAME* frame)
+{
+    const CAN_RX_MessageId_t rx_msg_id = CAN_Manager_FindRxMessageForFrame(fifo_msg_id, frame);
+
+    if (rx_msg_id >= CAN_RX_MSG_COUNT) {
+        return;
+    }
+
+    CAN_RX_Message_t* const msg = &rx_messages[rx_msg_id];
+
+    if (msg->decode_fn == NULL) {
+        return;
+    }
+
+    msg->decode_fn(frame);
+    msg->data_vld = TRUE;
+    IO_RTC_StartTime(&msg->last_rx_timestamp);
+}
+
+static IO_ErrorType CAN_Manager_ReadRxFifo(CAN_RX_MessageId_t fifo_msg_id)
+{
+    const CAN_RX_Message_t* const fifo_msg = &rx_messages[fifo_msg_id];
+    IO_CAN_DATA_FRAME rx_frame;
+    bool saw_overflow = FALSE;
+    bool received = FALSE;
+    IO_ErrorType fifo_status = IO_CAN_FIFOStatus(fifo_msg->handle);
+
+    while ((fifo_status == IO_E_OK) || (fifo_status == IO_E_CAN_OVERFLOW)) {
+        if (fifo_status == IO_E_CAN_OVERFLOW) {
+            saw_overflow = TRUE;
+        }
+
+        ubyte1 rxed_frames = 0;
+        const IO_ErrorType read_status = IO_CAN_ReadFIFO(fifo_msg->handle, &rx_frame, 1, &rxed_frames);
+
+        if (read_status != IO_E_OK) {
+            return read_status;
+        }
+
+        if (rxed_frames > 0) {
+            received = TRUE;
+            CAN_Manager_DispatchRxFrame(fifo_msg_id, &rx_frame);
+        }
+
+        fifo_status = IO_CAN_FIFOStatus(fifo_msg->handle);
+    }
+
+    if (fifo_status == IO_E_CAN_OLD_DATA) {
+        if (saw_overflow) {
+            return IO_E_CAN_OVERFLOW;
+        }
+
+        if (received) {
+            return IO_E_OK;
+        }
+
+        return IO_E_CAN_OLD_DATA;
+    }
+
+    return fifo_status;
+}
 
 static void CAN_Manager_UpdateRecoveryStateFromStatus(IO_ErrorType controls_status,
                                                       IO_ErrorType daq_status)
@@ -349,19 +465,6 @@ void CAN_Manager_Init(void)
                , 0);
     
 
-    /* Initialize FIFOs for EACH MESSAGE we expect to RX */
-    for (ubyte1 i = 0; i < CAN_RX_MSG_COUNT; i++) {
-        CAN_RX_Message_t* const msg = &rx_messages[i];
-
-        IO_CAN_ConfigFIFO( &msg->handle,
-                            msg->channel,
-                            RX_FIFO_BUFFER_SIZE,
-                            IO_CAN_MSG_READ,
-                            msg->id_format,
-                            msg->id,
-                            0x1FFFFFFF);
-    }
-
     /* Initialize FIFOs for Both TX Channels */
 
     /* Controls bus uses both STD and EXT frames. */
@@ -390,6 +493,23 @@ void CAN_Manager_Init(void)
                      , 0
                      , 0);
 
+    /* Initialize FIFOs for each RX filter. HVC/MOBO telemetry share one Controls EXT FIFO. */
+    for (ubyte1 i = 0; i < CAN_RX_MSG_COUNT; i++) {
+        CAN_RX_Message_t* const msg = &rx_messages[i];
+
+        if (!CAN_Manager_RxMessageOwnsFifo((CAN_RX_MessageId_t)i)) {
+            continue;
+        }
+
+        IO_CAN_ConfigFIFO( &msg->handle,
+                            msg->channel,
+                            RX_FIFO_BUFFER_SIZE,
+                            IO_CAN_MSG_READ,
+                            msg->id_format,
+                            msg->id,
+                            CAN_Manager_GetRxFifoMask((CAN_RX_MessageId_t)i));
+    }
+
     CAN_Recovery_Init();
 }
 
@@ -400,6 +520,10 @@ void CAN_Manager_DeInit(void)
     /* Deinit all RX message handles */
     for (ubyte1 i = 0; i < CAN_RX_MSG_COUNT; i++) {
         CAN_RX_Message_t* const msg = &rx_messages[i];
+
+        if (!CAN_Manager_RxMessageOwnsFifo((CAN_RX_MessageId_t)i)) {
+            continue;
+        }
 
         (void)IO_CAN_DeInitHandle(msg->handle);
     }
@@ -426,29 +550,25 @@ void CAN_Manager_ProcessRxMessages(void)
 
         if (!CAN_Recovery_IsReady()) {
             msg->data_vld = FALSE;
-            continue;
         }
-        
-        // Skip if decode function not configured
-        if (msg->decode_fn == NULL) {
-            continue;
-        }
-
-        IO_CAN_DATA_FRAME rx_frame;
-        bool received = FALSE;
-        const IO_ErrorType read_status = CAN_Util_ReadFIFO(msg->handle, &rx_frame, &received);
-        
-        if (received) {
-            msg->decode_fn(&rx_frame);
-            msg->data_vld = TRUE;
-            IO_RTC_StartTime(&msg->last_rx_timestamp);
-        }
-
-        CAN_Manager_RecordFifoStatus(CAN_HEALTH_FIFO_FROM_RX_MSG(i), read_status);
 
         if (IO_RTC_GetTimeUS(msg->last_rx_timestamp) > msg->timeout_us) {
             msg->data_vld = FALSE;
         }
+    }
+
+    if (!CAN_Recovery_IsReady()) {
+        return;
+    }
+
+    for (ubyte1 i = 0; i < CAN_RX_MSG_COUNT; i++) {
+        if (!CAN_Manager_RxMessageOwnsFifo((CAN_RX_MessageId_t)i)) {
+            continue;
+        }
+
+        const IO_ErrorType read_status = CAN_Manager_ReadRxFifo((CAN_RX_MessageId_t)i);
+
+        CAN_Manager_RecordFifoStatus(CAN_HEALTH_FIFO_FROM_RX_MSG(i), read_status);
     }
 }
 

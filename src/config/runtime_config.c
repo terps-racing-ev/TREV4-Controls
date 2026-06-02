@@ -60,7 +60,8 @@ typedef enum {
 #define RUNTIME_CFG_EEPROM_OFFSET     ((ubyte2)64)
 
 #define RUNTIME_CFG_MAGIC             ((ubyte4)0x52434647UL) /* 'RCFG' */
-#define RUNTIME_CFG_VERSION           ((ubyte2)1)
+#define RUNTIME_CFG_VERSION           ((ubyte2)2)
+#define RUNTIME_CFG_LEGACY_VERSION_1  ((ubyte2)1)
 
 #define RUNTIME_CFG_MAX_PARAMS        ((ubyte2)32)
 
@@ -388,7 +389,8 @@ static bool UnpackFromEepromBlob(const ubyte1* const blob)
         return FALSE;
     }
 
-    if (version != RUNTIME_CFG_VERSION) {
+    if ((version != RUNTIME_CFG_VERSION) &&
+        (version != RUNTIME_CFG_LEGACY_VERSION_1)) {
         return FALSE;
     }
 
@@ -402,10 +404,16 @@ static bool UnpackFromEepromBlob(const ubyte1* const blob)
     }
 
     /* Apply records (ignore unknown param IDs). */
+    const bool legacy_v1 = (version == RUNTIME_CFG_LEGACY_VERSION_1);
     ubyte2 offset = RUNTIME_CFG_HEADER_LEN;
     for (ubyte2 i = 0; i < record_count; i++) {
-        const ubyte1 pid = blob[offset + 0];
+        ubyte1 pid = blob[offset + 0];
         const sbyte2 val = ReadI16LE(&blob[offset + 1]);
+
+        if (legacy_v1 && (pid == RUNTIME_PARAM_REGEN_MAX_SOC)) {
+            pid = RUNTIME_PARAM_REGEN_STRATEGY;
+        }
+
         RuntimeConfig_ParamDesc_t* desc = FindParam(pid);
 
         if (desc != NULL) {
@@ -413,6 +421,10 @@ static bool UnpackFromEepromBlob(const ubyte1* const blob)
         }
 
         offset = (ubyte2)(offset + RUNTIME_CFG_RECORD_LEN);
+    }
+
+    if (legacy_v1) {
+        write_pending = TRUE;
     }
 
     return TRUE;

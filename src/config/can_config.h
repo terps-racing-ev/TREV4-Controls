@@ -25,6 +25,7 @@
 #define CAN_TX_RATE_NON_PERIODIC (0u)
 #define CAN_TX_RATE_10MS         MsToCycles(10)
 #define CAN_TX_RATE_100MS        MsToCycles(100)
+#define CAN_TX_RATE_250MS        MsToCycles(250)
 #define CAN_TX_RATE_1000MS       MsToCycles(1000)
 
 /* CAN channel recovery policy */
@@ -60,5 +61,6 @@
 #define CAN_ID_CAN_HEALTH           0x0D100CA9
 #define CAN_ID_CAN_HEALTH_FIFO      0x0D10F1F0
 #define CAN_ID_TRACTION_CONTROL     0x0D1007C0
+#define CAN_ID_CAN_READBACK         0x0D10CAFE
 
 #endif

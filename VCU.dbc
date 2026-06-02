@@ -111,6 +111,28 @@ BO_ 2366638016 VCU_Traction_Control: 8 VCU
  SG_ VCU_TC_Front_Left_Valid : 58|1@1+ (1.0,0.0) [0.0|1.0] "" Vector__XXX
  SG_ VCU_TC_Front_Right_Valid : 59|1@1+ (1.0,0.0) [0.0|1.0] "" Vector__XXX
 
+BO_ 2366687998 VCU_CAN_Readback: 8 VCU
+ SG_ VCU_CAN_Readback_Mux M : 0|8@1+ (1.0,0.0) [0.0|255.0] "" Vector__XXX
+ SG_ VCU_RB_INV_HighSpeed_Valid m0 : 8|1@1+ (1.0,0.0) [0.0|1.0] "" Vector__XXX
+ SG_ VCU_RB_HVC_Summary_Valid m0 : 9|1@1+ (1.0,0.0) [0.0|1.0] "" Vector__XXX
+ SG_ VCU_RB_HVC_SOC_Valid m0 : 10|1@1+ (1.0,0.0) [0.0|1.0] "" Vector__XXX
+ SG_ VCU_RB_HVC_VSense_Valid m0 : 11|1@1+ (1.0,0.0) [0.0|1.0] "" Vector__XXX
+ SG_ VCU_RB_MOBO_Power_Valid m0 : 12|1@1+ (1.0,0.0) [0.0|1.0] "" Vector__XXX
+ SG_ VCU_RB_Front_Left_RPM_Valid m0 : 13|1@1+ (1.0,0.0) [0.0|1.0] "" Vector__XXX
+ SG_ VCU_RB_Front_Right_RPM_Valid m0 : 14|1@1+ (1.0,0.0) [0.0|1.0] "" Vector__XXX
+ SG_ VCU_RB_HVC_SDC_Ok m0 : 16|1@1+ (1.0,0.0) [0.0|1.0] "" Vector__XXX
+ SG_ VCU_RB_HVC_IMD_Ok m0 : 17|1@1+ (1.0,0.0) [0.0|1.0] "" Vector__XXX
+ SG_ VCU_RB_HVC_BMS_Ok m0 : 18|1@1+ (1.0,0.0) [0.0|1.0] "" Vector__XXX
+ SG_ VCU_RB_SOC_Percent m0 : 32|16@1+ (0.01,0.0) [0.0|100.0] "%" Vector__XXX
+ SG_ VCU_RB_Rear_BSE_PSI m0 : 48|16@1+ (0.1,0.0) [0.0|10000.0] "PSI" Vector__XXX
+ SG_ VCU_RB_INV_Torque_Cmd m1 : 16|16@1- (0.1,0.0) [-230.0|230.0] "Nm" Vector__XXX
+ SG_ VCU_RB_INV_Torque_Feedback m1 : 32|16@1- (0.1,0.0) [-230.0|230.0] "Nm" Vector__XXX
+ SG_ VCU_RB_INV_Motor_Speed m1 : 48|16@1- (1.0,0.0) [-32768.0|32767.0] "RPM" Vector__XXX
+ SG_ VCU_RB_INV_DC_Bus_Voltage m2 : 16|16@1- (0.1,0.0) [-3276.8|3276.7] "V" Vector__XXX
+ SG_ VCU_RB_HVC_Inv_Voltage m2 : 32|32@1+ (1.0,0.0) [0.0|4294967295.0] "mV" Vector__XXX
+ SG_ VCU_RB_Front_Left_RPM m3 : 16|16@1+ (1.0,0.0) [0.0|65535.0] "RPM" Vector__XXX
+ SG_ VCU_RB_Front_Right_RPM m3 : 32|16@1+ (1.0,0.0) [0.0|65535.0] "RPM" Vector__XXX
+
 BO_ 2366638942 VCU_BSE: 8 VCU
  SG_ VCU_BSE_PSI : 8|16@1+ (0.1,0.0) [0.0|10000.0] "PSI" Vector__XXX
  SG_ VCU_BSE_Filt_mV : 24|16@1- (0.001,0.0) [-1000.0|1000.0] "V" Vector__XXX
@@ -251,6 +273,17 @@ VAL_ 2366638016 VCU_TC_Enabled_Status 0 "FALSE" 1 "TRUE" ;
 VAL_ 2366638016 VCU_TC_Active 0 "FALSE" 1 "TRUE" ;
 VAL_ 2366638016 VCU_TC_Front_Left_Valid 0 "FALSE" 1 "TRUE" ;
 VAL_ 2366638016 VCU_TC_Front_Right_Valid 0 "FALSE" 1 "TRUE" ;
+VAL_ 2366687998 VCU_CAN_Readback_Mux 0 "STATUS" 1 "INVERTER" 2 "VOLTAGE" 3 "FRONT_WHEEL_RPM" ;
+VAL_ 2366687998 VCU_RB_INV_HighSpeed_Valid 0 "FALSE" 1 "TRUE" ;
+VAL_ 2366687998 VCU_RB_HVC_Summary_Valid 0 "FALSE" 1 "TRUE" ;
+VAL_ 2366687998 VCU_RB_HVC_SOC_Valid 0 "FALSE" 1 "TRUE" ;
+VAL_ 2366687998 VCU_RB_HVC_VSense_Valid 0 "FALSE" 1 "TRUE" ;
+VAL_ 2366687998 VCU_RB_MOBO_Power_Valid 0 "FALSE" 1 "TRUE" ;
+VAL_ 2366687998 VCU_RB_Front_Left_RPM_Valid 0 "FALSE" 1 "TRUE" ;
+VAL_ 2366687998 VCU_RB_Front_Right_RPM_Valid 0 "FALSE" 1 "TRUE" ;
+VAL_ 2366687998 VCU_RB_HVC_SDC_Ok 0 "FALSE" 1 "TRUE" ;
+VAL_ 2366687998 VCU_RB_HVC_IMD_Ok 0 "FALSE" 1 "TRUE" ;
+VAL_ 2366687998 VCU_RB_HVC_BMS_Ok 0 "FALSE" 1 "TRUE" ;
 VAL_ 2366638942 VCU_BSE_Stale 0 "FALSE" 1 "TRUE" ;
 VAL_ 2366638942 VCU_BSE_ADC_Err 0 "FALSE" 1 "TRUE" ;
 VAL_ 2366638942 VCU_BSE_Out_of_Range 0 "FALSE" 1 "TRUE" ;

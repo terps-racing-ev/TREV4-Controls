@@ -244,6 +244,77 @@ void CAN_TX_PackTractionControl(IO_CAN_DATA_FRAME* frame)
                               (tc->front_right_valid << 3));
 }
 
+void CAN_TX_PackCANReadback(IO_CAN_DATA_FRAME* frame)
+{
+    static ubyte1 readback_mux = 0;
+
+    const HVCSummary_RX_Data_t* hvc_summary = CAN_RX_GetHVCSummaryData();
+    const HVCSOC_RX_Data_t* hvc_soc = CAN_RX_GetHVCSOCData();
+    const HVCVSense_RX_Data_t* hvc_vsense = CAN_RX_GetHVCVSenseData();
+    const MOBO_PowerTelemetry_RX_Data_t* mobo_power = CAN_RX_GetMOBO_PowerTelemetryData();
+    const InverterHighSpeed_RX_Data_t* inverter = CAN_RX_GetInverterHighSpeedData();
+    const FrontWheelRpm_RX_Data_t* front_left = CAN_RX_GetFrontLeftRpmData();
+    const FrontWheelRpm_RX_Data_t* front_right = CAN_RX_GetFrontRightRpmData();
+
+    frame->data[0] = readback_mux;
+
+    switch (readback_mux) {
+    case 0:
+        frame->data[1] = (ubyte1)((CAN_Manager_RX_Data_Valid(CAN_RX_MSG_INV_HIGH_SPEED) << 0) |
+                                  (CAN_Manager_RX_Data_Valid(CAN_RX_MSG_HVC_SUMMARY) << 1) |
+                                  (CAN_Manager_RX_Data_Valid(CAN_RX_MSG_HVC_SOC) << 2) |
+                                  (CAN_Manager_RX_Data_Valid(CAN_RX_MSG_HVC_VSENSE) << 3) |
+                                  (CAN_Manager_RX_Data_Valid(CAN_RX_MSG_MOBO_POWER_TELEMETRY) << 4) |
+                                  (CAN_Manager_RX_Data_Valid(CAN_RX_MSG_FRONT_LEFT_RPM) << 5) |
+                                  (CAN_Manager_RX_Data_Valid(CAN_RX_MSG_FRONT_RIGHT_RPM) << 6));
+        frame->data[2] = (ubyte1)((hvc_summary->sdc_ok << 0) |
+                                  (hvc_summary->imd_ok << 1) |
+                                  (hvc_summary->bms_ok << 2));
+        frame->data[3] = 0;
+        frame->data[4] = (ubyte1)(hvc_soc->pack_soc_percent_x100 & 0xFF);
+        frame->data[5] = (ubyte1)(hvc_soc->pack_soc_percent_x100 >> 8);
+        frame->data[6] = (ubyte1)(mobo_power->rear_brake_pressure_psi_x10 & 0xFF);
+        frame->data[7] = (ubyte1)(mobo_power->rear_brake_pressure_psi_x10 >> 8);
+        break;
+
+    case 1:
+        frame->data[1] = 0;
+        frame->data[2] = (ubyte1)((ubyte2)inverter->torque_cmd & 0xFF);
+        frame->data[3] = (ubyte1)((ubyte2)inverter->torque_cmd >> 8);
+        frame->data[4] = (ubyte1)((ubyte2)inverter->torque_feedback & 0xFF);
+        frame->data[5] = (ubyte1)((ubyte2)inverter->torque_feedback >> 8);
+        frame->data[6] = (ubyte1)((ubyte2)inverter->motor_speed & 0xFF);
+        frame->data[7] = (ubyte1)((ubyte2)inverter->motor_speed >> 8);
+        break;
+
+    case 2:
+        frame->data[1] = 0;
+        frame->data[2] = (ubyte1)((ubyte2)inverter->dc_bus_voltage & 0xFF);
+        frame->data[3] = (ubyte1)((ubyte2)inverter->dc_bus_voltage >> 8);
+        frame->data[4] = (ubyte1)(hvc_vsense->inv_voltage_mv & 0xFF);
+        frame->data[5] = (ubyte1)((hvc_vsense->inv_voltage_mv >> 8) & 0xFF);
+        frame->data[6] = (ubyte1)((hvc_vsense->inv_voltage_mv >> 16) & 0xFF);
+        frame->data[7] = (ubyte1)((hvc_vsense->inv_voltage_mv >> 24) & 0xFF);
+        break;
+
+    case 3:
+    default:
+        frame->data[1] = 0;
+        frame->data[2] = (ubyte1)(front_left->rpm & 0xFF);
+        frame->data[3] = (ubyte1)(front_left->rpm >> 8);
+        frame->data[4] = (ubyte1)(front_right->rpm & 0xFF);
+        frame->data[5] = (ubyte1)(front_right->rpm >> 8);
+        frame->data[6] = 0;
+        frame->data[7] = 0;
+        break;
+    }
+
+    readback_mux++;
+    if (readback_mux > 3) {
+        readback_mux = 0;
+    }
+}
+
 void CAN_TX_PackDeadCar(IO_CAN_DATA_FRAME* frame)
 {
     // i mean technically this should work i think but maybe more robust to have statemachine give ground zero truth
