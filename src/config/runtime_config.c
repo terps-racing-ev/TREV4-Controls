@@ -51,6 +51,7 @@ typedef struct {
     sbyte2 trc_launch_actual_torque_2;
     sbyte2 trc_launch_actual_torque_3;
     sbyte2 trc_launch_actual_torque_4;
+    sbyte2 regen_soc_gate_enabled;
 } RuntimeConfig_Data_t;
 
 typedef struct {
@@ -77,11 +78,12 @@ typedef enum {
 #define RUNTIME_CFG_EEPROM_OFFSET     ((ubyte2)64)
 
 #define RUNTIME_CFG_MAGIC             ((ubyte4)0x52434647UL) /* 'RCFG' */
-#define RUNTIME_CFG_VERSION           ((ubyte2)5)
+#define RUNTIME_CFG_VERSION           ((ubyte2)6)
 #define RUNTIME_CFG_LEGACY_VERSION_1  ((ubyte2)1)
 #define RUNTIME_CFG_LEGACY_VERSION_2  ((ubyte2)2)
 #define RUNTIME_CFG_LEGACY_VERSION_3  ((ubyte2)3)
 #define RUNTIME_CFG_LEGACY_VERSION_4  ((ubyte2)4)
+#define RUNTIME_CFG_LEGACY_VERSION_5  ((ubyte2)5)
 
 #define RUNTIME_CFG_MAX_PARAMS        ((ubyte2)40)
 
@@ -395,6 +397,13 @@ static RuntimeConfig_ParamDesc_t param_descs[] = {
         .min_value = 0,
         .max_value = 230,
     },
+    {
+        .id = RUNTIME_PARAM_REGEN_SOC_GATE_ENABLED,
+        .value = &runtime_cfg.regen_soc_gate_enabled,
+        .default_value = REGEN_SOC_GATE_ENABLED_DEFAULT,
+        .min_value = 0,
+        .max_value = 1,
+    },
 };
 
 #define PARAM_COUNT ((ubyte2)(sizeof(param_descs) / sizeof(param_descs[0])))
@@ -498,18 +507,11 @@ static void PackToEepromBlob(ubyte1* const blob)
     WriteU16LE(&blob[6], PARAM_COUNT);
     WriteU32LE(&blob[8], 0);
 
-    /* Records (fixed slots). Fill unused slots with 0xFF-ish values for clarity. */
+    /* Records (fixed slots). */
     ubyte2 offset = RUNTIME_CFG_HEADER_LEN;
-    for (ubyte2 i = 0; i < RUNTIME_CFG_MAX_PARAMS; i++) {
-        if (i < PARAM_COUNT) {
-            blob[offset + 0] = param_descs[i].id;
-            WriteI16LE(&blob[offset + 1], *param_descs[i].value);
-        }
-        else {
-            blob[offset + 0] = 0xFF;
-            WriteU16LE(&blob[offset + 1], 0xFFFF);
-        }
-
+    for (ubyte2 i = 0; i < PARAM_COUNT; i++) {
+        blob[offset + 0] = param_descs[i].id;
+        WriteI16LE(&blob[offset + 1], *param_descs[i].value);
         offset = (ubyte2)(offset + RUNTIME_CFG_RECORD_LEN);
     }
 
@@ -532,7 +534,8 @@ static bool UnpackFromEepromBlob(const ubyte1* const blob)
         (version != RUNTIME_CFG_LEGACY_VERSION_1) &&
         (version != RUNTIME_CFG_LEGACY_VERSION_2) &&
         (version != RUNTIME_CFG_LEGACY_VERSION_3) &&
-        (version != RUNTIME_CFG_LEGACY_VERSION_4)) {
+        (version != RUNTIME_CFG_LEGACY_VERSION_4) &&
+        (version != RUNTIME_CFG_LEGACY_VERSION_5)) {
         return FALSE;
     }
 

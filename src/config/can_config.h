@@ -36,6 +36,7 @@
 
 /* RX Message IDs */
 #define CAN_ID_INV_STATUS           0x0AB // TODO do we need this
+#define CAN_ID_INV_MOTOR_POSITION   0x0A5
 #define CAN_ID_INV_HIGH_SPEED       0x0B0
 #define CAN_ID_HVC_SUMMARY          0x004001F0
 #define CAN_ID_HVC_SOC              0x004001F4
@@ -66,6 +67,7 @@
 #define CAN_ID_DEAD_CAR             0x0D10DEAD
 #define CAN_ID_CAN_HEALTH           0x0D100CA9
 #define CAN_ID_CAN_HEALTH_FIFO      0x0D10F1F0
+#define CAN_ID_VCU_REGEN_DEBUG      0x0D1006E0
 #define CAN_ID_TRACTION_CONTROL     0x0D1007C0
 #define CAN_ID_VCU_TRC_STATE        0x0D1008C0
 #define CAN_ID_VCU_TRC_RUN_DATA     0x0D1008C1

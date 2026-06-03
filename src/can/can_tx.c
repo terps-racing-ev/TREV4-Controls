@@ -98,11 +98,60 @@ void CAN_TX_PackInverterCurrentLimit(IO_CAN_DATA_FRAME* frame)
     frame->data[7] = 0;
 }
 
+void CAN_TX_PackVCURegenDebug(IO_CAN_DATA_FRAME* frame)
+{
+    static ubyte1 regen_debug_mux = 0;
+    const TorqueController_Data_T* torque = TorqueController_GetData();
+
+    frame->data[0] = regen_debug_mux;
+
+    switch (regen_debug_mux) {
+    case 0:
+        frame->data[1] = (ubyte1)((torque->regen_strategy & 0x03U) |
+                                  ((torque->regen_soc_gate_enabled ? 1U : 0U) << 2));
+        frame->data[2] = torque->regen_status_flags;
+        frame->data[3] = torque->regen_block_reason;
+        frame->data[4] = (ubyte1)((ubyte2)torque->regen_torque & 0xFF);
+        frame->data[5] = (ubyte1)((ubyte2)torque->regen_torque >> 8);
+        frame->data[6] = (ubyte1)(torque->regen_speed_rpm_abs & 0xFF);
+        frame->data[7] = (ubyte1)(torque->regen_speed_rpm_abs >> 8);
+        break;
+
+    case 1:
+        frame->data[1] = 0;
+        frame->data[2] = (ubyte1)(torque->regen_front_pressure_psi & 0xFF);
+        frame->data[3] = (ubyte1)(torque->regen_front_pressure_psi >> 8);
+        frame->data[4] = (ubyte1)(torque->regen_rear_pressure_psi_x10 & 0xFF);
+        frame->data[5] = (ubyte1)(torque->regen_rear_pressure_psi_x10 >> 8);
+        frame->data[6] = (ubyte1)((ubyte2)torque->inv_torque_scaled & 0xFF);
+        frame->data[7] = (ubyte1)((ubyte2)torque->inv_torque_scaled >> 8);
+        break;
+
+    case 2:
+    default:
+        frame->data[1] = 0;
+        frame->data[2] = (ubyte1)((ubyte2)torque->regen_front_table_torque & 0xFF);
+        frame->data[3] = (ubyte1)((ubyte2)torque->regen_front_table_torque >> 8);
+        frame->data[4] = (ubyte1)((ubyte2)torque->regen_balance_torque & 0xFF);
+        frame->data[5] = (ubyte1)((ubyte2)torque->regen_balance_torque >> 8);
+        frame->data[6] = (ubyte1)((ubyte2)torque->regen_final_torque & 0xFF);
+        frame->data[7] = (ubyte1)((ubyte2)torque->regen_final_torque >> 8);
+        break;
+    }
+
+    regen_debug_mux++;
+    if (regen_debug_mux > 2U) {
+        regen_debug_mux = 0;
+    }
+}
+
 void CAN_TX_PackVCUSummary(IO_CAN_DATA_FRAME* frame)
 {
     static ubyte1 heartbeat;
     const VCU_State_t state = StateMachine_GetState();
     const TorqueController_Data_T* torque = TorqueController_GetData();
+    const HVCSummary_RX_Data_t* hvc_summary = CAN_RX_GetHVCSummaryData();
+    const bool hvc_summary_valid = CAN_Manager_RX_Data_Valid(CAN_RX_MSG_HVC_SUMMARY);
     const bool rtd_active = RTD_IsActive();
     const bool is_red_car = Lights_isRedCar();
     const Buzzer_State_t buzzer_state = Buzzer_GetState();
@@ -119,6 +168,10 @@ void CAN_TX_PackVCUSummary(IO_CAN_DATA_FRAME* frame)
        byte2-3: VCU_Speed (vehicle speed in mph x100)
        byte4 bit0: VCU_RTD_Active
        byte4 bit1: VCU_IsRedCar
+             byte4 bit2: HVC summary valid
+             byte4 bit3: HVC SDC closed
+             byte4 bit4: HVC IMD OK
+             byte4 bit5: HVC BMS fault OK
        byte5: VCU_Buzzer_State
      */
     frame->data[0] = heartbeat++;
@@ -127,6 +180,10 @@ void CAN_TX_PackVCUSummary(IO_CAN_DATA_FRAME* frame)
     frame->data[3] = speed_mph_x100 >> 8;
     frame->data[4] = rtd_active;
     frame->data[4] |= is_red_car << 1;
+    frame->data[4] |= hvc_summary_valid << 2;
+    frame->data[4] |= hvc_summary->sdc_ok << 3;
+    frame->data[4] |= hvc_summary->imd_ok << 4;
+    frame->data[4] |= hvc_summary->bms_ok << 5;
     frame->data[5] = (ubyte1)buzzer_state;
 }
 
@@ -294,6 +351,7 @@ void CAN_TX_PackCANReadback(IO_CAN_DATA_FRAME* frame)
     const HVCSOC_RX_Data_t* hvc_soc = CAN_RX_GetHVCSOCData();
     const HVCVSense_RX_Data_t* hvc_vsense = CAN_RX_GetHVCVSenseData();
     const MOBO_PowerTelemetry_RX_Data_t* mobo_power = CAN_RX_GetMOBO_PowerTelemetryData();
+    const InverterMotorPosition_RX_Data_t* inverter_position = CAN_RX_GetInverterMotorPositionData();
     const InverterHighSpeed_RX_Data_t* inverter = CAN_RX_GetInverterHighSpeedData();
     const FrontWheelRpm_RX_Data_t* front_left = CAN_RX_GetFrontLeftRpmData();
     const FrontWheelRpm_RX_Data_t* front_right = CAN_RX_GetFrontRightRpmData();
@@ -308,11 +366,12 @@ void CAN_TX_PackCANReadback(IO_CAN_DATA_FRAME* frame)
                                   (CAN_Manager_RX_Data_Valid(CAN_RX_MSG_HVC_VSENSE) << 3) |
                                   (CAN_Manager_RX_Data_Valid(CAN_RX_MSG_MOBO_POWER_TELEMETRY) << 4) |
                                   (CAN_Manager_RX_Data_Valid(CAN_RX_MSG_FRONT_LEFT_RPM) << 5) |
-                                  (CAN_Manager_RX_Data_Valid(CAN_RX_MSG_FRONT_RIGHT_RPM) << 6));
+                                  (CAN_Manager_RX_Data_Valid(CAN_RX_MSG_FRONT_RIGHT_RPM) << 6) |
+                                  (CAN_Manager_RX_Data_Valid(CAN_RX_MSG_INV_MOTOR_POSITION) << 7));
         frame->data[2] = (ubyte1)((hvc_summary->sdc_ok << 0) |
                                   (hvc_summary->imd_ok << 1) |
                                   (hvc_summary->bms_ok << 2));
-        frame->data[3] = 0;
+        frame->data[3] = hvc_summary->io_summary_flags;
         frame->data[4] = (ubyte1)(hvc_soc->pack_soc_percent_x100 & 0xFF);
         frame->data[5] = (ubyte1)(hvc_soc->pack_soc_percent_x100 >> 8);
         frame->data[6] = (ubyte1)(mobo_power->rear_brake_pressure_psi_x10 & 0xFF);
@@ -346,8 +405,8 @@ void CAN_TX_PackCANReadback(IO_CAN_DATA_FRAME* frame)
         frame->data[3] = (ubyte1)(front_left->rpm >> 8);
         frame->data[4] = (ubyte1)(front_right->rpm & 0xFF);
         frame->data[5] = (ubyte1)(front_right->rpm >> 8);
-        frame->data[6] = 0;
-        frame->data[7] = 0;
+        frame->data[6] = (ubyte1)((ubyte2)inverter_position->motor_speed & 0xFF);
+        frame->data[7] = (ubyte1)((ubyte2)inverter_position->motor_speed >> 8);
         break;
     }
 

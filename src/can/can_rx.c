@@ -5,6 +5,7 @@
 #include "control/traction_control_state_machine.h"
 
 static InverterStatus_RX_Data_t inverter_status_rx_data = {0};
+static InverterMotorPosition_RX_Data_t inverter_motor_position_rx_data = {0};
 static InverterHighSpeed_RX_Data_t inverter_high_speed_rx_data = {0};
 static HVCSummary_RX_Data_t hvc_summary_rx_data = {0};
 static HVCSummary_RX_Data_t hvc_summary_effective_data = {0};
@@ -18,6 +19,11 @@ static FrontWheelRpm_RX_Data_t front_right_rpm_rx_data = {0};
 const InverterStatus_RX_Data_t* CAN_RX_GetInverterStatusData(void)
 {
     return &inverter_status_rx_data;
+}
+
+const InverterMotorPosition_RX_Data_t* CAN_RX_GetInverterMotorPositionData(void)
+{
+    return &inverter_motor_position_rx_data;
 }
 
 const InverterHighSpeed_RX_Data_t* CAN_RX_GetInverterHighSpeedData(void)
@@ -77,6 +83,17 @@ void CAN_RX_UnpackInverterStatus(IO_CAN_DATA_FRAME* frame)
     (void)frame;
 }
 
+void CAN_RX_UnpackInverterMotorPosition(IO_CAN_DATA_FRAME* frame)
+{
+    if ((frame == NULL) || (frame->length < 4)) {
+        return;
+    }
+
+    const ubyte2 raw_speed = (ubyte2)((ubyte2)frame->data[2] |
+                                      ((ubyte2)frame->data[3] << 8));
+    inverter_motor_position_rx_data.motor_speed = (sbyte2)raw_speed;
+}
+
 void CAN_RX_UnpackInverterHighSpeed(IO_CAN_DATA_FRAME* frame)
 {
     if (frame == NULL) {
@@ -100,13 +117,14 @@ void CAN_RX_UnpackInverterHighSpeed(IO_CAN_DATA_FRAME* frame)
 
 void CAN_RX_UnpackHVCSummary(IO_CAN_DATA_FRAME* frame)
 {
-    if (frame == NULL) {
+    if ((frame == NULL) || (frame->length < 1)) {
         return;
     }
 
-    hvc_summary_rx_data.sdc_ok = (bool)(((frame->data[0] >> 0) & 1) == 0);
-    hvc_summary_rx_data.imd_ok = (bool)(((frame->data[0] >> 1) & 1) == 0);
-    hvc_summary_rx_data.bms_ok = (bool)(((frame->data[0] >> 2) & 1) == 0);
+    hvc_summary_rx_data.io_summary_flags = frame->data[0];
+    hvc_summary_rx_data.sdc_ok = (bool)((frame->data[0] & 0x01U) == 0);
+    hvc_summary_rx_data.imd_ok = (bool)((frame->data[0] & 0x02U) == 0);
+    hvc_summary_rx_data.bms_ok = (bool)((frame->data[0] & 0x04U) == 0);
 }
 
 void CAN_RX_UnpackHVCSOC(IO_CAN_DATA_FRAME* frame)

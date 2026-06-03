@@ -10,6 +10,10 @@ typedef struct {
 } InverterStatus_RX_Data_t;
 
 typedef struct {
+    sbyte2  motor_speed;        // x1 RPM from inverter Motor_Position_Info
+} InverterMotorPosition_RX_Data_t;
+
+typedef struct {
     sbyte2  torque_cmd;         // x10
     sbyte2  torque_feedback;    // x10
     sbyte2  motor_speed;        // x1
@@ -17,6 +21,7 @@ typedef struct {
 } InverterHighSpeed_RX_Data_t;
 
 typedef struct {
+    ubyte1  io_summary_flags;
     bool    sdc_ok;
     bool    imd_ok;
     bool    bms_ok;
@@ -44,6 +49,7 @@ typedef struct {
 
 /* RX message entrypoints (frame -> module-owned struct). */
 void CAN_RX_UnpackInverterStatus(IO_CAN_DATA_FRAME* frame);
+void CAN_RX_UnpackInverterMotorPosition(IO_CAN_DATA_FRAME* frame);
 void CAN_RX_UnpackInverterHighSpeed(IO_CAN_DATA_FRAME* frame);
 void CAN_RX_UnpackHVCSummary(IO_CAN_DATA_FRAME* frame);
 void CAN_RX_UnpackHVCSOC(IO_CAN_DATA_FRAME* frame);
@@ -55,6 +61,7 @@ void CAN_RX_UnpackFrontRightRpm(IO_CAN_DATA_FRAME* frame);
 
 /* RX message storage + public getters. */
 const InverterStatus_RX_Data_t* CAN_RX_GetInverterStatusData(void);
+const InverterMotorPosition_RX_Data_t* CAN_RX_GetInverterMotorPositionData(void);
 const InverterHighSpeed_RX_Data_t* CAN_RX_GetInverterHighSpeedData(void);
 const HVCSummary_RX_Data_t* CAN_RX_GetHVCSummaryData(void);
 const HVCSOC_RX_Data_t* CAN_RX_GetHVCSOCData(void);

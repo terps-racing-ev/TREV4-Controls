@@ -29,12 +29,12 @@ static CAN_Manager_Health_t can_health;
 * RX Messages - ADD MESSAGES HERE
 **************************************************************************/
 static CAN_RX_Message_t rx_messages[CAN_RX_MSG_COUNT] = {
-    [CAN_RX_MSG_INV_STATUS] = {
+    [CAN_RX_MSG_INV_MOTOR_POSITION] = {
         .channel = CONTROLS_CAN_CHANNEL,
         .id_format = IO_CAN_STD_FRAME,
-        .id = CAN_ID_INV_STATUS,
+        .id = CAN_ID_INV_MOTOR_POSITION,
         .timeout_us = MSG_TIMEOUT_US,
-        .decode_fn = CAN_RX_UnpackInverterStatus
+        .decode_fn = CAN_RX_UnpackInverterMotorPosition
     },
     [CAN_RX_MSG_INV_HIGH_SPEED] = {
         .channel = CONTROLS_CAN_CHANNEL,
@@ -178,6 +178,14 @@ static CAN_TX_Message_t tx_messages[CAN_TX_MSG_COUNT] = {
         .tx_trigger_fn = NULL,
         .pack_fn = CAN_TX_PackCANHealthFifo
     },
+    [CAN_TX_MSG_VCU_REGEN_DEBUG] = {
+        .channel = DAQ_CAN_CHANNEL,
+        .id_format = IO_CAN_EXT_FRAME,
+        .id = CAN_ID_VCU_REGEN_DEBUG,
+        .period_cycles = CAN_TX_RATE_100MS,
+        .tx_trigger_fn = NULL,
+        .pack_fn = CAN_TX_PackVCURegenDebug
+    },
     [CAN_TX_MSG_TRACTION_CONTROL] = {
         .channel = DAQ_CAN_CHANNEL,
         .id_format = IO_CAN_EXT_FRAME,
@@ -221,7 +229,10 @@ static CAN_TX_Message_t tx_messages[CAN_TX_MSG_COUNT] = {
 };
 
 #define CAN_RX_EXACT_MASK 0x1FFFFFFF
-#define CAN_RX_CONTROLS_TELEMETRY_MASK 0x1F9FFE1F
+/* Shared Controls EXT RX FIFO for HVC Summary/SOC/VSense and MOBO power.
+ * Mask off the ID bits that vary across 0x004001F0, 0x004001F4,
+ * 0x004001F7, and 0x00200010; dispatch later by the received frame ID. */
+#define CAN_RX_CONTROLS_TELEMETRY_MASK 0x1F9FFE18
 
 static void CAN_Manager_RunRecovery(void);
 
