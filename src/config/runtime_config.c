@@ -34,6 +34,23 @@ typedef struct {
     sbyte2 regen_min_speed;
     sbyte2 regen_max_soc;
     sbyte2 regen_strategy;
+    sbyte2 trc_launch_enabled;
+    sbyte2 trc_launch_end_rpm;
+    sbyte2 trc_launch_timeout_ms;
+    sbyte2 trc_launch_max_slip_x1000;
+    sbyte2 trc_launch_best_curve;
+    sbyte2 trc_launch_active_curve;
+    sbyte2 trc_launch_recommended_slip_x1000;
+    sbyte2 trc_launch_actual_rpm_0;
+    sbyte2 trc_launch_actual_rpm_1;
+    sbyte2 trc_launch_actual_rpm_2;
+    sbyte2 trc_launch_actual_rpm_3;
+    sbyte2 trc_launch_actual_rpm_4;
+    sbyte2 trc_launch_actual_torque_0;
+    sbyte2 trc_launch_actual_torque_1;
+    sbyte2 trc_launch_actual_torque_2;
+    sbyte2 trc_launch_actual_torque_3;
+    sbyte2 trc_launch_actual_torque_4;
 } RuntimeConfig_Data_t;
 
 typedef struct {
@@ -60,10 +77,13 @@ typedef enum {
 #define RUNTIME_CFG_EEPROM_OFFSET     ((ubyte2)64)
 
 #define RUNTIME_CFG_MAGIC             ((ubyte4)0x52434647UL) /* 'RCFG' */
-#define RUNTIME_CFG_VERSION           ((ubyte2)2)
+#define RUNTIME_CFG_VERSION           ((ubyte2)5)
 #define RUNTIME_CFG_LEGACY_VERSION_1  ((ubyte2)1)
+#define RUNTIME_CFG_LEGACY_VERSION_2  ((ubyte2)2)
+#define RUNTIME_CFG_LEGACY_VERSION_3  ((ubyte2)3)
+#define RUNTIME_CFG_LEGACY_VERSION_4  ((ubyte2)4)
 
-#define RUNTIME_CFG_MAX_PARAMS        ((ubyte2)32)
+#define RUNTIME_CFG_MAX_PARAMS        ((ubyte2)40)
 
 /* Header:
    u32 magic
@@ -256,6 +276,125 @@ static RuntimeConfig_ParamDesc_t param_descs[] = {
         .min_value = REGEN_STRATEGY_FRONT_ONLY,
         .max_value = REGEN_STRATEGY_AVERAGED,
     },
+    {
+        .id = RUNTIME_PARAM_TRC_LAUNCH_ENABLED,
+        .value = &runtime_cfg.trc_launch_enabled,
+        .default_value = TRC_LAUNCH_ENABLED_DEFAULT,
+        .min_value = 0,
+        .max_value = 1,
+    },
+    {
+        .id = RUNTIME_PARAM_TRC_LAUNCH_END_RPM,
+        .value = &runtime_cfg.trc_launch_end_rpm,
+        .default_value = TRC_LAUNCH_END_RPM_DEFAULT,
+        .min_value = 0,
+        .max_value = 20000,
+    },
+    {
+        .id = RUNTIME_PARAM_TRC_LAUNCH_TIMEOUT_MS,
+        .value = &runtime_cfg.trc_launch_timeout_ms,
+        .default_value = TRC_LAUNCH_TIMEOUT_MS_DEFAULT,
+        .min_value = 1000,
+        .max_value = 30000,
+    },
+    {
+        .id = RUNTIME_PARAM_TRC_LAUNCH_MAX_SLIP_X1000,
+        .value = &runtime_cfg.trc_launch_max_slip_x1000,
+        .default_value = TRC_LAUNCH_MAX_SLIP_X1000_DEFAULT,
+        .min_value = 1000,
+        .max_value = 5000,
+    },
+    {
+        .id = RUNTIME_PARAM_TRC_LAUNCH_BEST_CURVE,
+        .value = &runtime_cfg.trc_launch_best_curve,
+        .default_value = TRC_LAUNCH_BEST_CURVE_DEFAULT,
+        .min_value = 0,
+        .max_value = 2,
+    },
+    {
+        .id = RUNTIME_PARAM_TRC_LAUNCH_ACTIVE_CURVE,
+        .value = &runtime_cfg.trc_launch_active_curve,
+        .default_value = TRC_LAUNCH_ACTIVE_CURVE_DEFAULT,
+        .min_value = 0,
+        .max_value = 3,
+    },
+    {
+        .id = RUNTIME_PARAM_TRC_LAUNCH_RECOMMENDED_SLIP_X1000,
+        .value = &runtime_cfg.trc_launch_recommended_slip_x1000,
+        .default_value = TRC_LAUNCH_RECOMMENDED_SLIP_X1000_DEFAULT,
+        .min_value = 1000,
+        .max_value = 5000,
+    },
+    {
+        .id = RUNTIME_PARAM_TRC_LAUNCH_ACTUAL_RPM_0,
+        .value = &runtime_cfg.trc_launch_actual_rpm_0,
+        .default_value = TRC_LAUNCH_ACTUAL_RPM_0_DEFAULT,
+        .min_value = 0,
+        .max_value = 32767,
+    },
+    {
+        .id = RUNTIME_PARAM_TRC_LAUNCH_ACTUAL_RPM_1,
+        .value = &runtime_cfg.trc_launch_actual_rpm_1,
+        .default_value = TRC_LAUNCH_ACTUAL_RPM_1_DEFAULT,
+        .min_value = 0,
+        .max_value = 32767,
+    },
+    {
+        .id = RUNTIME_PARAM_TRC_LAUNCH_ACTUAL_RPM_2,
+        .value = &runtime_cfg.trc_launch_actual_rpm_2,
+        .default_value = TRC_LAUNCH_ACTUAL_RPM_2_DEFAULT,
+        .min_value = 0,
+        .max_value = 32767,
+    },
+    {
+        .id = RUNTIME_PARAM_TRC_LAUNCH_ACTUAL_RPM_3,
+        .value = &runtime_cfg.trc_launch_actual_rpm_3,
+        .default_value = TRC_LAUNCH_ACTUAL_RPM_3_DEFAULT,
+        .min_value = 0,
+        .max_value = 32767,
+    },
+    {
+        .id = RUNTIME_PARAM_TRC_LAUNCH_ACTUAL_RPM_4,
+        .value = &runtime_cfg.trc_launch_actual_rpm_4,
+        .default_value = TRC_LAUNCH_ACTUAL_RPM_4_DEFAULT,
+        .min_value = 0,
+        .max_value = 32767,
+    },
+    {
+        .id = RUNTIME_PARAM_TRC_LAUNCH_ACTUAL_TORQUE_0,
+        .value = &runtime_cfg.trc_launch_actual_torque_0,
+        .default_value = TRC_LAUNCH_ACTUAL_TORQUE_0_DEFAULT,
+        .min_value = 0,
+        .max_value = 230,
+    },
+    {
+        .id = RUNTIME_PARAM_TRC_LAUNCH_ACTUAL_TORQUE_1,
+        .value = &runtime_cfg.trc_launch_actual_torque_1,
+        .default_value = TRC_LAUNCH_ACTUAL_TORQUE_1_DEFAULT,
+        .min_value = 0,
+        .max_value = 230,
+    },
+    {
+        .id = RUNTIME_PARAM_TRC_LAUNCH_ACTUAL_TORQUE_2,
+        .value = &runtime_cfg.trc_launch_actual_torque_2,
+        .default_value = TRC_LAUNCH_ACTUAL_TORQUE_2_DEFAULT,
+        .min_value = 0,
+        .max_value = 230,
+    },
+    {
+        .id = RUNTIME_PARAM_TRC_LAUNCH_ACTUAL_TORQUE_3,
+        .value = &runtime_cfg.trc_launch_actual_torque_3,
+        .default_value = TRC_LAUNCH_ACTUAL_TORQUE_3_DEFAULT,
+        .min_value = 0,
+        .max_value = 230,
+    },
+    {
+        .id = RUNTIME_PARAM_TRC_LAUNCH_ACTUAL_TORQUE_4,
+        .value = &runtime_cfg.trc_launch_actual_torque_4,
+        .default_value = TRC_LAUNCH_ACTUAL_TORQUE_4_DEFAULT,
+        .min_value = 0,
+        .max_value = 230,
+    },
 };
 
 #define PARAM_COUNT ((ubyte2)(sizeof(param_descs) / sizeof(param_descs[0])))
@@ -390,7 +529,10 @@ static bool UnpackFromEepromBlob(const ubyte1* const blob)
     }
 
     if ((version != RUNTIME_CFG_VERSION) &&
-        (version != RUNTIME_CFG_LEGACY_VERSION_1)) {
+        (version != RUNTIME_CFG_LEGACY_VERSION_1) &&
+        (version != RUNTIME_CFG_LEGACY_VERSION_2) &&
+        (version != RUNTIME_CFG_LEGACY_VERSION_3) &&
+        (version != RUNTIME_CFG_LEGACY_VERSION_4)) {
         return FALSE;
     }
 
@@ -405,6 +547,7 @@ static bool UnpackFromEepromBlob(const ubyte1* const blob)
 
     /* Apply records (ignore unknown param IDs). */
     const bool legacy_v1 = (version == RUNTIME_CFG_LEGACY_VERSION_1);
+    const bool legacy = (version != RUNTIME_CFG_VERSION);
     ubyte2 offset = RUNTIME_CFG_HEADER_LEN;
     for (ubyte2 i = 0; i < record_count; i++) {
         ubyte1 pid = blob[offset + 0];
@@ -423,7 +566,10 @@ static bool UnpackFromEepromBlob(const ubyte1* const blob)
         offset = (ubyte2)(offset + RUNTIME_CFG_RECORD_LEN);
     }
 
-    if (legacy_v1) {
+    if (legacy) {
+        /* Migrate any older layout (v1 or v2) up to the current version.
+         * Appended params keep their defaults and are written on the next
+         * EEPROM flush. */
         write_pending = TRUE;
     }
 

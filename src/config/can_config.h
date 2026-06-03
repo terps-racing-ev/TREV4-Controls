@@ -48,6 +48,12 @@
 //                                      V
 #define CAN_ID_SET_VCU_CONFIG       0x000000CF
 
+/* Reserved SET_VCU_CONFIG mux value that routes to the traction-control state
+ * machine command handler instead of writing a runtime parameter. Chosen above
+ * RUNTIME_PARAM_COUNT so it can never collide with a real parameter id, and so
+ * commands are never persisted to EEPROM. */
+#define SET_VCU_CONFIG_TRC_COMMAND_MUX  240
+
 /* TX Message IDs */
 #define CAN_ID_INV_TORQUE_COMMAND   0x0C0
 #define CAN_ID_INV_READ_WRITE       0x0C1
@@ -61,6 +67,8 @@
 #define CAN_ID_CAN_HEALTH           0x0D100CA9
 #define CAN_ID_CAN_HEALTH_FIFO      0x0D10F1F0
 #define CAN_ID_TRACTION_CONTROL     0x0D1007C0
+#define CAN_ID_VCU_TRC_STATE        0x0D1008C0
+#define CAN_ID_VCU_TRC_RUN_DATA     0x0D1008C1
 #define CAN_ID_CAN_READBACK         0x0D10CAFE
 
 #endif

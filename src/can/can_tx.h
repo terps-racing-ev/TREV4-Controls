@@ -15,6 +15,8 @@ void CAN_TX_PackConfig(IO_CAN_DATA_FRAME* frame);
 void CAN_TX_PackCANHealth(IO_CAN_DATA_FRAME* frame);
 void CAN_TX_PackCANHealthFifo(IO_CAN_DATA_FRAME* frame);
 void CAN_TX_PackTractionControl(IO_CAN_DATA_FRAME* frame);
+void CAN_TX_PackVCUTrcState(IO_CAN_DATA_FRAME* frame);
+void CAN_TX_PackVCUTrcRunData(IO_CAN_DATA_FRAME* frame);
 void CAN_TX_PackCANReadback(IO_CAN_DATA_FRAME* frame);
 void CAN_TX_PackDeadCar(IO_CAN_DATA_FRAME* frame);
 

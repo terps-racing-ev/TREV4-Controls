@@ -51,4 +51,63 @@ typedef enum {
 #define TRACTION_CONTROL_KD_X1000_DEFAULT            0
 #define TRACTION_CONTROL_MIN_FRONT_RPM_DEFAULT       10
 
+/****************************************************************************
+ * Launch Control Learning Mode
+ *
+ * Semi-automated launch characterization. The driver performs two full-throttle
+ * runs using two compile-time torque-vs-(motor)speed curves; the VCU measures
+ * wheel slip and recommends the better curve + a slip target. All launch torque
+ * is pedal-bounded (never exceeds the pedal-mapped request), so existing APPS /
+ * FSAE torque-plausibility safety is preserved.
+ *
+ * RATIONALE FOR COMPILE-TIME CURVES (TTC60 EEPROM constraint):
+ *   A full 2-curve torque-vs-speed map would consume far more EEPROM than the
+ *   ~10 free i16 param slots allow. The curve *shapes* are therefore fixed at
+ *   compile time; only the small result set (best curve, recommended slip) and a
+ *   few tunable thresholds are persisted as runtime params.
+ ****************************************************************************/
+
+/* Number of breakpoints in each launch torque-vs-speed curve. */
+#define LAUNCH_CURVE_POINTS                 5
+
+/* Motor-speed (RPM) breakpoints shared by both curves (ascending). */
+#define LAUNCH_CURVE_RPM_BREAKPOINTS        { 0, 1000, 2000, 4000, 6000 }
+
+/* Curve A (conservative) torque (Nm) at each breakpoint. */
+#define LAUNCH_CURVE_A_TORQUE_NM            { 40, 50, 65, 80, 90 }
+
+/* Curve B (aggressive) torque (Nm) at each breakpoint. */
+#define LAUNCH_CURVE_B_TORQUE_NM            { 70, 85, 95, 100, 100 }
+
+/* Curve C placeholder torque (Nm) at each breakpoint. */
+#define LAUNCH_CURVE_C_TORQUE_NM            { 70, 85, 95, 100, 100 }
+
+/* Run-start readiness (compile-time; not persisted).
+ * A CAN command arms launch mode first; once armed, launch starts from pedal
+ * position only. No RPM or torque threshold is used to begin a run.
+ */
+#define LAUNCH_START_PEDAL_PERCENT         80     /* pedal travel % that starts a launch once armed */
+
+/* Launch learning runtime-param defaults (EEPROM-backed, i16). */
+#define TRC_LAUNCH_ENABLED_DEFAULT                  FALSE
+#define TRC_LAUNCH_END_RPM_DEFAULT                  6000   /* motor RPM that ends a run */
+#define TRC_LAUNCH_TIMEOUT_MS_DEFAULT               15000  /* per-run safety timeout */
+#define TRC_LAUNCH_MAX_SLIP_X1000_DEFAULT           1300   /* slip ratio that aborts a run */
+#define TRC_LAUNCH_BEST_CURVE_DEFAULT               0      /* 0 = Curve A, 1 = Curve B, 2 = Curve C */
+#define TRC_LAUNCH_ACTIVE_CURVE_DEFAULT             3      /* 0 = A, 1 = B, 2 = C, 3 = uploaded curve */
+#define TRC_LAUNCH_RECOMMENDED_SLIP_X1000_DEFAULT   1100
+
+/* EEPROM-backed uploaded actual-launch curve (used when ACTIVE_CURVE = 3). */
+#define TRC_LAUNCH_ACTUAL_RPM_0_DEFAULT             0
+#define TRC_LAUNCH_ACTUAL_RPM_1_DEFAULT             1000
+#define TRC_LAUNCH_ACTUAL_RPM_2_DEFAULT             2000
+#define TRC_LAUNCH_ACTUAL_RPM_3_DEFAULT             4000
+#define TRC_LAUNCH_ACTUAL_RPM_4_DEFAULT             6000
+
+#define TRC_LAUNCH_ACTUAL_TORQUE_0_DEFAULT          40
+#define TRC_LAUNCH_ACTUAL_TORQUE_1_DEFAULT          50
+#define TRC_LAUNCH_ACTUAL_TORQUE_2_DEFAULT          65
+#define TRC_LAUNCH_ACTUAL_TORQUE_3_DEFAULT          80
+#define TRC_LAUNCH_ACTUAL_TORQUE_4_DEFAULT          90
+
 #endif // TORQUE_CONFIG_H

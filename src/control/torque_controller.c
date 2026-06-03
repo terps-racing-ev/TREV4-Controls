@@ -9,6 +9,7 @@
 #include "state_machine.h"
 #include "torque_controller.h"
 #include "traction_control.h"
+#include "traction_control_state_machine.h"
 
 
 static TorqueController_Data_T torque_data;
@@ -203,6 +204,7 @@ void TorqueController_Init(void)
     torque_data.speed_mph_x100 = 0;
     torque_data.regen_torque = 0;
     TractionControl_Init();
+    TractionControlSM_Init();
 }
 
 void TorqueController_Update(void)
@@ -238,8 +240,20 @@ void TorqueController_Update(void)
         (void)TractionControl_ApplyLimit(0, inv_data->motor_speed);
         torque_data.inv_torque_scaled = torque_data.regen_torque * 10;
     } else {
-        const sbyte2 limited_torque = TractionControl_ApplyLimit(torque_data.apps_torque,
-                                                                 inv_data->motor_speed);
+        sbyte2 launch_torque = 0;
+        sbyte2 limited_torque;
+        if (TractionControlSM_GetLaunchTorque(torque_data.apps_torque,
+                                              inv_data->motor_speed,
+                                              &launch_torque)) {
+            /* Launch control owns torque this cycle (already pedal-bounded).
+             * Refresh traction-control telemetry but use the launch curve value
+             * directly so the (untuned) PID does not interfere with learning. */
+            (void)TractionControl_ApplyLimit(launch_torque, inv_data->motor_speed);
+            limited_torque = launch_torque;
+        } else {
+            limited_torque = TractionControl_ApplyLimit(torque_data.apps_torque,
+                                                        inv_data->motor_speed);
+        }
         torque_data.regen_torque = 0;
         torque_data.inv_torque_scaled = limited_torque * 10;
     }

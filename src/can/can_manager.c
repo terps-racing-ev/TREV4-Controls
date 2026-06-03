@@ -186,6 +186,22 @@ static CAN_TX_Message_t tx_messages[CAN_TX_MSG_COUNT] = {
         .tx_trigger_fn = NULL,
         .pack_fn = CAN_TX_PackTractionControl
     },
+    [CAN_TX_MSG_VCU_TRC_STATE] = {
+        .channel = DAQ_CAN_CHANNEL,
+        .id_format = IO_CAN_EXT_FRAME,
+        .id = CAN_ID_VCU_TRC_STATE,
+        .period_cycles = CAN_TX_RATE_100MS,
+        .tx_trigger_fn = NULL,
+        .pack_fn = CAN_TX_PackVCUTrcState
+    },
+    [CAN_TX_MSG_VCU_TRC_RUN_DATA] = {
+        .channel = DAQ_CAN_CHANNEL,
+        .id_format = IO_CAN_EXT_FRAME,
+        .id = CAN_ID_VCU_TRC_RUN_DATA,
+        .period_cycles = CAN_TX_RATE_100MS,
+        .tx_trigger_fn = NULL,
+        .pack_fn = CAN_TX_PackVCUTrcRunData
+    },
     [CAN_TX_MSG_CAN_READBACK] = {
         .channel = DAQ_CAN_CHANNEL,
         .id_format = IO_CAN_EXT_FRAME,
