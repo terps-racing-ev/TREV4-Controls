@@ -58,7 +58,7 @@ MESSAGE_BLOCKS = [
  SG_ SET_VCU_Regen_Max_BSE_Front_PSI m18 : 8|16@1+ (1.0,0.0) [0.0|10000.0] "PSI" Vector__XXX
  SG_ SET_VCU_Regen_Min_Speed m19 : 8|16@1+ (1.0,0.0) [0.0|32767.0] "RPM" Vector__XXX
  SG_ SET_VCU_Regen_Max_SOC m20 : 8|16@1+ (1.0,0.0) [0.0|100.0] "%" Vector__XXX
- SG_ SET_VCU_Regen_Strategy m21 : 8|8@1+ (1.0,0.0) [0.0|2.0] "" Vector__XXX
+ SG_ SET_VCU_Regen_Strategy m21 : 8|8@1+ (1.0,0.0) [0.0|3.0] "" Vector__XXX
  SG_ SET_VCU_Launch_Enabled m22 : 8|1@1+ (1.0,0.0) [0.0|1.0] "" Vector__XXX
  SG_ SET_VCU_Launch_End_RPM m23 : 8|16@1+ (1.0,0.0) [0.0|32767.0] "RPM" Vector__XXX
  SG_ SET_VCU_Launch_Timeout_ms m24 : 8|16@1+ (1.0,0.0) [0.0|60000.0] "ms" Vector__XXX
@@ -109,7 +109,7 @@ MESSAGE_BLOCKS = [
  SG_ VCU_Regen_Max_BSE_Front_PSI m18 : 8|16@1+ (1.0,0.0) [0.0|10000.0] "PSI" Vector__XXX
  SG_ VCU_Regen_Min_Speed m19 : 8|16@1+ (1.0,0.0) [0.0|32767.0] "RPM" Vector__XXX
  SG_ VCU_Regen_Max_SOC m20 : 8|16@1+ (1.0,0.0) [0.0|100.0] "%" Vector__XXX
- SG_ VCU_Regen_Strategy m21 : 8|8@1+ (1.0,0.0) [0.0|2.0] "" Vector__XXX
+ SG_ VCU_Regen_Strategy m21 : 8|8@1+ (1.0,0.0) [0.0|3.0] "" Vector__XXX
  SG_ VCU_Launch_Enabled m22 : 8|1@1+ (1.0,0.0) [0.0|1.0] "" Vector__XXX
  SG_ VCU_Launch_End_RPM m23 : 8|16@1+ (1.0,0.0) [0.0|32767.0] "RPM" Vector__XXX
  SG_ VCU_Launch_Timeout_ms m24 : 8|16@1+ (1.0,0.0) [0.0|60000.0] "ms" Vector__XXX
@@ -293,7 +293,7 @@ VALUE_LINES = [
     'VAL_ 2147483855 SET_VCU_Always_Green 0 "FALSE" 1 "TRUE" ;',
    'VAL_ 2147483855 SET_VCU_TC_Enabled 0 "FALSE" 1 "TRUE" ;',
    'VAL_ 2147483855 SET_VCU_Power_Limit_Enabled 0 "FALSE" 1 "TRUE" ;',
-   'VAL_ 2147483855 SET_VCU_Regen_Strategy 0 "FRONT_ONLY" 1 "REAR_ONLY" 2 "AVERAGED" ;',
+   'VAL_ 2147483855 SET_VCU_Regen_Strategy 0 "FRONT_ONLY" 1 "REAR_ONLY" 2 "AVERAGED" 3 "RYDER" ;',
    'VAL_ 2147483855 SET_VCU_Launch_Enabled 0 "FALSE" 1 "TRUE" ;',
    'VAL_ 2147483855 SET_VCU_Launch_Best_Curve 0 "CURVE_A" 1 "CURVE_B" 2 "CURVE_C" ;',
    'VAL_ 2147483855 SET_VCU_Launch_Active_Curve 0 "CURVE_A" 1 "CURVE_B" 2 "CURVE_C" 3 "UPLOADED" ;',
@@ -313,7 +313,7 @@ VALUE_LINES = [
     'VAL_ 2148532431 VCU_Always_Green 0 "FALSE" 1 "TRUE" ;',
    'VAL_ 2148532431 VCU_TC_Enabled 0 "FALSE" 1 "TRUE" ;',
    'VAL_ 2148532431 VCU_Power_Limit_Enabled 0 "FALSE" 1 "TRUE" ;',
-   'VAL_ 2148532431 VCU_Regen_Strategy 0 "FRONT_ONLY" 1 "REAR_ONLY" 2 "AVERAGED" ;',
+   'VAL_ 2148532431 VCU_Regen_Strategy 0 "FRONT_ONLY" 1 "REAR_ONLY" 2 "AVERAGED" 3 "RYDER" ;',
    'VAL_ 2148532431 VCU_Launch_Enabled 0 "FALSE" 1 "TRUE" ;',
    'VAL_ 2148532431 VCU_Launch_Best_Curve 0 "CURVE_A" 1 "CURVE_B" 2 "CURVE_C" ;',
    'VAL_ 2148532431 VCU_Launch_Active_Curve 0 "CURVE_A" 1 "CURVE_B" 2 "CURVE_C" 3 "UPLOADED" ;',

@@ -274,7 +274,7 @@ static RuntimeConfig_ParamDesc_t param_descs[] = {
         .value = &runtime_cfg.regen_strategy,
         .default_value = REGEN_STRATEGY_DEFAULT,
         .min_value = REGEN_STRATEGY_FRONT_ONLY,
-        .max_value = REGEN_STRATEGY_AVERAGED,
+        .max_value = REGEN_STRATEGY_RYDER,
     },
     {
         .id = RUNTIME_PARAM_TRC_LAUNCH_ENABLED,

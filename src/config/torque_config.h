@@ -29,6 +29,7 @@ typedef enum {
 	REGEN_STRATEGY_FRONT_ONLY = 0,
 	REGEN_STRATEGY_REAR_ONLY,
 	REGEN_STRATEGY_AVERAGED,
+	REGEN_STRATEGY_RYDER,
 } RegenStrategy_t;
 
 /* Regen defaults (runtime-configurable, EEPROM-backed). */
@@ -42,6 +43,20 @@ typedef enum {
 #define REGEN_MIN_SPEED_DEFAULT 500
 #define REGEN_MAX_SOC_DEFAULT 85
 #define REGEN_STRATEGY_DEFAULT REGEN_STRATEGY_AVERAGED
+
+/* Ryder regen strategy: front-pressure lookup plus rear-pressure balancing. */
+#define REGEN_RYDER_MU                         1.5f
+#define REGEN_RYDER_FRONT_TABLE_POINTS         19
+#define REGEN_RYDER_FRONT_PSI_STEP             50
+#define REGEN_RYDER_MAX_FRONT_PSI              900
+#define REGEN_RYDER_FRONT_TORQUE_X1000         { 0, 14936, 25332, 32316, 36706, 39108, 39971, 39638, 38369, 36366, 33784, 30747, 27351, 23673, 19773, 15702, 11497, 7192, 2811 }
+
+#define REGEN_RYDER_FRONT_FORCE_C0             183.0f
+#define REGEN_RYDER_FRONT_FORCE_C1             8.7696f
+#define REGEN_RYDER_FRONT_FORCE_C2             0.0141145f
+#define REGEN_RYDER_FRONT_FORCE_C3             0.0000068383f
+#define REGEN_RYDER_REAR_FORCE_C1              5.6077f
+#define REGEN_RYDER_TORQUE_SCALE               0.032704f
 
 /* Traction control defaults (runtime-configurable, fractional values x1000). */
 #define TRACTION_CONTROL_ENABLED_DEFAULT             FALSE
@@ -71,16 +86,16 @@ typedef enum {
 #define LAUNCH_CURVE_POINTS                 5
 
 /* Motor-speed (RPM) breakpoints shared by both curves (ascending). */
-#define LAUNCH_CURVE_RPM_BREAKPOINTS        { 0, 1000, 2000, 4000, 6000 }
+#define LAUNCH_CURVE_RPM_BREAKPOINTS        { 0, 340, 680, 1020, 1360 }
 
 /* Curve A (conservative) torque (Nm) at each breakpoint. */
-#define LAUNCH_CURVE_A_TORQUE_NM            { 40, 50, 65, 80, 90 }
+#define LAUNCH_CURVE_A_TORQUE_NM            { 100, 130, 160, 190, 220 }
 
 /* Curve B (aggressive) torque (Nm) at each breakpoint. */
-#define LAUNCH_CURVE_B_TORQUE_NM            { 70, 85, 95, 100, 100 }
+#define LAUNCH_CURVE_B_TORQUE_NM            {100, 160, 220, 220, 220}
 
 /* Curve C placeholder torque (Nm) at each breakpoint. */
-#define LAUNCH_CURVE_C_TORQUE_NM            { 70, 85, 95, 100, 100 }
+#define LAUNCH_CURVE_C_TORQUE_NM            {100, 220, 220, 220, 220}
 
 /* Run-start readiness (compile-time; not persisted).
  * A CAN command arms launch mode first; once armed, launch starts from pedal
@@ -99,10 +114,10 @@ typedef enum {
 
 /* EEPROM-backed uploaded actual-launch curve (used when ACTIVE_CURVE = 3). */
 #define TRC_LAUNCH_ACTUAL_RPM_0_DEFAULT             0
-#define TRC_LAUNCH_ACTUAL_RPM_1_DEFAULT             1000
-#define TRC_LAUNCH_ACTUAL_RPM_2_DEFAULT             2000
-#define TRC_LAUNCH_ACTUAL_RPM_3_DEFAULT             4000
-#define TRC_LAUNCH_ACTUAL_RPM_4_DEFAULT             6000
+#define TRC_LAUNCH_ACTUAL_RPM_1_DEFAULT             340
+#define TRC_LAUNCH_ACTUAL_RPM_2_DEFAULT             680
+#define TRC_LAUNCH_ACTUAL_RPM_3_DEFAULT             1020
+#define TRC_LAUNCH_ACTUAL_RPM_4_DEFAULT             1360
 
 #define TRC_LAUNCH_ACTUAL_TORQUE_0_DEFAULT          40
 #define TRC_LAUNCH_ACTUAL_TORQUE_1_DEFAULT          50

@@ -24,6 +24,6 @@
 
 /* Fixed current limits (Amps). */
 #define MIN_DCL_AMPS                   20
-#define CCL_AMPS                       20
+#define CCL_AMPS                       45
 
 #endif // POWER_CONFIG_H
