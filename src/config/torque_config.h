@@ -106,7 +106,7 @@ typedef enum {
 
 /* Launch learning runtime-param defaults (EEPROM-backed, i16). */
 #define TRC_LAUNCH_ENABLED_DEFAULT                  FALSE
-#define TRC_LAUNCH_END_RPM_DEFAULT                  6000   /* motor RPM that ends a run */
+#define TRC_LAUNCH_END_RPM_DEFAULT                  1360   /* motor RPM that ends a run */
 #define TRC_LAUNCH_TIMEOUT_MS_DEFAULT               15000  /* per-run safety timeout */
 #define TRC_LAUNCH_MAX_SLIP_X1000_DEFAULT           1300   /* slip ratio that aborts a run */
 #define TRC_LAUNCH_BEST_CURVE_DEFAULT               0      /* 0 = Curve A, 1 = Curve B, 2 = Curve C */
@@ -120,10 +120,10 @@ typedef enum {
 #define TRC_LAUNCH_ACTUAL_RPM_3_DEFAULT             1020
 #define TRC_LAUNCH_ACTUAL_RPM_4_DEFAULT             1360
 
-#define TRC_LAUNCH_ACTUAL_TORQUE_0_DEFAULT          40
-#define TRC_LAUNCH_ACTUAL_TORQUE_1_DEFAULT          50
-#define TRC_LAUNCH_ACTUAL_TORQUE_2_DEFAULT          65
-#define TRC_LAUNCH_ACTUAL_TORQUE_3_DEFAULT          80
-#define TRC_LAUNCH_ACTUAL_TORQUE_4_DEFAULT          90
+#define TRC_LAUNCH_ACTUAL_TORQUE_0_DEFAULT          100
+#define TRC_LAUNCH_ACTUAL_TORQUE_1_DEFAULT          130
+#define TRC_LAUNCH_ACTUAL_TORQUE_2_DEFAULT          160
+#define TRC_LAUNCH_ACTUAL_TORQUE_3_DEFAULT          190
+#define TRC_LAUNCH_ACTUAL_TORQUE_4_DEFAULT          220
 
 #endif // TORQUE_CONFIG_H
