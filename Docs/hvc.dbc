@@ -34,59 +34,56 @@ BS_:
 
 BU_: HVC
 
-BO_ 2151678448 IO_Summary: 7 HVC
- SG_ SDC_Closed : 0|1@1+ (1,0) [0|1] "" Vector__XXX
- SG_ IMD_Ok : 1|1@1+ (1,0) [0|1] "" Vector__XXX
- SG_ BMS_Fault_Ok : 2|1@1+ (1,0) [0|1] "" Vector__XXX
- SG_ Ref_Temp_C : 40|16@1- (0.01,0) [-327.68|327.67] "degC" Vector__XXX
+BO_ 2151678448 HVC_IO_Summary: 7 HVC
+ SG_ HVC_SDC_Open : 0|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ HVC_IMD_Fault : 1|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ HVC_BMS_Fault : 2|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ HVC_Ref_Temp_C : 40|16@1- (0.01,0) [-327.68|327.67] "degC" Vector__XXX
 
-BO_ 2151678451 IO_Current: 8 HVC
- SG_ Current_Low_mA : 0|32@1- (1,0) [-2147483648|2147483647] "mA" Vector__XXX
- SG_ Current_High_mA : 32|32@1- (1,0) [-2147483648|2147483647] "mA" Vector__XXX
+BO_ 2151678451 HVC_IO_Current: 8 HVC
+ SG_ HVC_Current_Low_mA : 0|32@1- (1,0) [-2147483648|2147483647] "mA" Vector__XXX
+ SG_ HVC_Current_High_mA : 32|32@1- (1,0) [-2147483648|2147483647] "mA" Vector__XXX
 
-BO_ 2151678455 IO_VSense: 8 HVC
- SG_ Batt_Voltage_mV : 0|32@1+ (1,0) [0|4294967295] "mV" Vector__XXX
- SG_ Inv_Voltage_mV : 32|32@1+ (1,0) [0|4294967295] "mV" Vector__XXX
+BO_ 2151678455 HVC_IO_VSense: 8 HVC
+ SG_ HVC_Batt_Voltage_mV : 0|32@1+ (1,0) [0|4294967295] "mV" Vector__XXX
+ SG_ HVC_Inv_Voltage_mV : 32|32@1+ (1,0) [0|4294967295] "mV" Vector__XXX
 
-BO_ 2151678449 BMS_State: 5 HVC
- SG_ BMS_State : 0|8@1+ (1,0) [0|255] "" Vector__XXX
- SG_ Err_RefOverTemp : 8|1@1+ (1,0) [0|1] "" Vector__XXX
- SG_ Err_ModuleTimeout : 9|1@1+ (1,0) [0|1] "" Vector__XXX
- SG_ Err_BattFloating : 10|1@1+ (1,0) [0|1] "" Vector__XXX
- SG_ Err_CurrSenseFloating : 11|1@1+ (1,0) [0|1] "" Vector__XXX
- SG_ Err_BmbError : 12|1@1+ (1,0) [0|1] "" Vector__XXX
- SG_ Err_BmsCanError : 13|1@1+ (1,0) [0|1] "" Vector__XXX
- SG_ Err_LvCanError : 14|1@1+ (1,0) [0|1] "" Vector__XXX
+BO_ 2151678449 HVC_BMS_State: 5 HVC
+ SG_ HVC_BMS_State : 0|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ HVC_Err_RefOverTemp : 8|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ HVC_Err_ModuleTimeout : 9|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ HVC_Err_BattFloating : 10|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ HVC_Err_CurrSenseFloating : 11|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ HVC_Err_BmbError : 12|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ HVC_Err_BmsCanError : 13|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ HVC_Err_LvCanError : 14|1@1+ (1,0) [0|1] "" Vector__XXX
 
-BO_ 2151678450 Errored_Panic: 0 HVC
+BO_ 2151678450 HVC_Errored_Panic: 0 HVC
 
-BO_ 2151678452 SOC: 8 HVC
- SG_ SOC_Percent : 0|16@1+ (0.01,0) [0|100] "%" Vector__XXX
- SG_ SOC_Capacity_As : 16|16@1+ (1,0) [0|65535] "A*s" Vector__XXX
- SG_ SOC_Delta_As : 32|32@1- (1,0) [-2147483648|2147483647] "A*s" Vector__XXX
+BO_ 2151678452 HVC_SOC: 8 HVC
+ SG_ HVC_SOC_Percent : 0|16@1+ (0.01,0) [0|100] "%" Vector__XXX
+ SG_ HVC_SOC_Capacity_As : 16|16@1+ (1,0) [0|65535] "A*s" Vector__XXX
+ SG_ HVC_SOC_Delta_As : 32|32@1- (1,0) [-2147483648|2147483647] "A*s" Vector__XXX
 
-BO_ 2151678453 ACC_Summary: 8 HVC
- SG_ Acc_Volt_Min_mV : 0|16@1+ (1,0) [0|65535] "mV" Vector__XXX
- SG_ Acc_Volt_Max_mV : 16|16@1+ (1,0) [0|65535] "mV" Vector__XXX
- SG_ Acc_Temp_Min_C : 32|16@1- (0.1,0) [-3276.8|3276.7] "degC" Vector__XXX
- SG_ Acc_Temp_Max_C : 48|16@1- (0.1,0) [-3276.8|3276.7] "degC" Vector__XXX
+BO_ 2151678453 HVC_ACC_Summary: 8 HVC
+ SG_ HVC_Acc_Volt_Min_mV : 0|16@1+ (1,0) [0|65535] "mV" Vector__XXX
+ SG_ HVC_Acc_Volt_Max_mV : 16|16@1+ (1,0) [0|65535] "mV" Vector__XXX
+ SG_ HVC_Acc_Temp_Min_C : 32|16@1- (0.1,0) [-3276.8|3276.7] "degC" Vector__XXX
+ SG_ HVC_Acc_Temp_Max_C : 48|16@1- (0.1,0) [-3276.8|3276.7] "degC" Vector__XXX
 
-BO_ 2151678456 Current_Limit: 8 HVC
- SG_ Negative_Current_Limit_mA : 0|32@1+ (1,0) [0|4294967295] "mA" Vector__XXX
- SG_ Positive_Current_Limit_mA : 32|32@1+ (1,0) [0|4294967295] "mA" Vector__XXX
+BO_ 2151678456 HVC_Current_Limit: 8 HVC
+ SG_ HVC_Negative_Current_Limit_mA : 0|32@1+ (1,0) [0|4294967295] "mA" Vector__XXX
+ SG_ HVC_Positive_Current_Limit_mA : 32|32@1+ (1,0) [0|4294967295] "mA" Vector__XXX
 
-BO_ 2151678458 PL_Signal: 1 HVC
- SG_ PL_Signal_Reason : 0|8@1+ (1,0) [0|255] "" Vector__XXX
+BO_ 2151678458 HVC_PL_Signal: 1 HVC
+ SG_ HVC_PL_Signal_Reason : 0|8@1+ (1,0) [0|255] "" Vector__XXX
 
-VAL_ 2151678449 BMS_State 0 "PRE_INIT" 1 "RUNNING" 2 "CHARGING" 3 "BALANCING" 4 "ERRORED" ;
-VAL_ 2151678458 PL_Signal_Reason 0 "NORMAL_OPEN" 1 "NORMAL_CLOSED" 2 "BMS_ERRORED" 3 "BATT_FLOATING" 4 "CHARGING" ;
-VAL_ 2151678448 SDC_Closed 0 "OK_CLOSED" 1 "OPEN_NOT_OK" ;
-VAL_ 2151678448 IMD_Ok 0 "OK" 1 "NOT_OK" ;
-VAL_ 2151678448 BMS_Fault_Ok 0 "OK" 1 "NOT_OK" ;
-VAL_ 2151678449 Err_RefOverTemp 0 "Inactive" 1 "Active" ;
-VAL_ 2151678449 Err_ModuleTimeout 0 "Inactive" 1 "Active" ;
-VAL_ 2151678449 Err_BattFloating 0 "Inactive" 1 "Active" ;
-VAL_ 2151678449 Err_CurrSenseFloating 0 "Inactive" 1 "Active" ;
-VAL_ 2151678449 Err_BmbError 0 "Inactive" 1 "Active" ;
-VAL_ 2151678449 Err_BmsCanError 0 "Inactive" 1 "Active" ;
-VAL_ 2151678449 Err_LvCanError 0 "Inactive" 1 "Active" ;
+VAL_ 2151678449 HVC_BMS_State 0 "PRE_INIT" 1 "RUNNING" 2 "CHARGING" 3 "BALANCING" 4 "ERRORED" ;
+VAL_ 2151678458 HVC_PL_Signal_Reason 0 "NORMAL_OPEN" 1 "NORMAL_CLOSED" 2 "BMS_ERRORED" 3 "BATT_FLOATING" 4 "CHARGING" ;
+VAL_ 2151678449 HVC_Err_RefOverTemp 0 "Inactive" 1 "Active" ;
+VAL_ 2151678449 HVC_Err_ModuleTimeout 0 "Inactive" 1 "Active" ;
+VAL_ 2151678449 HVC_Err_BattFloating 0 "Inactive" 1 "Active" ;
+VAL_ 2151678449 HVC_Err_CurrSenseFloating 0 "Inactive" 1 "Active" ;
+VAL_ 2151678449 HVC_Err_BmbError 0 "Inactive" 1 "Active" ;
+VAL_ 2151678449 HVC_Err_BmsCanError 0 "Inactive" 1 "Active" ;
+VAL_ 2151678449 HVC_Err_LvCanError 0 "Inactive" 1 "Active" ;
