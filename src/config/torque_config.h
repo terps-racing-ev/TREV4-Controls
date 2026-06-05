@@ -35,7 +35,7 @@ typedef enum {
 /* Regen defaults (runtime-configurable, EEPROM-backed). */
 #define REGEN_ENABLED_DEFAULT TRUE
 #define REGEN_MAX_TORQUE_DEFAULT 80
-#define REGEN_MIN_TORQUE_DEFAULT 10
+#define REGEN_MIN_TORQUE_DEFAULT 1
 #define REGEN_MIN_BSE_REAR_PSI_DEFAULT 20
 #define REGEN_MIN_BSE_FRONT_PSI_DEFAULT 20
 #define REGEN_MAX_BSE_REAR_PSI_DEFAULT 900
@@ -46,7 +46,7 @@ typedef enum {
 #define REGEN_STRATEGY_DEFAULT REGEN_STRATEGY_RYDER
 
 /* Ryder regen strategy: front-pressure lookup plus rear-pressure balancing. */
-#define REGEN_RYDER_MU                         1.5f
+#define REGEN_RYDER_MU                         2.25f
 #define REGEN_RYDER_FRONT_TABLE_POINTS         19
 #define REGEN_RYDER_FRONT_PSI_STEP             50
 #define REGEN_RYDER_MAX_FRONT_PSI              900

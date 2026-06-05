@@ -24,14 +24,14 @@
 
 /* APPS 1 Bounds */
 #define APPS_1_MAX_VOLTAGE 4430
-#define APPS_1_MIN_VOLTAGE 1477
+#define APPS_1_MIN_VOLTAGE 1520
 
 /* APPS 2 Bounds */
 #define APPS_2_MAX_VOLTAGE 3950
 #define APPS_2_MIN_VOLTAGE 1090
 
 /* Voltage range above max and below min that doesn't count as an error */
-#define APPS_VOLTAGE_TOLERANCE 250
+#define APPS_VOLTAGE_TOLERANCE 300
 
 /* Travel below 1 percent will count as 0 */
 #define APPS_DEADZONE (APPS_RESOLUTION / 100)
