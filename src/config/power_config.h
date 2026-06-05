@@ -23,7 +23,7 @@
 #define POWER_LIMIT_ENABLED_DEFAULT    TRUE
 
 /* Fixed current limits (Amps). */
-#define MIN_DCL_AMPS                   20
-#define CCL_AMPS                       45
+#define MIN_DCL_AMPS                   100
+#define CCL_AMPS                       60
 
 #endif // POWER_CONFIG_H

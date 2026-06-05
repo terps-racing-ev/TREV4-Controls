@@ -62,6 +62,17 @@ static ubyte2 GetConfiguredRegenMaxApps(void)
     return (ubyte2)((ubyte2)max_apps_percent * 10U);
 }
 
+static float4 GetConfiguredRyderMu(void)
+{
+    sbyte2 mu_x1000 = GetParam(RUNTIME_PARAM_REGEN_RYDER_MU_X1000);
+
+    if (mu_x1000 < 0) {
+        mu_x1000 = 0;
+    }
+
+    return ((float4)mu_x1000) / 1000.0f;
+}
+
 static void ResetRegenDebugDerived(void)
 {
     torque_data.regen_front_table_torque = 0;
@@ -207,7 +218,7 @@ static sbyte2 CalculateRyderBalanceTorque(const ubyte2 front_pressure_psi,
                               (x * x * REGEN_RYDER_FRONT_FORCE_C2) +
                               (x * x * x * REGEN_RYDER_FRONT_FORCE_C3);
     const float4 rear_term = y * REGEN_RYDER_REAR_FORCE_C1;
-    const float4 torque = REGEN_RYDER_MU * (front_term - rear_term) * REGEN_RYDER_TORQUE_SCALE;
+    const float4 torque = GetConfiguredRyderMu() * (front_term - rear_term) * REGEN_RYDER_TORQUE_SCALE;
 
     if (torque <= 0.0f) {
         return 0;
@@ -360,7 +371,7 @@ static sbyte2 CalculateRegenTorque(const APPS_Data_t* const apps,
         return 0;
     }
 
-    if ((apps != NULL) && (apps->apps_value > GetConfiguredRegenMaxApps())) {
+    if (apps->apps_value > GetConfiguredRegenMaxApps()) {
         torque_data.regen_block_reason = REGEN_BLOCK_APPS_ACTIVE;
         return 0;
     }

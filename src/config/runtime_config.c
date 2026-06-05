@@ -53,6 +53,7 @@ typedef struct {
     sbyte2 trc_launch_actual_torque_4;
     sbyte2 regen_soc_gate_enabled;
     sbyte2 regen_max_apps;
+    sbyte2 regen_ryder_mu_x1000;
 } RuntimeConfig_Data_t;
 
 typedef struct {
@@ -79,15 +80,16 @@ typedef enum {
 #define RUNTIME_CFG_EEPROM_OFFSET     ((ubyte2)64)
 
 #define RUNTIME_CFG_MAGIC             ((ubyte4)0x52434647UL) /* 'RCFG' */
-#define RUNTIME_CFG_VERSION           ((ubyte2)7)
+#define RUNTIME_CFG_VERSION           ((ubyte2)8)
 #define RUNTIME_CFG_LEGACY_VERSION_1  ((ubyte2)1)
 #define RUNTIME_CFG_LEGACY_VERSION_2  ((ubyte2)2)
 #define RUNTIME_CFG_LEGACY_VERSION_3  ((ubyte2)3)
 #define RUNTIME_CFG_LEGACY_VERSION_4  ((ubyte2)4)
 #define RUNTIME_CFG_LEGACY_VERSION_5  ((ubyte2)5)
 #define RUNTIME_CFG_LEGACY_VERSION_6  ((ubyte2)6)
+#define RUNTIME_CFG_LEGACY_VERSION_7  ((ubyte2)7)
 
-#define RUNTIME_CFG_MAX_PARAMS        ((ubyte2)41)
+#define RUNTIME_CFG_MAX_PARAMS        ((ubyte2)42)
 
 /* Header:
    u32 magic
@@ -413,6 +415,13 @@ static RuntimeConfig_ParamDesc_t param_descs[] = {
         .min_value = 0,
         .max_value = 100,
     },
+    {
+        .id = RUNTIME_PARAM_REGEN_RYDER_MU_X1000,
+        .value = &runtime_cfg.regen_ryder_mu_x1000,
+        .default_value = REGEN_RYDER_MU_X1000_DEFAULT,
+        .min_value = 0,
+        .max_value = 10000,
+    },
 };
 
 #define PARAM_COUNT ((ubyte2)(sizeof(param_descs) / sizeof(param_descs[0])))
@@ -545,7 +554,8 @@ static bool UnpackFromEepromBlob(const ubyte1* const blob)
         (version != RUNTIME_CFG_LEGACY_VERSION_3) &&
         (version != RUNTIME_CFG_LEGACY_VERSION_4) &&
         (version != RUNTIME_CFG_LEGACY_VERSION_5) &&
-        (version != RUNTIME_CFG_LEGACY_VERSION_6)) {
+        (version != RUNTIME_CFG_LEGACY_VERSION_6) &&
+        (version != RUNTIME_CFG_LEGACY_VERSION_7)) {
         return FALSE;
     }
 
