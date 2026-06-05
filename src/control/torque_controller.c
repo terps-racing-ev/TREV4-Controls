@@ -51,6 +51,17 @@ static ubyte1 GetConfiguredRegenStrategy(void)
     return (ubyte1)strategy;
 }
 
+static ubyte2 GetConfiguredRegenMaxApps(void)
+{
+    sbyte2 max_apps_percent = GetParam(RUNTIME_PARAM_REGEN_MAX_APPS);
+
+    if (max_apps_percent < 0) {
+        max_apps_percent = 0;
+    }
+
+    return (ubyte2)((ubyte2)max_apps_percent * 10U);
+}
+
 static void ResetRegenDebugDerived(void)
 {
     torque_data.regen_front_table_torque = 0;
@@ -329,7 +340,8 @@ static bool GetRegenPressure(const BSE_Data_t* const front_bse,
     return TRUE;
 }
 
-static sbyte2 CalculateRegenTorque(const BSE_Data_t* const front_bse,
+static sbyte2 CalculateRegenTorque(const APPS_Data_t* const apps,
+                                   const BSE_Data_t* const front_bse,
                                    const MOBO_PowerTelemetry_RX_Data_t* const mobo_power,
                                    const sbyte2 motor_speed)
 {
@@ -348,7 +360,7 @@ static sbyte2 CalculateRegenTorque(const BSE_Data_t* const front_bse,
         return 0;
     }
 
-    if (torque_data.apps_torque > 0) {
+    if ((apps != NULL) && (apps->apps_value > GetConfiguredRegenMaxApps())) {
         torque_data.regen_block_reason = REGEN_BLOCK_APPS_ACTIVE;
         return 0;
     }
@@ -464,7 +476,7 @@ void TorqueController_Update(void)
 
 
     // TODO all this logic will have to be improved with launch control
-    torque_data.regen_torque = CalculateRegenTorque(bse, mobo_power, regen_motor_speed);
+    torque_data.regen_torque = CalculateRegenTorque(apps, bse, mobo_power, regen_motor_speed);
     if (torque_data.regen_torque < 0) {
         (void)TractionControl_ApplyLimit(0, inv_data->motor_speed);
         torque_data.inv_torque_scaled = torque_data.regen_torque * 10;

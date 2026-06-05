@@ -34,6 +34,7 @@ typedef enum {
 
 /* Regen defaults (runtime-configurable, EEPROM-backed). */
 #define REGEN_ENABLED_DEFAULT TRUE
+#define REGEN_MAX_APPS_DEFAULT 5
 #define REGEN_MAX_TORQUE_DEFAULT 80
 #define REGEN_MIN_TORQUE_DEFAULT 1
 #define REGEN_MIN_BSE_REAR_PSI_DEFAULT 20
