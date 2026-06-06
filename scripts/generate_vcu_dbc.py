@@ -286,6 +286,8 @@ MESSAGE_BLOCKS = [
  SG_ RX_INV_HIGH_SPEED_VCU_FIFO_Other_Errs_Count m4 : 48|8@1+ (1.0,0.0) [0.0|255.0] "" Vector__XXX
  SG_ RX_HVC_SUMMARY_VCU_FIFO_Other_Errs_Count m5 : 48|8@1+ (1.0,0.0) [0.0|255.0] "" Vector__XXX
  SG_ RX_SET_VCU_CONFIG_VCU_FIFO_Other_Errs_Count m6 : 48|8@1+ (1.0,0.0) [0.0|255.0] "" Vector__XXX""",
+    """BO_ 2366639360 VCU_LOG_Event_Flag: 8 VCU
+ SG_ VCU_LOG_Event_ID : 0|8@1+ (1.0,0.0) [0.0|255.0] "" Vector__XXX""",
     """BO_ 2367343840 VCU_APPS_Voltages: 8 VCU
  SG_ VCU_APPS2_Filt_mV : 0|16@1- (0.001,0.0) [-1000.0|1000.0] "V" Vector__XXX
  SG_ VCU_APPS2_Raw_mV : 16|16@1- (0.001,0.0) [-1000.0|1000.0] "V" Vector__XXX
