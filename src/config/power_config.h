@@ -25,5 +25,6 @@
 /* Fixed current limits (Amps). */
 #define MIN_DCL_AMPS                   100
 #define CCL_AMPS                       60
+#define AMPS_MULTIPLIER                2.1f // Multiply final DCL amps to get closer to actual (inverter has weird scaling
 
 #endif // POWER_CONFIG_H

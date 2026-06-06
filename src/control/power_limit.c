@@ -49,6 +49,8 @@ void PowerLimit_Update(void)
         }
     }
 
+    dcl_amps = (ubyte4)(((float4)dcl_amps * AMPS_MULTIPLIER) + 0.5f); // Apply multipler because fuck the inverter
+
     if (dcl_amps > 0xFFFFUL) {
         dcl_amps = 0xFFFFUL;
     }
