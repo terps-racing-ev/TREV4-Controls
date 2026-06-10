@@ -47,11 +47,20 @@ void Lights_Update(void)
     const bool always_green = (dbg_bits & DEBUG_BIT_ALWAYS_GREEN);
 
     if (always_green || in_red_car_grace) {
+        /* Debug override / startup grace forces green and clears any latch. */
         red_car = FALSE;
     }
-    else {
-        red_car = !hvc_valid || !hvc->imd_ok || !hvc->bms_ok;
+    else if (!hvc_valid || !hvc->imd_ok || !hvc->bms_ok) {
+        /* An IMD or BMS fault (or lost HVC) latches the TSSI red. Either fault
+         * opens the Shutdown Circuit automatically. */
+        red_car = TRUE;
     }
+    else if (hvc->sdc_ok) {
+        /* Stay latched red until the Shutdown Circuit is confirmed closed again,
+         * even if the IMD/BMS fault flags have already cleared. */
+        red_car = FALSE;
+    }
+    /* else: no active fault but SDC not yet confirmed OK -> hold latched red. */
 
     /* Actuation for TSSI */
     if (red_car) {
