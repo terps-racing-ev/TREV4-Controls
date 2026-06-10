@@ -25,7 +25,8 @@
 #define BSE_MAX_PSI 3000
 #define BSE_MIN_PSI 0
 
-#define BRAKES_ENGAGED_THRESHOLD 40 //PSI
+#define BRAKES_ENGAGED_THRESHOLD 60 //PSI
+#define BRAKE_THROTTLE_CUT_THRESHOLD 60 //PSI
 
 /* Voltage range above max and below min that doesn't count as an error */
 #define BSE_VOLTAGE_TOLERANCE 250

@@ -28,7 +28,7 @@ MESSAGE_BLOCKS = [
  SG_ VCU_INV_Charge_Current_Limit : 16|16@1+ (1.0,0.0) [0.0|65535.0] "A" Vector__XXX""",
     """BO_ 2147483855 SET_VCU_Config: 8 SET
  SG_ SET_VCU_Select M : 0|8@1+ (1.0,0.0) [0.0|255.0] "" Vector__XXX
- SG_ SET_VCU_Max_Torque m0 : 8|16@1- (0.1,0.0) [-230.0|230.0] "Nm" Vector__XXX
+ SG_ SET_VCU_Max_Torque m0 : 8|16@1+ (1.0,0.0) [0.0|230.0] "Nm" Vector__XXX
  SG_ SET_VCU_Motor_Direction m1 : 8|1@1+ (1.0,0.0) [0.0|1.0] "" Vector__XXX
  SG_ SET_VCU_Regen_Enabled m2 : 8|1@1+ (1.0,0.0) [0.0|1.0] "" Vector__XXX
  SG_ SET_VCU_ECHO_DAQ m3 : 8|1@1+ (1.0,0.0) [0.0|1.0] "" Vector__XXX
@@ -141,7 +141,7 @@ MESSAGE_BLOCKS = [
     """BO_ 2366636528 VCU_Summary: 8 VCU
  SG_ VCU_Heartbeat : 0|8@1+ (1.0,0.0) [0.0|255.0] "" Vector__XXX
  SG_ VCU_State : 8|8@1+ (1.0,0.0) [0.0|5.0] "" Vector__XXX
- SG_ VCU_Speed : 16|16@1- (1.0,0.0) [-6000.0|6000.0] "RPM" Vector__XXX
+ SG_ VCU_Speed_MPH : 16|16@1+ (0.01,0.0) [0.0|655.35] "mph" Vector__XXX
  SG_ VCU_RTD_Active : 32|1@1+ (1.0,0.0) [0.0|1.0] "" Vector__XXX
  SG_ VCU_Red_Car : 33|1@1+ (1.0,0.0) [0.0|1.0] "" Vector__XXX
  SG_ VCU_HVC_Summary_Valid : 34|1@1+ (1.0,0.0) [0.0|1.0] "" Vector__XXX
@@ -287,7 +287,7 @@ MESSAGE_BLOCKS = [
  SG_ RX_HVC_SUMMARY_VCU_FIFO_Other_Errs_Count m5 : 48|8@1+ (1.0,0.0) [0.0|255.0] "" Vector__XXX
  SG_ RX_SET_VCU_CONFIG_VCU_FIFO_Other_Errs_Count m6 : 48|8@1+ (1.0,0.0) [0.0|255.0] "" Vector__XXX""",
     """BO_ 2366639360 VCU_LOG_Event_Flag: 8 VCU
- SG_ VCU_LOG_Event_ID : 0|8@1+ (1.0,0.0) [0.0|255.0] "" Vector__XXX""",
+ SG_ VCU_LOG_Event_Value : 0|32@1+ (1.0,0.0) [0.0|4294967295.0] "" Vector__XXX""",
     """BO_ 2367343840 VCU_APPS_Voltages: 8 VCU
  SG_ VCU_APPS2_Filt_mV : 0|16@1- (0.001,0.0) [-1000.0|1000.0] "V" Vector__XXX
  SG_ VCU_APPS2_Raw_mV : 16|16@1- (0.001,0.0) [-1000.0|1000.0] "V" Vector__XXX

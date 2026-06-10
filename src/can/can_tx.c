@@ -165,7 +165,7 @@ void CAN_TX_PackVCUSummary(IO_CAN_DATA_FRAME* frame)
     /* DAQBus.dbc / VCU_Summary
        byte0: VCU_Heartbeat
        byte1: VCU_State
-       byte2-3: VCU_Speed (vehicle speed in mph x100)
+    byte2-3: VCU_Speed_MPH (vehicle speed in mph x100)
        byte4 bit0: VCU_RTD_Active
        byte4 bit1: VCU_IsRedCar
              byte4 bit2: HVC summary valid

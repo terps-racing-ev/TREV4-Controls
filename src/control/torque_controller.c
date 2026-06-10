@@ -1,6 +1,7 @@
 #include "IO_Constants.h"
 #include "config/torque_config.h"
 #include "config/apps_config.h"
+#include "config/bse_config.h"
 #include "can/can_manager.h"
 #include "can/can_rx.h"
 #include "config/runtime_config.h"
@@ -71,6 +72,25 @@ static float4 GetConfiguredRyderMu(void)
     }
 
     return ((float4)mu_x1000) / 1000.0f;
+}
+
+static bool IgnoreBrakePlausibility(void)
+{
+    const sbyte2 dbg_bits = GetParam(RUNTIME_PARAM_DEBUG_DEFINES);
+    return ((dbg_bits & DEBUG_BIT_IGNORE_BRAKE_PLAUSIBILITY) != 0);
+}
+
+static bool BrakeThrottleCutActive(const BSE_Data_t* const front_bse)
+{
+    if (IgnoreBrakePlausibility()) {
+        return FALSE;
+    }
+
+    if ((front_bse == NULL) || !front_bse->valid) {
+        return FALSE;
+    }
+
+    return (front_bse->psi > BRAKE_THROTTLE_CUT_THRESHOLD);
 }
 
 static void ResetRegenDebugDerived(void)
@@ -419,27 +439,12 @@ static sbyte2 CalculateRegenTorque(const APPS_Data_t* const apps,
     return (sbyte2)(-positive_torque);
 }
 
-static ubyte4 ComputeSpeedMPHx100(sbyte2 motor_rpm, sbyte2 wheel_diameter_in)
+static ubyte4 ComputeSpeedMPHx100(sbyte2 motor_rpm)
 {
-    /* Compute vehicle speed in mph x100 from motor RPM and wheel diameter (inches).
-     * Formula: speed_mph = (motor_rpm / GEAR_RATIO) * pi * diameter_in / (60 * 12)
-     * With fixed-point x100 and integer arithmetic:
-     *   speed_mph_x100 = (motor_rpm * diameter_in * 12627) / 100000
-     *   where 12627 ≈ (3.14159 * 10000 / 3.4545) / 7.2
-     * Note: Speed is unsigned (always positive/magnitude).
+    /* Fixed conversion: 1 RPM = 0.0152 MPH.
+     * Store as mph x100, so the scale factor becomes 1.52.
      */
-    const ubyte2 SPEED_SCALE_NUM = 12627U;
-    const ubyte4 SPEED_SCALE_DENOM = 100000UL;
-    
-    ubyte4 rpm_u = (ubyte4)AbsS16ToU16(motor_rpm);
-    ubyte4 diameter_u = (ubyte4)wheel_diameter_in;
-    
-    /* Compute with intermediate values to prevent overflow. */
-    ubyte4 temp = rpm_u * diameter_u;
-    temp = (temp * (ubyte4)SPEED_SCALE_NUM);
-    ubyte4 result = temp / SPEED_SCALE_DENOM;
-    
-    return result;
+    return ((ubyte4)AbsS16ToU16(motor_rpm) * 152UL) / 100UL;
 }
 
 void TorqueController_Init(void)
@@ -465,10 +470,8 @@ void TorqueController_Update(void)
     const MOBO_PowerTelemetry_RX_Data_t* mobo_power = CAN_RX_GetMOBO_PowerTelemetryData(); // Rear BSE PSI is here
     const sbyte2 regen_motor_speed = inv_position->motor_speed;
 
-    /* Compute vehicle speed from inverter RPM and wheel diameter config. */
-    sbyte2 wheel_diameter = WHEEL_DIAMETER_DEFAULT;
-    (void)RuntimeConfig_GetI32(RUNTIME_PARAM_WHEEL_DIAMETER, &wheel_diameter);
-    torque_data.speed_mph_x100 = ComputeSpeedMPHx100(inv_data->motor_speed, wheel_diameter);
+    /* Compute vehicle speed from inverter motor RPM using a fixed mph/rpm ratio. */
+    torque_data.speed_mph_x100 = ComputeSpeedMPHx100(inv_data->motor_speed);
     UpdateRegenDebugInputs(state, bse, mobo_power, regen_motor_speed);
 
     if (state != VCU_STATE_DRIVING) {
@@ -494,9 +497,12 @@ void TorqueController_Update(void)
     } else {
         sbyte2 launch_torque = 0;
         sbyte2 limited_torque;
-        if (TractionControlSM_GetLaunchTorque(torque_data.apps_torque,
-                                              inv_data->motor_speed,
-                                              &launch_torque)) {
+        if (BrakeThrottleCutActive(bse)) {
+            (void)TractionControl_ApplyLimit(0, inv_data->motor_speed);
+            limited_torque = 0;
+        } else if (TractionControlSM_GetLaunchTorque(torque_data.apps_torque,
+                                                     inv_data->motor_speed,
+                                                     &launch_torque)) {
             /* Launch control owns torque this cycle (already pedal-bounded).
              * Refresh traction-control telemetry but use the launch curve value
              * directly so the (untuned) PID does not interfere with learning. */

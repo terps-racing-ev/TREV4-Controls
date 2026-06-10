@@ -36,24 +36,24 @@ void StateMachine_Update(void)
     
     // TODO read all the messages we need
     const HVCSummary_RX_Data_t* hvc_summary = CAN_RX_GetHVCSummaryData();
+    sbyte2 dbg_bits = 0;
+    (void)RuntimeConfig_GetI32(RUNTIME_PARAM_DEBUG_DEFINES, &dbg_bits);
+    const bool ignore_rtd_brakes = (dbg_bits & DEBUG_BIT_IGNORE_RTD_BRAKES);
+    const bool ignore_brake_plausibility = (dbg_bits & DEBUG_BIT_IGNORE_BRAKE_PLAUSIBILITY);
 
     /*
     hvc better always be honest and reflect hardware. no imd or bms hiccups allowed.
     red car check should be covered by sdc in theory, but this is in case to avoid sus red car driving situations
     */
     const bool hard_fault = (!apps->valid || !bse->valid || !hvc_summary->sdc_ok || is_red_car);
-    const bool bap_fault = (apps->above_bap_threshold && bse->hard_braking);
+    const bool bap_fault = (!ignore_brake_plausibility &&
+                            apps->above_bap_threshold &&
+                            bse->hard_braking);
 
     bool ready_to_drive = TRUE;
     ready_to_drive &= rtd_active;
-    {
-        sbyte2 dbg_bits = 0;
-        (void)RuntimeConfig_GetI32(RUNTIME_PARAM_DEBUG_DEFINES, &dbg_bits);
-        const bool ignore_rtd_brakes = (dbg_bits & DEBUG_BIT_IGNORE_RTD_BRAKES);
-
-        if (!ignore_rtd_brakes) {
-            ready_to_drive &= bse->brakes_engaged;
-        }
+    if (!ignore_rtd_brakes) {
+        ready_to_drive &= bse->brakes_engaged;
     }
 
     /* red car check since it isn't a state rn */

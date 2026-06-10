@@ -23,8 +23,8 @@
 #define POWER_LIMIT_ENABLED_DEFAULT    TRUE
 
 /* Fixed current limits (Amps). */
-#define MIN_DCL_AMPS                   100
-#define CCL_AMPS                       60
+#define MIN_DCL_AMPS                   10 //BEFORE MULTIPLIER
+#define CCL_AMPS                       70
 #define AMPS_MULTIPLIER                2.1f // Multiply final DCL amps to get closer to actual (inverter has weird scaling
 
 #endif // POWER_CONFIG_H
