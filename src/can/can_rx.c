@@ -2,7 +2,7 @@
 
 #include "config/can_config.h"
 #include "config/runtime_config.h"
-#include "control/traction_control_state_machine.h"
+#include "control/launch_control.h"
 
 static InverterStatus_RX_Data_t inverter_status_rx_data = {0};
 static InverterMotorPosition_RX_Data_t inverter_motor_position_rx_data = {0};
@@ -178,9 +178,9 @@ void CAN_RX_UnpackSetVCUConfig(IO_CAN_DATA_FRAME* frame)
                                       ((ubyte2)frame->data[2] << 8));
     const sbyte2 value = (sbyte2)raw_value;
 
-    /* Reserved mux: traction-control command (not a persisted parameter). */
-    if (mux == SET_VCU_CONFIG_TRC_COMMAND_MUX) {
-        TractionControlSM_HandleCommand((TrcCommand_t)value);
+    /* Reserved mux: launch-control command (not a persisted parameter). */
+    if (mux == SET_VCU_CONFIG_LAUNCH_COMMAND_MUX) {
+        LaunchControl_HandleCommand((ubyte1)value);
         return;
     }
 

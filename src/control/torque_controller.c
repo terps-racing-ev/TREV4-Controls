@@ -10,7 +10,7 @@
 #include "state_machine.h"
 #include "torque_controller.h"
 #include "traction_control.h"
-#include "traction_control_state_machine.h"
+#include "launch_control.h"
 
 
 static TorqueController_Data_T torque_data;
@@ -457,7 +457,7 @@ void TorqueController_Init(void)
     torque_data.regen_torque = 0;
     UpdateRegenDebugInputs(VCU_STATE_NOT_READY, NULL, NULL, 0);
     TractionControl_Init();
-    TractionControlSM_Init();
+    LaunchControl_Init();
 }
 
 void TorqueController_Update(void)
@@ -500,12 +500,11 @@ void TorqueController_Update(void)
         if (BrakeThrottleCutActive(bse)) {
             (void)TractionControl_ApplyLimit(0, inv_data->motor_speed);
             limited_torque = 0;
-        } else if (TractionControlSM_GetLaunchTorque(torque_data.apps_torque,
-                                                     inv_data->motor_speed,
-                                                     &launch_torque)) {
+        } else if (LaunchControl_GetTorque(torque_data.apps_torque,
+                                           &launch_torque)) {
             /* Launch control owns torque this cycle (already pedal-bounded).
              * Refresh traction-control telemetry but use the launch curve value
-             * directly so the (untuned) PID does not interfere with learning. */
+             * directly so the limiter does not fight the launch curve. */
             (void)TractionControl_ApplyLimit(launch_torque, inv_data->motor_speed);
             limited_torque = launch_torque;
         } else {

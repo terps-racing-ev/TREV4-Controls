@@ -12,7 +12,7 @@
 #include "sensors/apps.h"
 #include "sensors/bse.h"
 #include "control/torque_controller.h"
-#include "control/traction_control_state_machine.h"
+#include "control/launch_control.h"
 #include "control/power_limit.h"
 #include "config/runtime_config.h"
 
@@ -102,7 +102,7 @@ void main (void)
         /*******************************************/
         Lights_Update(); // eh this is output but lwk has logic in it that statemachine will need
         StateMachine_Update();
-        TractionControlSM_Update();
+        LaunchControl_Update();
         TorqueController_Update();
         PowerLimit_Update();
         

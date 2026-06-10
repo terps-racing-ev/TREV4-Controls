@@ -6,8 +6,7 @@
 #include "sensors/bse.h"
 #include "control/torque_controller.h"
 #include "control/traction_control.h"
-#include "control/traction_control_state_machine.h"
-#include "control/learning_mode.h"
+#include "control/launch_control.h"
 #include "control/power_limit.h"
 
 #include "state_machine.h"
@@ -303,44 +302,29 @@ void CAN_TX_PackTractionControl(IO_CAN_DATA_FRAME* frame)
                               (tc->front_right_valid << 3));
 }
 
-void CAN_TX_PackVCUTrcState(IO_CAN_DATA_FRAME* frame)
+void CAN_TX_PackVCULaunchState(IO_CAN_DATA_FRAME* frame)
 {
-    const TrcStateMachine_Data_t* trc = TractionControlSM_GetData();
+    const LaunchControl_Data_t* launch = LaunchControl_GetData();
 
-    frame->data[0] = (ubyte1)trc->state;
-    frame->data[1] = (ubyte1)(((ubyte1)(trc->current_run & 0x03)) |
-                              ((ubyte1)((trc->selected_curve & 0x03) << 2)) |
-                              ((ubyte1)((trc->learning_active ? 1U : 0U) << 4)) |
-                              ((ubyte1)((trc->launch_mode_active ? 1U : 0U) << 5)) |
-                              ((ubyte1)((trc->best_curve & 0x03) << 6)));
-    frame->data[2] = (ubyte1)((ubyte2)trc->grip_score_a_x1000 & 0xFF);
-    frame->data[3] = (ubyte1)((ubyte2)trc->grip_score_a_x1000 >> 8);
-    frame->data[4] = (ubyte1)((ubyte2)trc->grip_score_b_x1000 & 0xFF);
-    frame->data[5] = (ubyte1)((ubyte2)trc->grip_score_b_x1000 >> 8);
-    frame->data[6] = (ubyte1)((ubyte2)trc->recommended_slip_x1000 & 0xFF);
-    frame->data[7] = (ubyte1)((ubyte2)trc->recommended_slip_x1000 >> 8);
-}
-
-void CAN_TX_PackVCUTrcRunData(IO_CAN_DATA_FRAME* frame)
-{
-    static ubyte1 run_idx = 0;
-    const LearningMode_Data_t* learning = LearningMode_GetData();
-    const ubyte1 idx = run_idx;
-    const ubyte1 run_number = (ubyte1)(idx + 1);
-
-    frame->data[0] = run_number;
-    frame->data[1] = (ubyte1)((learning->sample_count[idx] > 0) ? 1U : 0U);
-    frame->data[2] = (ubyte1)(learning->avg_slip_x1000[idx] & 0xFF);
-    frame->data[3] = (ubyte1)(learning->avg_slip_x1000[idx] >> 8);
-    frame->data[4] = (ubyte1)(learning->peak_slip_x1000[idx] & 0xFF);
-    frame->data[5] = (ubyte1)(learning->peak_slip_x1000[idx] >> 8);
-    frame->data[6] = (ubyte1)((ubyte2)learning->grip_score_x1000[idx] & 0xFF);
-    frame->data[7] = (ubyte1)((ubyte2)learning->grip_score_x1000[idx] >> 8);
-
-    run_idx++;
-    if (run_idx >= LEARNING_RUN_COUNT) {
-        run_idx = 0;
+    ubyte2 elapsed_ms = (ubyte2)((launch->elapsed_ms > 65535UL) ? 65535UL
+                                                                : launch->elapsed_ms);
+    sbyte2 curve_torque = launch->curve_torque_nm;
+    if (curve_torque < 0) {
+        curve_torque = 0;
     }
+    if (curve_torque > 255) {
+        curve_torque = 255;
+    }
+
+    frame->data[0] = (ubyte1)launch->state;
+    frame->data[1] = (ubyte1)(((launch->armed ? 1U : 0U) << 0) |
+                              ((launch->active ? 1U : 0U) << 1));
+    frame->data[2] = (ubyte1)(elapsed_ms & 0xFF);
+    frame->data[3] = (ubyte1)(elapsed_ms >> 8);
+    frame->data[4] = (ubyte1)curve_torque;
+    frame->data[5] = 0;
+    frame->data[6] = 0;
+    frame->data[7] = 0;
 }
 
 void CAN_TX_PackCANReadback(IO_CAN_DATA_FRAME* frame)

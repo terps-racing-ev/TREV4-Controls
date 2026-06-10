@@ -34,26 +34,16 @@ typedef struct {
     sbyte2 regen_min_speed;
     sbyte2 regen_max_soc;
     sbyte2 regen_strategy;
-    sbyte2 trc_launch_enabled;
-    sbyte2 trc_launch_end_rpm;
-    sbyte2 trc_launch_timeout_ms;
-    sbyte2 trc_launch_max_slip_x1000;
-    sbyte2 trc_launch_best_curve;
-    sbyte2 trc_launch_active_curve;
-    sbyte2 trc_launch_recommended_slip_x1000;
-    sbyte2 trc_launch_actual_rpm_0;
-    sbyte2 trc_launch_actual_rpm_1;
-    sbyte2 trc_launch_actual_rpm_2;
-    sbyte2 trc_launch_actual_rpm_3;
-    sbyte2 trc_launch_actual_rpm_4;
-    sbyte2 trc_launch_actual_torque_0;
-    sbyte2 trc_launch_actual_torque_1;
-    sbyte2 trc_launch_actual_torque_2;
-    sbyte2 trc_launch_actual_torque_3;
-    sbyte2 trc_launch_actual_torque_4;
     sbyte2 regen_soc_gate_enabled;
     sbyte2 regen_max_apps;
     sbyte2 regen_ryder_mu_x1000;
+    sbyte2 launch_torque_offtheline;
+    sbyte2 launch_torque_init;
+    sbyte2 launch_torque_final;
+    sbyte2 launch_offtheline_time_ms;
+    sbyte2 launch_curve_duration_ms;
+    sbyte2 launch_trigger_apps_percent;
+    sbyte2 launch_end_apps_percent;
 } RuntimeConfig_Data_t;
 
 typedef struct {
@@ -80,7 +70,7 @@ typedef enum {
 #define RUNTIME_CFG_EEPROM_OFFSET     ((ubyte2)64)
 
 #define RUNTIME_CFG_MAGIC             ((ubyte4)0x52434647UL) /* 'RCFG' */
-#define RUNTIME_CFG_VERSION           ((ubyte2)8)
+#define RUNTIME_CFG_VERSION           ((ubyte2)10)
 #define RUNTIME_CFG_LEGACY_VERSION_1  ((ubyte2)1)
 #define RUNTIME_CFG_LEGACY_VERSION_2  ((ubyte2)2)
 #define RUNTIME_CFG_LEGACY_VERSION_3  ((ubyte2)3)
@@ -88,6 +78,13 @@ typedef enum {
 #define RUNTIME_CFG_LEGACY_VERSION_5  ((ubyte2)5)
 #define RUNTIME_CFG_LEGACY_VERSION_6  ((ubyte2)6)
 #define RUNTIME_CFG_LEGACY_VERSION_7  ((ubyte2)7)
+/* v8 -> v9: removed launch-control "learning"/curve params (ids 22..38) and
+ * added time-based launch torque set-points (ids 42..44). Param ids below the
+ * removed block were preserved, so v8 records still migrate cleanly. */
+#define RUNTIME_CFG_LEGACY_VERSION_8  ((ubyte2)8)
+/* v9 -> v10: added runtime-tunable curve shape / trigger params (ids 45..48).
+ * All prior IDs are unchanged, so v9 records migrate cleanly. */
+#define RUNTIME_CFG_LEGACY_VERSION_9  ((ubyte2)9)
 
 #define RUNTIME_CFG_MAX_PARAMS        ((ubyte2)42)
 
@@ -283,125 +280,6 @@ static RuntimeConfig_ParamDesc_t param_descs[] = {
         .max_value = REGEN_STRATEGY_RYDER,
     },
     {
-        .id = RUNTIME_PARAM_TRC_LAUNCH_ENABLED,
-        .value = &runtime_cfg.trc_launch_enabled,
-        .default_value = TRC_LAUNCH_ENABLED_DEFAULT,
-        .min_value = 0,
-        .max_value = 1,
-    },
-    {
-        .id = RUNTIME_PARAM_TRC_LAUNCH_END_RPM,
-        .value = &runtime_cfg.trc_launch_end_rpm,
-        .default_value = TRC_LAUNCH_END_RPM_DEFAULT,
-        .min_value = 0,
-        .max_value = 20000,
-    },
-    {
-        .id = RUNTIME_PARAM_TRC_LAUNCH_TIMEOUT_MS,
-        .value = &runtime_cfg.trc_launch_timeout_ms,
-        .default_value = TRC_LAUNCH_TIMEOUT_MS_DEFAULT,
-        .min_value = 1000,
-        .max_value = 30000,
-    },
-    {
-        .id = RUNTIME_PARAM_TRC_LAUNCH_MAX_SLIP_X1000,
-        .value = &runtime_cfg.trc_launch_max_slip_x1000,
-        .default_value = TRC_LAUNCH_MAX_SLIP_X1000_DEFAULT,
-        .min_value = 1000,
-        .max_value = 5000,
-    },
-    {
-        .id = RUNTIME_PARAM_TRC_LAUNCH_BEST_CURVE,
-        .value = &runtime_cfg.trc_launch_best_curve,
-        .default_value = TRC_LAUNCH_BEST_CURVE_DEFAULT,
-        .min_value = 0,
-        .max_value = 2,
-    },
-    {
-        .id = RUNTIME_PARAM_TRC_LAUNCH_ACTIVE_CURVE,
-        .value = &runtime_cfg.trc_launch_active_curve,
-        .default_value = TRC_LAUNCH_ACTIVE_CURVE_DEFAULT,
-        .min_value = 0,
-        .max_value = 3,
-    },
-    {
-        .id = RUNTIME_PARAM_TRC_LAUNCH_RECOMMENDED_SLIP_X1000,
-        .value = &runtime_cfg.trc_launch_recommended_slip_x1000,
-        .default_value = TRC_LAUNCH_RECOMMENDED_SLIP_X1000_DEFAULT,
-        .min_value = 1000,
-        .max_value = 5000,
-    },
-    {
-        .id = RUNTIME_PARAM_TRC_LAUNCH_ACTUAL_RPM_0,
-        .value = &runtime_cfg.trc_launch_actual_rpm_0,
-        .default_value = TRC_LAUNCH_ACTUAL_RPM_0_DEFAULT,
-        .min_value = 0,
-        .max_value = 32767,
-    },
-    {
-        .id = RUNTIME_PARAM_TRC_LAUNCH_ACTUAL_RPM_1,
-        .value = &runtime_cfg.trc_launch_actual_rpm_1,
-        .default_value = TRC_LAUNCH_ACTUAL_RPM_1_DEFAULT,
-        .min_value = 0,
-        .max_value = 32767,
-    },
-    {
-        .id = RUNTIME_PARAM_TRC_LAUNCH_ACTUAL_RPM_2,
-        .value = &runtime_cfg.trc_launch_actual_rpm_2,
-        .default_value = TRC_LAUNCH_ACTUAL_RPM_2_DEFAULT,
-        .min_value = 0,
-        .max_value = 32767,
-    },
-    {
-        .id = RUNTIME_PARAM_TRC_LAUNCH_ACTUAL_RPM_3,
-        .value = &runtime_cfg.trc_launch_actual_rpm_3,
-        .default_value = TRC_LAUNCH_ACTUAL_RPM_3_DEFAULT,
-        .min_value = 0,
-        .max_value = 32767,
-    },
-    {
-        .id = RUNTIME_PARAM_TRC_LAUNCH_ACTUAL_RPM_4,
-        .value = &runtime_cfg.trc_launch_actual_rpm_4,
-        .default_value = TRC_LAUNCH_ACTUAL_RPM_4_DEFAULT,
-        .min_value = 0,
-        .max_value = 32767,
-    },
-    {
-        .id = RUNTIME_PARAM_TRC_LAUNCH_ACTUAL_TORQUE_0,
-        .value = &runtime_cfg.trc_launch_actual_torque_0,
-        .default_value = TRC_LAUNCH_ACTUAL_TORQUE_0_DEFAULT,
-        .min_value = 0,
-        .max_value = 230,
-    },
-    {
-        .id = RUNTIME_PARAM_TRC_LAUNCH_ACTUAL_TORQUE_1,
-        .value = &runtime_cfg.trc_launch_actual_torque_1,
-        .default_value = TRC_LAUNCH_ACTUAL_TORQUE_1_DEFAULT,
-        .min_value = 0,
-        .max_value = 230,
-    },
-    {
-        .id = RUNTIME_PARAM_TRC_LAUNCH_ACTUAL_TORQUE_2,
-        .value = &runtime_cfg.trc_launch_actual_torque_2,
-        .default_value = TRC_LAUNCH_ACTUAL_TORQUE_2_DEFAULT,
-        .min_value = 0,
-        .max_value = 230,
-    },
-    {
-        .id = RUNTIME_PARAM_TRC_LAUNCH_ACTUAL_TORQUE_3,
-        .value = &runtime_cfg.trc_launch_actual_torque_3,
-        .default_value = TRC_LAUNCH_ACTUAL_TORQUE_3_DEFAULT,
-        .min_value = 0,
-        .max_value = 230,
-    },
-    {
-        .id = RUNTIME_PARAM_TRC_LAUNCH_ACTUAL_TORQUE_4,
-        .value = &runtime_cfg.trc_launch_actual_torque_4,
-        .default_value = TRC_LAUNCH_ACTUAL_TORQUE_4_DEFAULT,
-        .min_value = 0,
-        .max_value = 230,
-    },
-    {
         .id = RUNTIME_PARAM_REGEN_SOC_GATE_ENABLED,
         .value = &runtime_cfg.regen_soc_gate_enabled,
         .default_value = REGEN_SOC_GATE_ENABLED_DEFAULT,
@@ -421,6 +299,55 @@ static RuntimeConfig_ParamDesc_t param_descs[] = {
         .default_value = REGEN_RYDER_MU_X1000_DEFAULT,
         .min_value = 0,
         .max_value = 10000,
+    },
+    {
+        .id = RUNTIME_PARAM_LAUNCH_TORQUE_OFFTHELINE,
+        .value = &runtime_cfg.launch_torque_offtheline,
+        .default_value = LAUNCH_TORQUE_OFFTHELINE_DEFAULT,
+        .min_value = 0,
+        .max_value = 230,
+    },
+    {
+        .id = RUNTIME_PARAM_LAUNCH_TORQUE_INIT,
+        .value = &runtime_cfg.launch_torque_init,
+        .default_value = LAUNCH_TORQUE_INIT_DEFAULT,
+        .min_value = 0,
+        .max_value = 230,
+    },
+    {
+        .id = RUNTIME_PARAM_LAUNCH_TORQUE_FINAL,
+        .value = &runtime_cfg.launch_torque_final,
+        .default_value = LAUNCH_TORQUE_FINAL_DEFAULT,
+        .min_value = 0,
+        .max_value = 230,
+    },
+    {
+        .id = RUNTIME_PARAM_LAUNCH_OFFTHELINE_TIME_MS,
+        .value = &runtime_cfg.launch_offtheline_time_ms,
+        .default_value = LAUNCH_OFFTHELINE_TIME_MS_DEFAULT,
+        .min_value = 0,
+        .max_value = 2000,
+    },
+    {
+        .id = RUNTIME_PARAM_LAUNCH_CURVE_DURATION_MS,
+        .value = &runtime_cfg.launch_curve_duration_ms,
+        .default_value = LAUNCH_CURVE_DURATION_MS_DEFAULT,
+        .min_value = 100,
+        .max_value = 10000,
+    },
+    {
+        .id = RUNTIME_PARAM_LAUNCH_TRIGGER_APPS_PERCENT,
+        .value = &runtime_cfg.launch_trigger_apps_percent,
+        .default_value = LAUNCH_TRIGGER_APPS_PERCENT_DEFAULT,
+        .min_value = 1,
+        .max_value = 100,
+    },
+    {
+        .id = RUNTIME_PARAM_LAUNCH_END_APPS_PERCENT,
+        .value = &runtime_cfg.launch_end_apps_percent,
+        .default_value = LAUNCH_END_APPS_PERCENT_DEFAULT,
+        .min_value = 0,
+        .max_value = 99,
     },
 };
 
@@ -555,7 +482,9 @@ static bool UnpackFromEepromBlob(const ubyte1* const blob)
         (version != RUNTIME_CFG_LEGACY_VERSION_4) &&
         (version != RUNTIME_CFG_LEGACY_VERSION_5) &&
         (version != RUNTIME_CFG_LEGACY_VERSION_6) &&
-        (version != RUNTIME_CFG_LEGACY_VERSION_7)) {
+        (version != RUNTIME_CFG_LEGACY_VERSION_7) &&
+        (version != RUNTIME_CFG_LEGACY_VERSION_8) &&
+        (version != RUNTIME_CFG_LEGACY_VERSION_9)) {
         return FALSE;
     }
 

@@ -27,31 +27,27 @@ typedef enum {
     RUNTIME_PARAM_REGEN_MIN_SPEED,
     RUNTIME_PARAM_REGEN_MAX_SOC,
     RUNTIME_PARAM_REGEN_STRATEGY,
-    /* Launch control learning params. APPEND-ONLY: new params must be added
-     * immediately before RUNTIME_PARAM_COUNT and the EEPROM version bumped,
-     * never inserted mid-list (doing so shifts stored mux ids and corrupts
-     * existing EEPROM records). */
-    RUNTIME_PARAM_TRC_LAUNCH_ENABLED,
-    RUNTIME_PARAM_TRC_LAUNCH_END_RPM,
-    RUNTIME_PARAM_TRC_LAUNCH_TIMEOUT_MS,
-    RUNTIME_PARAM_TRC_LAUNCH_MAX_SLIP_X1000,
-    RUNTIME_PARAM_TRC_LAUNCH_BEST_CURVE,
-    RUNTIME_PARAM_TRC_LAUNCH_ACTIVE_CURVE,
-    RUNTIME_PARAM_TRC_LAUNCH_RECOMMENDED_SLIP_X1000,
-    RUNTIME_PARAM_TRC_LAUNCH_ACTUAL_RPM_0,
-    RUNTIME_PARAM_TRC_LAUNCH_ACTUAL_RPM_1,
-    RUNTIME_PARAM_TRC_LAUNCH_ACTUAL_RPM_2,
-    RUNTIME_PARAM_TRC_LAUNCH_ACTUAL_RPM_3,
-    RUNTIME_PARAM_TRC_LAUNCH_ACTUAL_RPM_4,
-    RUNTIME_PARAM_TRC_LAUNCH_ACTUAL_TORQUE_0,
-    RUNTIME_PARAM_TRC_LAUNCH_ACTUAL_TORQUE_1,
-    RUNTIME_PARAM_TRC_LAUNCH_ACTUAL_TORQUE_2,
-    RUNTIME_PARAM_TRC_LAUNCH_ACTUAL_TORQUE_3,
-    RUNTIME_PARAM_TRC_LAUNCH_ACTUAL_TORQUE_4,
-    RUNTIME_PARAM_REGEN_SOC_GATE_ENABLED,
-    RUNTIME_PARAM_REGEN_MAX_APPS,
-    RUNTIME_PARAM_REGEN_RYDER_MU_X1000,
-    RUNTIME_PARAM_COUNT,
+    /* IDs 22..38 were the old Launch-Control "learning" + uploaded-curve params.
+     * They were removed when launch control was rewritten to a time-based torque
+     * curve (June 2026). The IDs are intentionally left RESERVED -- the params
+     * below keep explicit ids so existing EEPROM records and DBC mux indices do
+     * not shift. APPEND-ONLY past this point; bump RUNTIME_CFG_VERSION on change. */
+    RUNTIME_PARAM_REGEN_SOC_GATE_ENABLED = 39,
+    RUNTIME_PARAM_REGEN_MAX_APPS,            /* 40 */
+    RUNTIME_PARAM_REGEN_RYDER_MU_X1000,      /* 41 */
+
+    /* Time-based launch control: runtime-tunable torque set-points (Nm). */
+    RUNTIME_PARAM_LAUNCH_TORQUE_OFFTHELINE,  /* 42 */
+    RUNTIME_PARAM_LAUNCH_TORQUE_INIT,        /* 43 */
+    RUNTIME_PARAM_LAUNCH_TORQUE_FINAL,       /* 44 */
+
+    /* Time-based launch control: runtime-tunable curve shape / trigger thresholds. */
+    RUNTIME_PARAM_LAUNCH_OFFTHELINE_TIME_MS,    /* 45 - off-the-line hold window in ms */
+    RUNTIME_PARAM_LAUNCH_CURVE_DURATION_MS,     /* 46 - parabolic ramp duration in ms */
+    RUNTIME_PARAM_LAUNCH_TRIGGER_APPS_PERCENT,  /* 47 - APPS % that triggers launch */
+    RUNTIME_PARAM_LAUNCH_END_APPS_PERCENT,      /* 48 - APPS % at/below which launch ends */
+
+    RUNTIME_PARAM_COUNT,                         /* 49 */
 } RuntimeParamId_t;
 
 /* Bit positions for runtime-configurable debug flags stored in
