@@ -19,10 +19,11 @@ typedef enum {
     REGEN_BLOCK_BELOW_MIN_SPEED,
     REGEN_BLOCK_FRONT_INVALID,
     REGEN_BLOCK_REAR_INVALID,
+    REGEN_BLOCK_FRONT_PRESSURE_LOW,
     REGEN_BLOCK_FRONT_PRESSURE_HIGH,
-    REGEN_BLOCK_RYDER_TABLE_ZERO,
-    REGEN_BLOCK_RYDER_BALANCE_ZERO,
-    REGEN_BLOCK_LEGACY_PRESSURE_INVALID,
+    REGEN_BLOCK_REAR_PRESSURE_LOW,
+    REGEN_BLOCK_REAR_PRESSURE_HIGH,
+    REGEN_BLOCK_BALANCE_ZERO,
     REGEN_BLOCK_ZERO_AFTER_CLAMPS,
     REGEN_BLOCK_SOC_HIGH,
     REGEN_BLOCK_APPS_ACTIVE,
@@ -31,13 +32,11 @@ typedef enum {
 typedef struct {
     sbyte2 apps_torque;
     sbyte2 regen_torque;
-    sbyte2 regen_front_table_torque;
     sbyte2 regen_balance_torque;
     sbyte2 regen_final_torque;
     ubyte2 regen_front_pressure_psi;
     ubyte2 regen_rear_pressure_psi_x10;
     ubyte2 regen_speed_rpm_abs;
-    ubyte1 regen_strategy;
     ubyte1 regen_status_flags;
     ubyte1 regen_block_reason;
     bool regen_soc_gate_enabled;

@@ -33,7 +33,6 @@ typedef struct {
     sbyte2 regen_max_bse_front_psi;
     sbyte2 regen_min_speed;
     sbyte2 regen_max_soc;
-    sbyte2 regen_strategy;
     sbyte2 regen_soc_gate_enabled;
     sbyte2 regen_max_apps;
     sbyte2 regen_ryder_mu_x1000;
@@ -70,7 +69,7 @@ typedef enum {
 #define RUNTIME_CFG_EEPROM_OFFSET     ((ubyte2)64)
 
 #define RUNTIME_CFG_MAGIC             ((ubyte4)0x52434647UL) /* 'RCFG' */
-#define RUNTIME_CFG_VERSION           ((ubyte2)10)
+#define RUNTIME_CFG_VERSION           ((ubyte2)11)
 #define RUNTIME_CFG_LEGACY_VERSION_1  ((ubyte2)1)
 #define RUNTIME_CFG_LEGACY_VERSION_2  ((ubyte2)2)
 #define RUNTIME_CFG_LEGACY_VERSION_3  ((ubyte2)3)
@@ -85,6 +84,10 @@ typedef enum {
 /* v9 -> v10: added runtime-tunable curve shape / trigger params (ids 45..48).
  * All prior IDs are unchanged, so v9 records migrate cleanly. */
 #define RUNTIME_CFG_LEGACY_VERSION_9  ((ubyte2)9)
+/* v10 -> v11: removed the regen strategy selector (id 21, now RESERVED) when
+ * regen became RYDER-only. FindParam ignores the orphaned id 21 record, and all
+ * other IDs are unchanged, so v10 records migrate cleanly. */
+#define RUNTIME_CFG_LEGACY_VERSION_10 ((ubyte2)10)
 
 #define RUNTIME_CFG_MAX_PARAMS        ((ubyte2)42)
 
@@ -271,13 +274,6 @@ static RuntimeConfig_ParamDesc_t param_descs[] = {
         .default_value = REGEN_MAX_SOC_DEFAULT,
         .min_value = 0,
         .max_value = 100,
-    },
-    {
-        .id = RUNTIME_PARAM_REGEN_STRATEGY,
-        .value = &runtime_cfg.regen_strategy,
-        .default_value = REGEN_STRATEGY_DEFAULT,
-        .min_value = REGEN_STRATEGY_FRONT_ONLY,
-        .max_value = REGEN_STRATEGY_RYDER,
     },
     {
         .id = RUNTIME_PARAM_REGEN_SOC_GATE_ENABLED,
@@ -484,7 +480,8 @@ static bool UnpackFromEepromBlob(const ubyte1* const blob)
         (version != RUNTIME_CFG_LEGACY_VERSION_6) &&
         (version != RUNTIME_CFG_LEGACY_VERSION_7) &&
         (version != RUNTIME_CFG_LEGACY_VERSION_8) &&
-        (version != RUNTIME_CFG_LEGACY_VERSION_9)) {
+        (version != RUNTIME_CFG_LEGACY_VERSION_9) &&
+        (version != RUNTIME_CFG_LEGACY_VERSION_10)) {
         return FALSE;
     }
 
@@ -498,16 +495,11 @@ static bool UnpackFromEepromBlob(const ubyte1* const blob)
     }
 
     /* Apply records (ignore unknown param IDs). */
-    const bool legacy_v1 = (version == RUNTIME_CFG_LEGACY_VERSION_1);
     const bool legacy = (version != RUNTIME_CFG_VERSION);
     ubyte2 offset = RUNTIME_CFG_HEADER_LEN;
     for (ubyte2 i = 0; i < record_count; i++) {
-        ubyte1 pid = blob[offset + 0];
+        const ubyte1 pid = blob[offset + 0];
         const sbyte2 val = ReadI16LE(&blob[offset + 1]);
-
-        if (legacy_v1 && (pid == RUNTIME_PARAM_REGEN_MAX_SOC)) {
-            pid = RUNTIME_PARAM_REGEN_STRATEGY;
-        }
 
         RuntimeConfig_ParamDesc_t* desc = FindParam(pid);
 

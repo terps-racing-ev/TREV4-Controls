@@ -26,12 +26,11 @@ typedef enum {
     RUNTIME_PARAM_REGEN_MAX_BSE_FRONT_PSI,
     RUNTIME_PARAM_REGEN_MIN_SPEED,
     RUNTIME_PARAM_REGEN_MAX_SOC,
-    RUNTIME_PARAM_REGEN_STRATEGY,
-    /* IDs 22..38 were the old Launch-Control "learning" + uploaded-curve params.
-     * They were removed when launch control was rewritten to a time-based torque
-     * curve (June 2026). The IDs are intentionally left RESERVED -- the params
-     * below keep explicit ids so existing EEPROM records and DBC mux indices do
-     * not shift. APPEND-ONLY past this point; bump RUNTIME_CFG_VERSION on change. */
+    /* ID 21 was RUNTIME_PARAM_REGEN_STRATEGY, removed when the regen strategy
+     * selector was dropped and the code became RYDER-only (June 2026).
+     * IDs 21..38 are intentionally left RESERVED -- the params below keep
+     * explicit ids so existing EEPROM records and DBC mux indices do not shift.
+     * APPEND-ONLY past this point; bump RUNTIME_CFG_VERSION on change. */
     RUNTIME_PARAM_REGEN_SOC_GATE_ENABLED = 39,
     RUNTIME_PARAM_REGEN_MAX_APPS,            /* 40 */
     RUNTIME_PARAM_REGEN_RYDER_MU_X1000,      /* 41 */

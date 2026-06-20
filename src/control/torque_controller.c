@@ -15,8 +15,6 @@
 
 static TorqueController_Data_T torque_data;
 
-static const sbyte4 ryder_regen_torque_x1000[REGEN_RYDER_FRONT_TABLE_POINTS] = REGEN_RYDER_FRONT_TORQUE_X1000;
-
 static sbyte2 GetParam(RuntimeParamId_t param_id)
 {
     sbyte2 value = 0;
@@ -35,21 +33,6 @@ static ubyte2 AbsS16ToU16(const sbyte2 value)
     }
 
     return (ubyte2)(-value);
-}
-
-static ubyte1 GetConfiguredRegenStrategy(void)
-{
-    sbyte2 strategy = GetParam(RUNTIME_PARAM_REGEN_STRATEGY);
-
-    if (strategy > REGEN_STRATEGY_RYDER) {
-        strategy = REGEN_STRATEGY_DEFAULT;
-    }
-
-    if (strategy < REGEN_STRATEGY_FRONT_ONLY) {
-        strategy = REGEN_STRATEGY_DEFAULT;
-    }
-
-    return (ubyte1)strategy;
 }
 
 static ubyte2 GetConfiguredRegenMaxApps(void)
@@ -95,7 +78,6 @@ static bool BrakeThrottleCutActive(const BSE_Data_t* const front_bse)
 
 static void ResetRegenDebugDerived(void)
 {
-    torque_data.regen_front_table_torque = 0;
     torque_data.regen_balance_torque = 0;
     torque_data.regen_final_torque = 0;
     torque_data.regen_block_reason = REGEN_BLOCK_NONE;
@@ -111,7 +93,6 @@ static void UpdateRegenDebugInputs(const VCU_State_t state,
     const bool soc_valid = CAN_Manager_RX_Data_Valid(CAN_RX_MSG_HVC_SOC);
     const sbyte2 min_speed = GetParam(RUNTIME_PARAM_REGEN_MIN_SPEED);
 
-    torque_data.regen_strategy = GetConfiguredRegenStrategy();
     torque_data.regen_soc_gate_enabled = (GetParam(RUNTIME_PARAM_REGEN_SOC_GATE_ENABLED) != 0);
     torque_data.regen_speed_rpm_abs = AbsS16ToU16(motor_speed);
     torque_data.regen_front_pressure_psi = ((front_bse != NULL) ? front_bse->psi : 0U);
@@ -138,9 +119,8 @@ static void UpdateRegenDebugInputs(const VCU_State_t state,
         torque_data.regen_status_flags |= REGEN_STATUS_FLAG_REAR_VALID;
     }
 
-    if (torque_data.regen_strategy == REGEN_STRATEGY_RYDER) {
-        torque_data.regen_status_flags |= REGEN_STATUS_FLAG_RYDER_ACTIVE;
-    }
+    /* Regen is RYDER-only, so this flag is always set while regen is configured. */
+    torque_data.regen_status_flags |= REGEN_STATUS_FLAG_RYDER_ACTIVE;
 
     if (soc_valid) {
         torque_data.regen_status_flags |= REGEN_STATUS_FLAG_SOC_VALID;
@@ -166,66 +146,9 @@ static sbyte2 PedalTravelToTorque(ubyte2 pedal_travel)
                     (sbyte4)(pedal_travel_for_max_torque - APPS_DEADZONE));
 }
 
-static sbyte2 InterpolateRegenTorque(const ubyte2 pressure_psi,
-                                     const sbyte2 min_pressure_psi,
-                                     const sbyte2 max_pressure_psi)
-{
-    sbyte2 min_torque = GetParam(RUNTIME_PARAM_REGEN_MIN_TORQUE);
-    sbyte2 max_torque = GetParam(RUNTIME_PARAM_REGEN_MAX_TORQUE);
-
-    if (max_torque < min_torque) {
-        const sbyte2 configured_min_torque = min_torque;
-        min_torque = max_torque;
-        max_torque = configured_min_torque;
-    }
-
-    if (pressure_psi < (ubyte2)min_pressure_psi) {
-        return 0;
-    }
-
-    if (max_pressure_psi <= min_pressure_psi) {
-        return max_torque;
-    }
-
-    if (pressure_psi >= (ubyte2)max_pressure_psi) {
-        return max_torque;
-    }
-
-    return (sbyte2)(min_torque +
-                    (((sbyte4)(pressure_psi - (ubyte2)min_pressure_psi) *
-                      (sbyte4)(max_torque - min_torque)) /
-                     (sbyte4)(max_pressure_psi - min_pressure_psi)));
-}
-
 static ubyte2 RearBrakePressurePsi(const MOBO_PowerTelemetry_RX_Data_t* const mobo_power)
 {
     return (ubyte2)(((ubyte4)mobo_power->rear_brake_pressure_psi_x10 + 5U) / 10U);
-}
-
-static sbyte2 LookupRyderFrontTorque(const ubyte2 front_pressure_psi)
-{
-    if (front_pressure_psi > REGEN_RYDER_MAX_FRONT_PSI) {
-        return 0;
-    }
-
-    const ubyte2 lower_idx = (ubyte2)(front_pressure_psi / REGEN_RYDER_FRONT_PSI_STEP);
-    if (lower_idx >= (REGEN_RYDER_FRONT_TABLE_POINTS - 1)) {
-        return (sbyte2)((ryder_regen_torque_x1000[REGEN_RYDER_FRONT_TABLE_POINTS - 1] + 500L) / 1000L);
-    }
-
-    const ubyte2 lower_psi = (ubyte2)(lower_idx * REGEN_RYDER_FRONT_PSI_STEP);
-    const ubyte2 delta_psi = (ubyte2)(front_pressure_psi - lower_psi);
-    const sbyte4 lower_torque = ryder_regen_torque_x1000[lower_idx];
-    const sbyte4 upper_torque = ryder_regen_torque_x1000[lower_idx + 1];
-    const sbyte4 interpolated = lower_torque +
-                                (((sbyte4)delta_psi * (upper_torque - lower_torque)) /
-                                 (sbyte4)REGEN_RYDER_FRONT_PSI_STEP);
-
-    if (interpolated <= 0) {
-        return 0;
-    }
-
-    return (sbyte2)((interpolated + 500L) / 1000L);
 }
 
 static sbyte2 CalculateRyderBalanceTorque(const ubyte2 front_pressure_psi,
@@ -247,15 +170,24 @@ static sbyte2 CalculateRyderBalanceTorque(const ubyte2 front_pressure_psi,
     return (sbyte2)(torque + 0.5f);
 }
 
+/*
+ * RYDER regen: torque comes purely from the brake-force balance equation,
+ * gated by an adjustable front/rear PSI activation window and clamped to the
+ * adjustable [REGEN_MIN_TORQUE, REGEN_MAX_TORQUE] envelope.
+ *
+ *   - Below MIN front/rear PSI: not braking enough -> no regen.
+ *   - Above MAX front/rear PSI: brake-too-hard cutoff (keeps the cubic in its
+ *     fitted domain and preserves brake plausibility) -> no regen.
+ *   - Inside the window: torque = clamp(equation, MIN_TORQUE, MAX_TORQUE).
+ *
+ * A non-positive equation result (rear braking exceeds front) yields no regen
+ * rather than being floored to MIN_TORQUE, so we never command rear regen the
+ * balance model says is not warranted.
+ */
 static sbyte2 CalculateRyderRegenTorque(const BSE_Data_t* const front_bse,
                                         const MOBO_PowerTelemetry_RX_Data_t* const mobo_power)
 {
-    if ((front_bse == NULL) || (mobo_power == NULL)) {
-        torque_data.regen_block_reason = REGEN_BLOCK_FRONT_INVALID;
-        return 0;
-    }
-
-    if (!front_bse->valid) {
+    if ((front_bse == NULL) || (mobo_power == NULL) || !front_bse->valid) {
         torque_data.regen_block_reason = REGEN_BLOCK_FRONT_INVALID;
         return 0;
     }
@@ -265,36 +197,61 @@ static sbyte2 CalculateRyderRegenTorque(const BSE_Data_t* const front_bse,
         return 0;
     }
 
-    if (front_bse->psi > REGEN_RYDER_MAX_FRONT_PSI) {
+    const ubyte2 front_psi = front_bse->psi;
+    const ubyte2 rear_psi = RearBrakePressurePsi(mobo_power);
+    const sbyte2 min_front_psi = GetParam(RUNTIME_PARAM_REGEN_MIN_BSE_FRONT_PSI);
+    const sbyte2 max_front_psi = GetParam(RUNTIME_PARAM_REGEN_MAX_BSE_FRONT_PSI);
+    const sbyte2 min_rear_psi = GetParam(RUNTIME_PARAM_REGEN_MIN_BSE_REAR_PSI);
+    const sbyte2 max_rear_psi = GetParam(RUNTIME_PARAM_REGEN_MAX_BSE_REAR_PSI);
+
+    /* Front activation window (front is the plausibility-relevant circuit). */
+    if (front_psi < (ubyte2)min_front_psi) {
+        torque_data.regen_block_reason = REGEN_BLOCK_FRONT_PRESSURE_LOW;
+        return 0;
+    }
+
+    if ((max_front_psi > 0) && (front_psi > (ubyte2)max_front_psi)) {
         torque_data.regen_block_reason = REGEN_BLOCK_FRONT_PRESSURE_HIGH;
         return 0;
     }
 
-    const sbyte2 front_table_torque = LookupRyderFrontTorque(front_bse->psi);
-    const sbyte2 balance_torque = CalculateRyderBalanceTorque(front_bse->psi,
-                                                              mobo_power->rear_brake_pressure_psi_x10);
-    sbyte2 requested_torque = balance_torque;
-    const sbyte2 configured_max_torque = GetParam(RUNTIME_PARAM_REGEN_MAX_TORQUE);
+    /* Rear activation window. */
+    if (rear_psi < (ubyte2)min_rear_psi) {
+        torque_data.regen_block_reason = REGEN_BLOCK_REAR_PRESSURE_LOW;
+        return 0;
+    }
 
-    torque_data.regen_front_table_torque = front_table_torque;
+    if ((max_rear_psi > 0) && (rear_psi > (ubyte2)max_rear_psi)) {
+        torque_data.regen_block_reason = REGEN_BLOCK_REAR_PRESSURE_HIGH;
+        return 0;
+    }
+
+    const sbyte2 balance_torque = CalculateRyderBalanceTorque(front_psi,
+                                                              mobo_power->rear_brake_pressure_psi_x10);
     torque_data.regen_balance_torque = balance_torque;
 
-    if (front_table_torque <= 0) {
-        torque_data.regen_block_reason = REGEN_BLOCK_RYDER_TABLE_ZERO;
-        return 0;
-    }
-
     if (balance_torque <= 0) {
-        torque_data.regen_block_reason = REGEN_BLOCK_RYDER_BALANCE_ZERO;
+        torque_data.regen_block_reason = REGEN_BLOCK_BALANCE_ZERO;
         return 0;
     }
 
-    if (requested_torque > front_table_torque) {
-        requested_torque = front_table_torque;
+    sbyte2 min_torque = GetParam(RUNTIME_PARAM_REGEN_MIN_TORQUE);
+    sbyte2 max_torque = GetParam(RUNTIME_PARAM_REGEN_MAX_TORQUE);
+
+    if (max_torque < min_torque) {
+        const sbyte2 configured_min_torque = min_torque;
+        min_torque = max_torque;
+        max_torque = configured_min_torque;
     }
 
-    if (requested_torque > configured_max_torque) {
-        requested_torque = configured_max_torque;
+    sbyte2 requested_torque = balance_torque;
+
+    if (requested_torque > max_torque) {
+        requested_torque = max_torque;
+    }
+
+    if (requested_torque < min_torque) {
+        requested_torque = min_torque;
     }
 
     if (requested_torque < 0) {
@@ -310,67 +267,6 @@ static sbyte2 CalculateRyderRegenTorque(const BSE_Data_t* const front_bse,
     return requested_torque;
 }
 
-static bool GetRegenPressure(const BSE_Data_t* const front_bse,
-                             const MOBO_PowerTelemetry_RX_Data_t* const mobo_power,
-                             ubyte2* const out_pressure_psi,
-                             sbyte2* const out_min_pressure_psi,
-                             sbyte2* const out_max_pressure_psi)
-{
-    if ((front_bse == NULL) || (mobo_power == NULL) ||
-        (out_pressure_psi == NULL) || (out_min_pressure_psi == NULL) ||
-        (out_max_pressure_psi == NULL)) {
-        return FALSE;
-    }
-
-    sbyte2 strategy = torque_data.regen_strategy;
-    const ubyte2 front_pressure = front_bse->psi;
-    const ubyte2 rear_pressure = RearBrakePressurePsi(mobo_power);
-    const sbyte2 front_min = GetParam(RUNTIME_PARAM_REGEN_MIN_BSE_FRONT_PSI);
-    const sbyte2 rear_min = GetParam(RUNTIME_PARAM_REGEN_MIN_BSE_REAR_PSI);
-    const sbyte2 front_max = GetParam(RUNTIME_PARAM_REGEN_MAX_BSE_FRONT_PSI);
-    const sbyte2 rear_max = GetParam(RUNTIME_PARAM_REGEN_MAX_BSE_REAR_PSI);
-    const bool rear_valid = CAN_Manager_RX_Data_Valid(CAN_RX_MSG_MOBO_POWER_TELEMETRY);
-
-    if (strategy > REGEN_STRATEGY_RYDER) {
-        strategy = REGEN_STRATEGY_DEFAULT;
-    }
-
-    if (strategy == REGEN_STRATEGY_RYDER) {
-        return FALSE;
-    }
-
-    if (strategy == REGEN_STRATEGY_FRONT_ONLY) {
-        if (!front_bse->valid) {
-            return FALSE;
-        }
-
-        *out_pressure_psi = front_pressure;
-        *out_min_pressure_psi = front_min;
-        *out_max_pressure_psi = front_max;
-        return TRUE;
-    }
-
-    if (strategy == REGEN_STRATEGY_REAR_ONLY) {
-        if (!rear_valid) {
-            return FALSE;
-        }
-
-        *out_pressure_psi = rear_pressure;
-        *out_min_pressure_psi = rear_min;
-        *out_max_pressure_psi = rear_max;
-        return TRUE;
-    }
-
-    if (!front_bse->valid || !rear_valid) {
-        return FALSE;
-    }
-
-    *out_pressure_psi = (ubyte2)(((ubyte4)front_pressure + (ubyte4)rear_pressure) / 2U);
-    *out_min_pressure_psi = (sbyte2)(((sbyte4)front_min + (sbyte4)rear_min) / 2);
-    *out_max_pressure_psi = (sbyte2)(((sbyte4)front_max + (sbyte4)rear_max) / 2);
-    return TRUE;
-}
-
 static sbyte2 CalculateRegenTorque(const APPS_Data_t* const apps,
                                    const BSE_Data_t* const front_bse,
                                    const MOBO_PowerTelemetry_RX_Data_t* const mobo_power,
@@ -378,10 +274,6 @@ static sbyte2 CalculateRegenTorque(const APPS_Data_t* const apps,
 {
     (void)motor_speed;
 
-    ubyte2 pressure_psi = 0;
-    sbyte2 min_pressure_psi = 0;
-    sbyte2 max_pressure_psi = 0;
-    const ubyte1 strategy = torque_data.regen_strategy;
     const HVCSOC_RX_Data_t* const hvc_soc = CAN_RX_GetHVCSOCData();
     const bool hvc_soc_valid = CAN_Manager_RX_Data_Valid(CAN_RX_MSG_HVC_SOC);
     const ubyte4 regen_max_soc_x100 = (ubyte4)(GetParam(RUNTIME_PARAM_REGEN_MAX_SOC) * 100);
@@ -408,32 +300,9 @@ static sbyte2 CalculateRegenTorque(const APPS_Data_t* const apps,
         return 0;
     }
 
-    if (strategy == REGEN_STRATEGY_RYDER) {
-        const sbyte2 positive_torque = CalculateRyderRegenTorque(front_bse, mobo_power);
-        if (positive_torque > 0) {
-            torque_data.regen_status_flags |= REGEN_STATUS_FLAG_REGEN_ACTIVE;
-        }
-        return (sbyte2)(-positive_torque);
-    }
-
-    if (!GetRegenPressure(front_bse, mobo_power,
-                          &pressure_psi,
-                          &min_pressure_psi,
-                          &max_pressure_psi)) {
-        torque_data.regen_block_reason = REGEN_BLOCK_LEGACY_PRESSURE_INVALID;
-        return 0;
-    }
-
-    const sbyte2 positive_torque = InterpolateRegenTorque(pressure_psi,
-                                                          min_pressure_psi,
-                                                          max_pressure_psi);
-    torque_data.regen_final_torque = positive_torque;
-
+    const sbyte2 positive_torque = CalculateRyderRegenTorque(front_bse, mobo_power);
     if (positive_torque > 0) {
         torque_data.regen_status_flags |= REGEN_STATUS_FLAG_REGEN_ACTIVE;
-    }
-    else {
-        torque_data.regen_block_reason = REGEN_BLOCK_ZERO_AFTER_CLAMPS;
     }
 
     return (sbyte2)(-positive_torque);
@@ -444,7 +313,7 @@ static ubyte4 ComputeSpeedMPHx100(sbyte2 motor_rpm)
     /* Fixed conversion: 1 RPM = 0.0152 MPH.
      * Store as mph x100, so the scale factor becomes 1.52.
      */
-    return ((ubyte4)AbsS16ToU16(motor_rpm) * 152UL) / 100UL;
+    return ((ubyte4)AbsS16ToU16(motor_rpm) * 128UL) / 100UL;
 }
 
 void TorqueController_Init(void)

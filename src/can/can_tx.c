@@ -106,8 +106,7 @@ void CAN_TX_PackVCURegenDebug(IO_CAN_DATA_FRAME* frame)
 
     switch (regen_debug_mux) {
     case 0:
-        frame->data[1] = (ubyte1)((torque->regen_strategy & 0x03U) |
-                                  ((torque->regen_soc_gate_enabled ? 1U : 0U) << 2));
+        frame->data[1] = (ubyte1)((torque->regen_soc_gate_enabled ? 1U : 0U) << 2);
         frame->data[2] = torque->regen_status_flags;
         frame->data[3] = torque->regen_block_reason;
         frame->data[4] = (ubyte1)((ubyte2)torque->regen_torque & 0xFF);
@@ -129,8 +128,8 @@ void CAN_TX_PackVCURegenDebug(IO_CAN_DATA_FRAME* frame)
     case 2:
     default:
         frame->data[1] = 0;
-        frame->data[2] = (ubyte1)((ubyte2)torque->regen_front_table_torque & 0xFF);
-        frame->data[3] = (ubyte1)((ubyte2)torque->regen_front_table_torque >> 8);
+        frame->data[2] = 0;
+        frame->data[3] = 0;
         frame->data[4] = (ubyte1)((ubyte2)torque->regen_balance_torque & 0xFF);
         frame->data[5] = (ubyte1)((ubyte2)torque->regen_balance_torque >> 8);
         frame->data[6] = (ubyte1)((ubyte2)torque->regen_final_torque & 0xFF);

@@ -25,13 +25,6 @@
 
 #define MOTOR_DIRECTION_DEFAULT MOTOR_FORWARDS // backwards for dyno testing
 
-typedef enum {
-	REGEN_STRATEGY_FRONT_ONLY = 0,
-	REGEN_STRATEGY_REAR_ONLY,
-	REGEN_STRATEGY_AVERAGED,
-	REGEN_STRATEGY_RYDER,
-} RegenStrategy_t;
-
 /* Regen defaults (runtime-configurable, EEPROM-backed). */
 #define REGEN_ENABLED_DEFAULT TRUE
 #define REGEN_MAX_APPS_DEFAULT 5
@@ -44,15 +37,11 @@ typedef enum {
 #define REGEN_MIN_SPEED_DEFAULT 250
 #define REGEN_MAX_SOC_DEFAULT 85
 #define REGEN_SOC_GATE_ENABLED_DEFAULT TRUE
-#define REGEN_STRATEGY_DEFAULT REGEN_STRATEGY_RYDER
 
-/* Ryder regen strategy: front-pressure lookup plus rear-pressure balancing. */
+/* Ryder regen strategy: rear-axle regen torque from the front/rear brake-force
+ * balance equation, gated by an adjustable front/rear PSI activation window and
+ * clamped to [REGEN_MIN_TORQUE, REGEN_MAX_TORQUE]. */
 #define REGEN_RYDER_MU_X1000_DEFAULT           2250
-#define REGEN_RYDER_FRONT_TABLE_POINTS         19
-#define REGEN_RYDER_FRONT_PSI_STEP             50
-#define REGEN_RYDER_MAX_FRONT_PSI              900
-/* Previous regen table x1000: { 0, 14936, 25332, 32316, 36706, 39108, 39971, 39638, 38369, 36366, 33784, 30747, 27351, 23673, 19773, 15702, 11497, 7192, 2811 } */
-#define REGEN_RYDER_FRONT_TORQUE_X1000         { 0, 22404, 37998, 48474, 55059, 58662, 59957, 59457, 57554, 54549, 50676, 46121, 41027, 35510, 29660, 23553, 17246, 10788, 4217 }
 
 #define REGEN_RYDER_FRONT_FORCE_C0             183.0f
 #define REGEN_RYDER_FRONT_FORCE_C1             8.7696f
