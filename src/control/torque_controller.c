@@ -1,5 +1,6 @@
 #include "IO_Constants.h"
 #include "config/torque_config.h"
+#include "config/endurance_config.h"
 #include "config/apps_config.h"
 #include "config/bse_config.h"
 #include "can/can_manager.h"
@@ -132,7 +133,14 @@ static void UpdateRegenDebugInputs(const VCU_State_t state,
 static sbyte2 PedalTravelToTorque(ubyte2 pedal_travel)
 {
     const ubyte2 pedal_travel_for_max_torque = (ubyte2)((((ubyte4)APPS_RESOLUTION) * (ubyte4)PERCENT_TRAVEL_FOR_MAX_TORQUE) / 100);
-    const ubyte1 max_torque = RuntimeConfig_GetMaxTorque(); // MAX_TORQUE_DEFAULT;
+    ubyte1 max_torque = RuntimeConfig_GetMaxTorque(); // MAX_TORQUE_DEFAULT;
+
+    /* Endurance caps drive torque to a fixed lower value, bounded by Normal's
+     * cap so it can never request more torque than Normal. */
+    if ((RuntimeConfig_GetDriveMode() == DRIVE_MODE_ENDURANCE) &&
+        ((ubyte1)ENDURANCE_TORQUE_CAP_NM < max_torque)) {
+        max_torque = (ubyte1)ENDURANCE_TORQUE_CAP_NM;
+    }
 
     if (pedal_travel < APPS_DEADZONE) {
         return 0;

@@ -229,6 +229,12 @@ void CAN_TX_PackConfig(IO_CAN_DATA_FRAME* frame)
 
     (void)RuntimeConfig_GetI32(param_id, &param_value);
 
+    /* For the power-cap mux, echo the cap actually being commanded (SoC-derated
+     * in Endurance) rather than the static Normal-mode configured value. */
+    if (param_id == RUNTIME_PARAM_POWER_CAP_KW) {
+        param_value = (sbyte2)PowerLimit_GetActivePowerCapKw();
+    }
+
     const ubyte2 packed_value = (ubyte2)(param_value);
 
     frame->data[0] = (ubyte1)param_id;

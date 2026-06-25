@@ -3,6 +3,8 @@
 
 #include "IO_Constants.h"
 
+#include "config/endurance_config.h"
+
 // MAX 255
 typedef enum {
     RUNTIME_PARAM_MAX_TORQUE,
@@ -46,7 +48,10 @@ typedef enum {
     RUNTIME_PARAM_LAUNCH_TRIGGER_APPS_PERCENT,  /* 47 - APPS % that triggers launch */
     RUNTIME_PARAM_LAUNCH_END_APPS_PERCENT,      /* 48 - APPS % at/below which launch ends */
 
-    RUNTIME_PARAM_COUNT,                         /* 49 */
+    /* Selectable drive mode (DriveMode_t): 0=Normal, 1=Endurance. */
+    RUNTIME_PARAM_DRIVE_MODE,                   /* 49 */
+
+    RUNTIME_PARAM_COUNT,                         /* 50 */
 } RuntimeParamId_t;
 
 /* Bit positions for runtime-configurable debug flags stored in
@@ -75,6 +80,7 @@ bool RuntimeConfig_GetI32(const RuntimeParamId_t param_id, sbyte2* const out_val
 ubyte1 RuntimeConfig_GetMaxTorque(void);
 bool RuntimeConfig_GetMotorDirection(void);
 bool RuntimeConfig_GetRegenEnabled(void);
+DriveMode_t RuntimeConfig_GetDriveMode(void);
 
 /*
  * Broadcast trigger helpers.

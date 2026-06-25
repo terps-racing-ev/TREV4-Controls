@@ -61,6 +61,7 @@ BO_ 2147483855 SET_VCU_Config: 8 SET
  SG_ SET_VCU_Launch_Curve_Duration_ms m46 : 8|16@1+ (1.0,0.0) [100.0|10000.0] "ms" Vector__XXX
  SG_ SET_VCU_Launch_Trigger_APPS_Pct m47 : 8|16@1+ (1.0,0.0) [1.0|100.0] "%" Vector__XXX
  SG_ SET_VCU_Launch_End_APPS_Pct m48 : 8|16@1+ (1.0,0.0) [0.0|99.0] "%" Vector__XXX
+ SG_ SET_VCU_Drive_Mode m49 : 8|16@1+ (1.0,0.0) [0.0|1.0] "" Vector__XXX
  SG_ SET_VCU_Launch_Command m240 : 8|8@1+ (1.0,0.0) [0.0|2.0] "" Vector__XXX
 
 BO_ 2148532431 VCU_Config: 8 VCU
@@ -105,6 +106,7 @@ BO_ 2148532431 VCU_Config: 8 VCU
  SG_ VCU_Launch_Curve_Duration_ms m46 : 8|16@1+ (1.0,0.0) [100.0|10000.0] "ms" Vector__XXX
  SG_ VCU_Launch_Trigger_APPS_Pct m47 : 8|16@1+ (1.0,0.0) [1.0|100.0] "%" Vector__XXX
  SG_ VCU_Launch_End_APPS_Pct m48 : 8|16@1+ (1.0,0.0) [0.0|99.0] "%" Vector__XXX
+ SG_ VCU_Drive_Mode m49 : 8|16@1+ (1.0,0.0) [0.0|1.0] "" Vector__XXX
 
 BO_ 2148532928 VCU_MOBO_Command: 8 VCU
  SG_ VCU_Pump_Toggle_Cmd : 8|1@1+ (1.0,0.0) [0.0|1.0] "" Vector__XXX
@@ -348,6 +350,8 @@ VAL_ 2366637792 VCU_Regen_Block_Reason 0 "NONE" 1 "DISABLED" 2 "NOT_DRIVING" 3 "
 VAL_ 2366638272 VCU_Launch_State_Machine 0 "DISARMED" 1 "ARMED" 2 "LAUNCHING" ;
 VAL_ 2366638272 VCU_Launch_Armed 0 "FALSE" 1 "TRUE" ;
 VAL_ 2366638272 VCU_Launch_Active 0 "FALSE" 1 "TRUE" ;
+VAL_ 2148532431 VCU_Drive_Mode 0 "NORMAL" 1 "ENDURANCE" ;
+VAL_ 2147483855 SET_VCU_Drive_Mode 0 "NORMAL" 1 "ENDURANCE" ;
 VAL_ 2366687998 VCU_CAN_Readback_Mux 0 "STATUS" 1 "INVERTER" 2 "VOLTAGE" 3 "FRONT_WHEEL_RPM" ;
 VAL_ 2366687998 VCU_RB_INV_HighSpeed_Valid 0 "FALSE" 1 "TRUE" ;
 VAL_ 2366687998 VCU_RB_HVC_Summary_Valid 0 "FALSE" 1 "TRUE" ;

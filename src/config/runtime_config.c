@@ -5,6 +5,7 @@
 
 #include "config/torque_config.h"
 #include "config/power_config.h"
+#include "config/endurance_config.h"
 
 /**************************************************************************
 *                          P R I V A T E    T Y P E S
@@ -43,6 +44,7 @@ typedef struct {
     sbyte2 launch_curve_duration_ms;
     sbyte2 launch_trigger_apps_percent;
     sbyte2 launch_end_apps_percent;
+    sbyte2 drive_mode;
 } RuntimeConfig_Data_t;
 
 typedef struct {
@@ -69,7 +71,7 @@ typedef enum {
 #define RUNTIME_CFG_EEPROM_OFFSET     ((ubyte2)64)
 
 #define RUNTIME_CFG_MAGIC             ((ubyte4)0x52434647UL) /* 'RCFG' */
-#define RUNTIME_CFG_VERSION           ((ubyte2)11)
+#define RUNTIME_CFG_VERSION           ((ubyte2)12)
 #define RUNTIME_CFG_LEGACY_VERSION_1  ((ubyte2)1)
 #define RUNTIME_CFG_LEGACY_VERSION_2  ((ubyte2)2)
 #define RUNTIME_CFG_LEGACY_VERSION_3  ((ubyte2)3)
@@ -88,6 +90,10 @@ typedef enum {
  * regen became RYDER-only. FindParam ignores the orphaned id 21 record, and all
  * other IDs are unchanged, so v10 records migrate cleanly. */
 #define RUNTIME_CFG_LEGACY_VERSION_10 ((ubyte2)10)
+/* v11 -> v12: added selectable drive mode (id 49, RUNTIME_PARAM_DRIVE_MODE).
+ * Appended param takes its default (DRIVE_MODE_DEFAULT) and is written on the
+ * next EEPROM flush, so v11 records migrate cleanly. */
+#define RUNTIME_CFG_LEGACY_VERSION_11 ((ubyte2)11)
 
 #define RUNTIME_CFG_MAX_PARAMS        ((ubyte2)42)
 
@@ -345,6 +351,13 @@ static RuntimeConfig_ParamDesc_t param_descs[] = {
         .min_value = 0,
         .max_value = 99,
     },
+    {
+        .id = RUNTIME_PARAM_DRIVE_MODE,
+        .value = &runtime_cfg.drive_mode,
+        .default_value = DRIVE_MODE_DEFAULT,
+        .min_value = DRIVE_MODE_NORMAL,
+        .max_value = DRIVE_MODE_MAX,
+    },
 };
 
 #define PARAM_COUNT ((ubyte2)(sizeof(param_descs) / sizeof(param_descs[0])))
@@ -481,7 +494,8 @@ static bool UnpackFromEepromBlob(const ubyte1* const blob)
         (version != RUNTIME_CFG_LEGACY_VERSION_7) &&
         (version != RUNTIME_CFG_LEGACY_VERSION_8) &&
         (version != RUNTIME_CFG_LEGACY_VERSION_9) &&
-        (version != RUNTIME_CFG_LEGACY_VERSION_10)) {
+        (version != RUNTIME_CFG_LEGACY_VERSION_10) &&
+        (version != RUNTIME_CFG_LEGACY_VERSION_11)) {
         return FALSE;
     }
 
@@ -639,6 +653,11 @@ bool RuntimeConfig_GetMotorDirection(void)
 bool RuntimeConfig_GetRegenEnabled(void)
 {
     return (runtime_cfg.regen_enabled != 0);
+}
+
+DriveMode_t RuntimeConfig_GetDriveMode(void)
+{
+    return (DriveMode_t)runtime_cfg.drive_mode;
 }
 
 bool RuntimeConfig_ConfigTxTrigger(void)
