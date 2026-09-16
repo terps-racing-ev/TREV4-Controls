@@ -57,12 +57,13 @@ void CAN_TX_PackInvTorqueCommand(IO_CAN_DATA_FRAME* frame)
 
     frame->data[0] = torque_data->inv_torque_scaled & 0xFF;
     frame->data[1] = torque_data->inv_torque_scaled >> 8;
-    // TODO speed command?
-    frame->data[2] = 0;
-    frame->data[3] = 0;
+    frame->data[2] = (ubyte1)((ubyte2)torque_data->inv_speed_rpm & 0xFF);
+    frame->data[3] = (ubyte1)((ubyte2)torque_data->inv_speed_rpm >> 8);
     frame->data[4] = torque_data->inv_direction;
-    frame->data[5] = torque_data->inv_enable;
-    frame->data[6] = torque_data->inv_speed_mode;
+    /* CM200DZ command: enable = byte 5 bit 0, speed override = bit 2. */
+    frame->data[5] = (ubyte1)((torque_data->inv_enable ? 1U : 0U) |
+                            (torque_data->inv_speed_mode ? (1U << 2) : 0U));
+    frame->data[6] = 0;
     // TODO torque limit. useful prolly not?
     frame->data[7] = 0;
 }

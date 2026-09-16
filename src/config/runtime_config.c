@@ -45,6 +45,7 @@ typedef struct {
     sbyte2 launch_trigger_apps_percent;
     sbyte2 launch_end_apps_percent;
     sbyte2 drive_mode;
+    sbyte2 max_speed_mph;
 } RuntimeConfig_Data_t;
 
 typedef struct {
@@ -71,7 +72,7 @@ typedef enum {
 #define RUNTIME_CFG_EEPROM_OFFSET     ((ubyte2)64)
 
 #define RUNTIME_CFG_MAGIC             ((ubyte4)0x52434647UL) /* 'RCFG' */
-#define RUNTIME_CFG_VERSION           ((ubyte2)12)
+#define RUNTIME_CFG_VERSION           ((ubyte2)13)
 #define RUNTIME_CFG_LEGACY_VERSION_1  ((ubyte2)1)
 #define RUNTIME_CFG_LEGACY_VERSION_2  ((ubyte2)2)
 #define RUNTIME_CFG_LEGACY_VERSION_3  ((ubyte2)3)
@@ -94,6 +95,9 @@ typedef enum {
  * Appended param takes its default (DRIVE_MODE_DEFAULT) and is written on the
  * next EEPROM flush, so v11 records migrate cleanly. */
 #define RUNTIME_CFG_LEGACY_VERSION_11 ((ubyte2)11)
+
+/* v12 -> v13: append max speed (id 50), default disabled. */
+#define RUNTIME_CFG_LEGACY_VERSION_12 ((ubyte2)12)
 
 #define RUNTIME_CFG_MAX_PARAMS        ((ubyte2)42)
 
@@ -358,6 +362,14 @@ static RuntimeConfig_ParamDesc_t param_descs[] = {
         .min_value = DRIVE_MODE_NORMAL,
         .max_value = DRIVE_MODE_MAX,
     },
+    {
+        .id = RUNTIME_PARAM_MAX_SPEED_MPH,
+        .value = &runtime_cfg.max_speed_mph,
+        .default_value = 0,
+        .min_value = 0,
+        /* MPH setting range; RPM conversion saturates to the CAN field limit. */
+        .max_value = 419,
+    },
 };
 
 #define PARAM_COUNT ((ubyte2)(sizeof(param_descs) / sizeof(param_descs[0])))
@@ -495,7 +507,8 @@ static bool UnpackFromEepromBlob(const ubyte1* const blob)
         (version != RUNTIME_CFG_LEGACY_VERSION_8) &&
         (version != RUNTIME_CFG_LEGACY_VERSION_9) &&
         (version != RUNTIME_CFG_LEGACY_VERSION_10) &&
-        (version != RUNTIME_CFG_LEGACY_VERSION_11)) {
+        (version != RUNTIME_CFG_LEGACY_VERSION_11) &&
+        (version != RUNTIME_CFG_LEGACY_VERSION_12)) {
         return FALSE;
     }
 

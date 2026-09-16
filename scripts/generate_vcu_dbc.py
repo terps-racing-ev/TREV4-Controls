@@ -17,7 +17,7 @@ HEADER_LINES = [
 MESSAGE_BLOCKS = [
     """BO_ 192 VCU_INV_Command: 8 VCU
  SG_ VCU_INV_Torque_Cmd : 0|16@1- (0.1,0.0) [-230.0|230.0] "Nm" Vector__XXX
- SG_ VCU_INV_Speed_Cmd : 16|16@1- (1.0,0.0) [-6000.0|6000.0] "RPM" Vector__XXX
+ SG_ VCU_INV_Speed_Cmd : 16|16@1- (1.0,0.0) [-32768.0|32767.0] "RPM" Vector__XXX
  SG_ VCU_INV_Direction_Cmd : 32|1@1+ (1.0,0.0) [0.0|1.0] "" Vector__XXX
  SG_ VCU_INV_Inverter_Enable : 40|1@1+ (1.0,0.0) [0.0|1.0] "" Vector__XXX
  SG_ VCU_INV_Speed_Enable : 42|1@1+ (1.0,0.0) [0.0|1.0] "" Vector__XXX
@@ -69,6 +69,7 @@ MESSAGE_BLOCKS = [
  SG_ SET_VCU_Launch_Trigger_APPS_Pct m47 : 8|16@1+ (1.0,0.0) [1.0|100.0] "%" Vector__XXX
  SG_ SET_VCU_Launch_End_APPS_Pct m48 : 8|16@1+ (1.0,0.0) [0.0|99.0] "%" Vector__XXX
  SG_ SET_VCU_Drive_Mode m49 : 8|16@1+ (1.0,0.0) [0.0|1.0] "" Vector__XXX
+ SG_ SET_VCU_Max_Speed_MPH m50 : 8|16@1+ (1.0,0.0) [0.0|419.0] "mph" Vector__XXX
  SG_ SET_VCU_Launch_Command m240 : 8|8@1+ (1.0,0.0) [0.0|2.0] "" Vector__XXX""",
     """BO_ 2148532431 VCU_Config: 8 VCU
  SG_ VCU_Config_Mux M : 0|8@1+ (1.0,0.0) [0.0|255.0] "" Vector__XXX
@@ -112,7 +113,8 @@ MESSAGE_BLOCKS = [
  SG_ VCU_Launch_Curve_Duration_ms m46 : 8|16@1+ (1.0,0.0) [100.0|10000.0] "ms" Vector__XXX
  SG_ VCU_Launch_Trigger_APPS_Pct m47 : 8|16@1+ (1.0,0.0) [1.0|100.0] "%" Vector__XXX
  SG_ VCU_Launch_End_APPS_Pct m48 : 8|16@1+ (1.0,0.0) [0.0|99.0] "%" Vector__XXX
- SG_ VCU_Drive_Mode m49 : 8|16@1+ (1.0,0.0) [0.0|1.0] "" Vector__XXX""",
+ SG_ VCU_Drive_Mode m49 : 8|16@1+ (1.0,0.0) [0.0|1.0] "" Vector__XXX
+ SG_ VCU_Max_Speed_MPH m50 : 8|16@1+ (1.0,0.0) [0.0|419.0] "mph" Vector__XXX""",
     """BO_ 2148532928 VCU_MOBO_Command: 8 VCU
  SG_ VCU_Pump_Toggle_Cmd : 8|1@1+ (1.0,0.0) [0.0|1.0] "" Vector__XXX
  SG_ VCU_DRS_Toggle_Cmd : 9|1@1+ (1.0,0.0) [0.0|1.0] "" Vector__XXX

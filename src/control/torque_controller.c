@@ -316,12 +316,31 @@ static sbyte2 CalculateRegenTorque(const APPS_Data_t* const apps,
     return (sbyte2)(-positive_torque);
 }
 
+static float4 GetMPHx100PerMotorRPM(void)
+{
+    const sbyte2 diameter_inches = GetParam(RUNTIME_PARAM_WHEEL_DIAMETER);
+    /* Wheel circumference is pi * diameter. 63360 inches/mile, 60 min/hour.
+     * Runtime configuration clamps diameter to 8..30 inches. */
+    return (3.14159265358979323846f * (float4)diameter_inches * 6000.0f) /
+           (63360.0f * GEAR_RATIO);
+}
+
 static ubyte4 ComputeSpeedMPHx100(sbyte2 motor_rpm)
 {
-    /* Fixed conversion: 1 RPM = 0.0152 MPH.
-     * Store as mph x100, so the scale factor becomes 1.52.
-     */
-    return ((ubyte4)AbsS16ToU16(motor_rpm) * 128UL) / 100UL;
+    /* Widen before negating to include the signed RPM minimum (-32768). */
+    const sbyte4 rpm = (sbyte4)motor_rpm;
+    const ubyte4 rpm_abs = (ubyte4)((rpm < 0) ? -rpm : rpm);
+    return (ubyte4)((float4)rpm_abs * GetMPHx100PerMotorRPM());
+}
+
+static sbyte2 ComputeMotorRPMFromMPH(sbyte2 speed_mph)
+{
+    const float4 rpm = ((float4)speed_mph * 100.0f) / GetMPHx100PerMotorRPM();
+    /* Small wheels can require more RPM than the signed CAN field supports. */
+    if (rpm >= 32767.0f) {
+        return 32767;
+    }
+    return (sbyte2)(rpm + 0.5f);
 }
 
 void TorqueController_Init(void)
@@ -330,6 +349,7 @@ void TorqueController_Init(void)
     torque_data.inv_direction = MOTOR_FORWARDS;//RuntimeConfig_GetMotorDirection();
     torque_data.inv_enable = INVERTER_DISABLE;
     torque_data.inv_speed_mode = INVERTER_SPEED_DISABLE;
+    torque_data.inv_speed_rpm = 0;
     torque_data.speed_mph_x100 = 0;
     torque_data.regen_torque = 0;
     UpdateRegenDebugInputs(VCU_STATE_NOT_READY, NULL, NULL, 0);
@@ -347,7 +367,7 @@ void TorqueController_Update(void)
     const MOBO_PowerTelemetry_RX_Data_t* mobo_power = CAN_RX_GetMOBO_PowerTelemetryData(); // Rear BSE PSI is here
     const sbyte2 regen_motor_speed = inv_position->motor_speed;
 
-    /* Compute vehicle speed from inverter motor RPM using a fixed mph/rpm ratio. */
+    /* Compute vehicle speed from inverter motor RPM using configured wheel diameter and gear ratio. */
     torque_data.speed_mph_x100 = ComputeSpeedMPHx100(inv_data->motor_speed);
     UpdateRegenDebugInputs(state, bse, mobo_power, regen_motor_speed);
 
@@ -359,6 +379,7 @@ void TorqueController_Update(void)
         torque_data.inv_direction = MOTOR_FORWARDS;//RuntimeConfig_GetMotorDirection();
         torque_data.inv_enable = INVERTER_DISABLE;
         torque_data.inv_speed_mode = INVERTER_SPEED_DISABLE;
+        torque_data.inv_speed_rpm = 0;
         return;
     }
 
@@ -395,7 +416,26 @@ void TorqueController_Update(void)
     // TODO should we check errors again? since statemachine is one cycle behind
     torque_data.inv_direction = MOTOR_FORWARDS;//RuntimeConfig_GetMotorDirection();
     torque_data.inv_enable = INVERTER_ENABLE;
-    torque_data.inv_speed_mode = INVERTER_SPEED_DISABLE;
+    /* Latch only after exceeding the configured VCU speed. Falling below the
+     * threshold does not release speed mode; releasing the pedal does.
+     * Existing brake/sensor/state inhibitions must also cancel the override. */
+    const sbyte2 max_speed_mph = GetParam(RUNTIME_PARAM_MAX_SPEED_MPH);
+    if ((max_speed_mph <= 0) || (apps->apps_value == 0U) ||
+        !apps->valid || BrakeThrottleCutActive(bse) ||
+        !CAN_Manager_RX_Data_Valid(CAN_RX_MSG_INV_HIGH_SPEED) ||
+        (torque_data.regen_torque < 0)) {
+        torque_data.inv_speed_mode = INVERTER_SPEED_DISABLE;
+    } else if (torque_data.speed_mph_x100 > ((ubyte4)max_speed_mph * 100UL)) {
+        torque_data.inv_speed_mode = TRUE;
+    }
+
+    torque_data.inv_speed_rpm = 0;
+    if (torque_data.inv_speed_mode) {
+        /* Inverse of ComputeSpeedMPHx100, rounded to the nearest RPM. */
+        torque_data.inv_speed_rpm = ComputeMotorRPMFromMPH(max_speed_mph);
+        /* In speed mode this field is regulator feedforward, not a torque request. */
+        torque_data.inv_torque_scaled = 0;
+    }
 
 }
 

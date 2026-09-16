@@ -51,7 +51,9 @@ typedef enum {
     /* Selectable drive mode (DriveMode_t): 0=Normal, 1=Endurance. */
     RUNTIME_PARAM_DRIVE_MODE,                   /* 49 */
 
-    RUNTIME_PARAM_COUNT,                         /* 50 */
+    RUNTIME_PARAM_MAX_SPEED_MPH,                 /* 50: 0 disables */
+
+    RUNTIME_PARAM_COUNT,                         /* 51 */
 } RuntimeParamId_t;
 
 /* Bit positions for runtime-configurable debug flags stored in

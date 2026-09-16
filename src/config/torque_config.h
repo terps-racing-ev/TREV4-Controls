@@ -14,7 +14,7 @@
 #define INVERTER_SPEED_ENABLE 1
 #define INVERTER_SPEED_DISABLE 0
 
-/* Drivetrain geometry (fixed). */
+/* Fixed motor-to-wheel reduction and default runtime wheel diameter (inches). */
 #define GEAR_RATIO 3.4545f
 #define WHEEL_DIAMETER_DEFAULT 16
 
